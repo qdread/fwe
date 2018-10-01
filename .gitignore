@@ -39,3 +39,4 @@ rsconnect/
 # Compiled Stan files
 *.rds
 *.rda
+.Rproj.user
