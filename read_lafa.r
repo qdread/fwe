@@ -1,17 +1,8 @@
 # Script for reading LAFA XLSX files into R
 # QDR/FWE/01 Oct 2018
 
-dir('Q:/LAFA')
 
-library(XLConnect)
-library(stringr)
-
-# test with one.
-wb <- loadWorkbook('Q:/LAFA/Dairy.xls', create = TRUE)
-
-# Get sheet names and remove table of contents
-sheet_names <- getSheets(wb)
-sheet_names <- sheet_names[!sheet_names %in% c('TableOfContents')]
+# Define functions --------------------------------------------------------
 
 # Function to read single sheet
 read_lafa_sheet <- function(name, wb) {
@@ -69,6 +60,15 @@ read_lafa_workbook <- function(file) {
 }
 
 
+# Read data ---------------------------------------------------------------
+
+files <- list.files('Q:/LAFA', full.names = TRUE)
+
 dairy <- read_lafa_workbook('Q:/LAFA/Dairy.xls')
+fat <- read_lafa_workbook('Q:/LAFA/fat.xls')
 fruit <- read_lafa_workbook('Q:/LAFA/Fruit.xls')
+grain <- read_lafa_workbook('Q:/LAFA/grain.xls')
 meat <- read_lafa_workbook('Q:/LAFA/meat.xls')
+sugar <- read_lafa_workbook('Q:/LAFA/sugar.xls')
+veg <- read_lafa_workbook('Q:/LAFA/veg.xls')
+
