@@ -8,7 +8,7 @@ library(tidyverse)
 library(reshape2)
 library(data.table)
 
-files <- list.files('Q:/FAOSTAT', full.names = TRUE)
+files <- list.files('Q:/FAOSTAT', full.names = TRUE, pattern = '.csv')
 objnames <- gsub('(.*?)usa_', '', files)
 objnames <- gsub('.csv', '', objnames)
 
