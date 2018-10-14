@@ -163,3 +163,9 @@ extr_nlcd_df_01to06 <- extr_nlcd_df_01to06 %>%
 
 write.csv(extr_nlcd_df_06to11, file = '/nfs/qread-data/BBS/bbs_nlcd_change0611_1kmbuffer.csv', row.names = FALSE)
 write.csv(extr_nlcd_df_01to06, file = '/nfs/qread-data/BBS/bbs_nlcd_change0106_1kmbuffer.csv', row.names = FALSE)
+
+# Write NLCD levels for the transition matrix to a csv.
+levels0611 <- levels(nlcd06to11)[[1]]
+levels0106 <- levels(nlcd01to06)[[1]]
+write.csv(levels0611, file = '/nfs/qread-data/BBS/nlcd_change0611_levels.csv', row.names = FALSE)
+write.csv(levels0106, file = '/nfs/qread-data/BBS/nlcd_change0106_levels.csv', row.names = FALSE)
