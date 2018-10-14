@@ -1,10 +1,13 @@
 # Script to extract pixel values of NLCD for all BBS points.
-# Actually, it would be best to get the entire route's NLCD points, but first just do the points.
+# 1 km buffer around each route.
+# Edit 12 Oct.: get LC change as well.
 
 bbspts <- read.csv('/nfs/qread-data/BBS/bbs_route_midpoints.csv')
 
 library(raster)
 nlcd11 <- raster('/nfs/public-data/NLCD/nlcd_2011_landcover_2011_edition_2014_03_31/nlcd_2011_landcover_2011_edition_2014_03_31.img')
+nlcd06to11 <- raster('/nfs/public-data/NLCD/nlcd_2006_to_2011_landcover_fromto_change_index_2011_edition_2014_04_09/nlcd_2006_to_2011_landcover_fromto_change_index_2011_edition_2014_04_09.img')
+nlcd01to06 <- raster('/nfs/public-data/NLCD/nlcd_2001_to_2006_landcover_fromto_change_index_2011_edition_2014_04_09/nlcd_2001_to_2006_landcover_fromto_change_index_2011_edition_2014_04_09.img')
 # NLCD is in 30 m resolution, AEA projection.
 
 aea_crs <- proj4string(nlcd11)
@@ -15,7 +18,6 @@ bbs_nlcd_categories <- nlcd_levels[[1]]$Land.Cover.Class[match(bbs_nlcd, nlcd_le
 
 # This does not include Alaska. Need to get that separately.
 nlcd11ak <- raster('/nfs/qread-data/NLCD/ak_nlcd_2011_landcover_1_15_15.img')
-
 
 # Read in the BBS route shapefile
 fp <- '/nfs/qread-data/BBS/bbsrtes_2012_alb'
@@ -34,7 +36,7 @@ extract1 <- function(i) {
   message(paste(i, 'finished'))
   return(table(extr[[1]]))
 }
-  
+
   
 # Run on cluster
 
@@ -97,3 +99,67 @@ nlcd_highestcategory <- extr_nlcd_df %>%
 
 
 write.csv(extr_nlcd_df, file = '/nfs/qread-data/BBS/bbs_nlcd_1kmbuffer.csv', row.names = FALSE)
+
+# Land cover change extraction --------------------------------------------
+
+
+extract_raster <- function(i) {
+  extr <- extract(r, bbsbuffered1k[i, ])
+  return(table(extr[[1]]))
+}
+
+r <- nlcd06to11
+library(rslurm)
+sopts <- list(partition = "sesync", time = "4:00:00")
+sjob <- slurm_apply(extract_raster, data.frame(i = 1:N),
+                    nodes = 2, cpus_per_node = 8,
+                    slurm_options = sopts,
+                    add_objects = c('r', 'bbsbuffered1k'))
+
+print_job_status(sjob)
+extracted_nlcd_06to11 <- get_slurm_out(sjob)
+cleanup_files(sjob)
+
+r <- nlcd01to06
+sjob06 <- slurm_apply(extract_raster, data.frame(i = 1:N),
+                      nodes = 2, cpus_per_node = 8,
+                      slurm_options = sopts,
+                      add_objects = c('r', 'bbsbuffered1k'))
+print_job_status(sjob06)
+extracted_nlcd_01to06 <- get_slurm_out(sjob06)
+cleanup_files(sjob06)
+
+extr_nlcd_df_06to11 <- imap_dfr(extracted_nlcd_06to11, function(x, y) {
+  if (length(x) == 0) {
+    data.frame(route=integer(0),Var1=integer(0),Freq=integer(0))
+  } else {
+    cbind(route = y, as.data.frame(x))
+  }
+})
+
+extr_nlcd_df_01to06 <- imap_dfr(extracted_nlcd_01to06, function(x, y) {
+  if (length(x) == 0) {
+    data.frame(route=integer(0),Var1=integer(0),Freq=integer(0))
+  } else {
+    cbind(route = y, as.data.frame(x))
+  }
+})
+
+extr_nlcd_df_06to11 <- extr_nlcd_df_06to11 %>%
+  mutate(route = bbsrtes$rteno[route]) %>%
+  group_by(route) %>%
+  mutate(proportion = Freq/sum(Freq)) %>%
+  group_by(route, Var1) %>%
+  rename(category = Var1) %>%
+  summarize(proportion = sum(proportion))
+
+extr_nlcd_df_01to06 <- extr_nlcd_df_01to06 %>%
+  mutate(route = bbsrtes$rteno[route]) %>%
+  group_by(route) %>%
+  mutate(proportion = Freq/sum(Freq)) %>%
+  group_by(route, Var1) %>%
+  rename(category = Var1) %>%
+  summarize(proportion = sum(proportion))
+
+write.csv(extr_nlcd_df_06to11, file = '/nfs/qread-data/BBS/bbs_nlcd_change0611_1kmbuffer.csv', row.names = FALSE)
+write.csv(extr_nlcd_df_01to06, file = '/nfs/qread-data/BBS/bbs_nlcd_change0106_1kmbuffer.csv', row.names = FALSE)
