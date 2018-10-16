@@ -79,14 +79,14 @@ library(reshape2)
 bbs_fg_richness <- bbsmat_byroute_oneyear %>%
   melt(varnames = c('rteNo', 'species')) %>% 
   mutate(rteNo = bbscov_oneyear$rteNo[rteNo]) %>%
-  left_join(birdtrait %>% select(Latin_Name_clean, FG), by = c('species' = 'Latin_Name_clean')) %>%
+  left_join(birdtrait %>% dplyr::select(Latin_Name_clean, FG), by = c('species' = 'Latin_Name_clean')) %>%
   group_by(rteNo, FG) %>%
   summarize(richness = sum(value))
   
 # Now get FG richness by naturalness.  
 
 bbs_fg_richness <- bbs_fg_richness %>%
-  left_join(bbs_rtemeta %>% select(rteNo, BCR)) %>%
+  left_join(bbs_rtemeta %>% dplyr::select(rteNo, BCR)) %>%
   left_join(bcr_nat) %>%
   left_join(bbs_nat, by = c('rteNo' = 'route')) %>%
   mutate(proportion_corrected = if_else(proportion < maxless1, proportion, maxless1))
@@ -95,3 +95,20 @@ ggplot(bbs_fg_richness, aes(x = qlogis(proportion_corrected), y = richness, grou
   geom_point() +
   geom_smooth(method = lm, se = FALSE) +
   facet_wrap(~FG)
+
+
+# Calculate affinity scores by taxon and BCR ------------------------------
+
+affinity_score <- function(dat, z) {
+  S_mod <- mean(dat$richness[dat$proportion_corrected < dat$median_natural])   # Richness in modified
+  S_nat <- mean(dat$richness[dat$proportion_corrected > dat$median_natural]) # Richness in natural
+  CF_loc <- 1 - S_mod / S_nat
+  h <- (1 - CF_loc) ^ (1 / z)
+  return(data.frame(S_mod = S_mod, S_nat = S_nat, CF_loc = CF_loc, h = h))
+}
+
+bbs_fg_affin <- bbs_fg_richness %>%
+  group_by(BCR, FG) %>%
+  do(affinity_score(., z = 0.27))
+
+ggplot(bbs_fg_affin, aes(group = FG, x = h <= 1)) + geom_bar()
