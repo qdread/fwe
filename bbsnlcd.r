@@ -169,3 +169,12 @@ levels0611 <- levels(nlcd06to11)[[1]]
 levels0106 <- levels(nlcd01to06)[[1]]
 write.csv(levels0611, file = '/nfs/qread-data/BBS/nlcd_change0611_levels.csv', row.names = FALSE)
 write.csv(levels0106, file = '/nfs/qread-data/BBS/nlcd_change0106_levels.csv', row.names = FALSE)
+
+# Get areas of each polygon and write to a CSV so proportion can be converted to actual area.
+bbs_areas <- gArea(bbsbuffered1k, byid = TRUE)
+
+library(dplyr)
+bbs_rte_areas <- bbsbuffered1k@data %>%
+  mutate(area = bbs_areas) %>%
+  group_by(rteno) %>%
+  summarize(area = sum(area)/1e6)
