@@ -40,3 +40,6 @@ rsconnect/
 *.rds
 *.rda
 .Rproj.user
+
+# Any directories created by Rslurm, and all files in them.
+_rslurm*/
