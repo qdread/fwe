@@ -35,7 +35,7 @@ raster_files <- c(dir('/nfs/qread-data/NLCD', pattern='*.vrt', full.names = TRUE
 # Load raster into R and get table of pixel counts
 # Delete unneeded files
 
-polygon_counts <- function(raster_file, fp_write, polygon_file, file_tag) {
+polygon_counts <- function(raster_file, fp_write, polygon_file, file_tag, verbose = FALSE) {
   fp <- file.path(fp_write, paste0(polygon_file, file_tag))
   
   crop_args <- paste('-crop_to_cutline -overwrite -dstnodata NULL -cutline', 
@@ -67,9 +67,9 @@ polygon_counts <- function(raster_file, fp_write, polygon_file, file_tag) {
   
   # Get table of pixel counts for each tile
   for (rowidx in 1:n_tile_rows) {
-    message(paste('row',rowidx))
+    if (verbose) message(paste('row',rowidx))
     for (colidx in 1:n_tile_cols) {
-      message(paste('col',colidx))
+      if (verbose) message(paste('col',colidx))
       k <- k + 1
       dat <- getRasterData(gd, 
                            offset = c(r_offset[rowidx], c_offset[colidx]), 
@@ -150,10 +150,19 @@ munge_table <- function(tab, i) {
   data.frame(BCR = bcrdat$BCR[i], BCRNAME = bcrdat$BCRNAME[i], tab) %>%
     rename(category = dat)
 }
+safe_munge_table <- safely(munge_table, otherwise = NULL)
 
-nlcd0106 <- imap_dfr(nlcd_bcr[[1]], munge_table)
-nlcd0611 <- imap_dfr(nlcd_bcr[[2]], munge_table)
-nlcd06 <- imap_dfr(nlcd_bcr[[3]], munge_table)
-nlcd11 <- imap_dfr(nlcd_bcr[[4]], munge_table)
-nlcdold <- imap_dfr(nlcd_bcr[[5]], munge_table)
+# Get rid of the null entries in the lists first.
+nlcd_bcr_corrected <- map(nlcd_bcr, function(x) x[!map_lgl(x, is.null)])
 
+nlcd0106 <- imap_dfr(nlcd_bcr_corrected[[1]], munge_table)
+nlcd0611 <- imap_dfr(nlcd_bcr_corrected[[2]], munge_table)
+nlcd06 <- imap_dfr(nlcd_bcr_corrected[[3]], munge_table)
+nlcd11 <- imap_dfr(nlcd_bcr_corrected[[4]], munge_table)
+nlcdold <- imap_dfr(nlcd_bcr_corrected[[5]], munge_table)
+
+write.csv(nlcd0106, file = '/nfs/qread-data/NLCD/corrected_nlcd_bcr_0106.csv', row.names = FALSE)
+write.csv(nlcd0611, file = '/nfs/qread-data/NLCD/corrected_nlcd_bcr_0611.csv', row.names = FALSE)
+write.csv(nlcd06, file = '/nfs/qread-data/NLCD/corrected_nlcd_bcr_06.csv', row.names = FALSE)
+write.csv(nlcd11, file = '/nfs/qread-data/NLCD/corrected_nlcd_bcr_11.csv', row.names = FALSE)
+write.csv(nlcdold, file = '/nfs/qread-data/NLCD/corrected_nlcd_bcr_old.csv', row.names = FALSE)
