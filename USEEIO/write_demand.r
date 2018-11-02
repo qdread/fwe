@@ -65,16 +65,18 @@ write.csv(demand, '~/Dropbox/projects/foodwaste/data/demand_scenarios.csv', row.
 
 # Scenario 2 modified: Adjust the increase in canned and frozen food from scenario 2 slightly downward
 # This is because demand should be less since less food is wasted.
-# Use the 1.5 multiplication for price, but use ratios of waste amounts for fruit and vegetable.
+# Use the 1.67 multiplication for price (homescan), but use ratios of waste amounts for fruit and vegetable.
+
+processed_fresh_price_ratio <- 1.67
 
 demand_reduction_freshfruit <- orig_demand[1] * 0.5
 demand_reduction_freshveg <- orig_demand[2] * 0.5
-demand_increase_cannedfruit <- demand_reduction_freshfruit * 1.5 * nonfresh_fruit_loss/fresh_fruit_loss # fruit waste ratio is 0.54
-demand_increase_cannedveg <- demand_reduction_freshveg * 1.5 * nonfresh_veg_loss/fresh_veg_loss # veg waste ratio is 1.12
+demand_increase_cannedfruit <- demand_reduction_freshfruit * processed_fresh_price_ratio * nonfresh_fruit_loss/fresh_fruit_loss # fruit waste ratio is 0.54
+demand_increase_cannedveg <- demand_reduction_freshveg * processed_fresh_price_ratio * nonfresh_veg_loss/fresh_veg_loss # veg waste ratio is 1.12
 
 demand_change <- c(-demand_reduction_freshfruit, -demand_reduction_freshveg, demand_increase_cannedfruit + demand_increase_cannedveg)
 # Original demand for fresh and preserved produce in US in 2007 was $69.4B
-# This alternative scenario increases it by $4.6B to $74B
+# This alternative scenario increases it by $7.5B to $76.9B
 
 demand$scenario2 <- demand$USConsumption
 demand$scenario2[grep('fruit|vegetable', tolower(demand$Name))] <- orig_demand + demand_change
@@ -92,3 +94,4 @@ demand <- demand %>%
          scenario2_cannedfruitveg = if_else(Name == 'Fruit and vegetable canning, pickling, and drying', scenario2_direct, 0))
 
 write.csv(demand, '~/Dropbox/projects/foodwaste/data/demand_scenarios.csv', row.names = FALSE)
+
