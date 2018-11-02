@@ -26,11 +26,16 @@ bbs_long <- bbs %>%
 
 # Quickest way to do rolling average is probably to reshape to wide format by year
 # Only include 1975 and later because of the lack of sampling before that time.
+
+# Set first year to use and width of rolling average window
+year1 <- 1975
+window_size <- 5
+
 bbs_wide_year <- bbs_long %>%
-  filter(n > 0, Year >= 1975) %>%
+  filter(n > 0, Year >= year1) %>%
   dcast(rteNo + FG + AOU ~ Year, value.var = 'n', fill = 0)
 
-idx1 <- which(names(bbs_wide_year) == '1984')
+idx1 <- which(names(bbs_wide_year) == as.character(year1 + window_size - 1))
 idx2 <- which(names(bbs_wide_year) == '2016')
 n_yrs <- length(idx1:idx2)
 
@@ -41,14 +46,14 @@ bbs_rolling <- bbs_wide_year %>%
     n_obs <- as.logical(x)
     n_roll <- logical(n_yrs)
     
-    for (y in 1:n_yrs) n_roll[y] <- any(n_obs[y:(y+9)]) 
+    for (y in 1:n_yrs) n_roll[y] <- any(n_obs[y:(y+(window_size - 1))]) 
     n_roll
   })
 
 # Create long format bbs rolling
 bbs_rolling <- cbind(bbs_wide_year[,1:3], t(bbs_rolling))
 bbs_rolling_long <- melt(bbs_rolling, id.vars = c('rteNo', 'FG', 'AOU'), variable.name = 'Year', value.name = 'present') %>%
-  mutate(Year = as.numeric(as.character(Year)) + 1983)
+  mutate(Year = as.numeric(as.character(Year)) + year1 + (window_size - 2))
 
 bbs_fg_rolling <- bbs_rolling_long %>%
   group_by(rteNo, FG, Year) %>%

@@ -1,6 +1,7 @@
 # Script for reading LAFA XLSX files into R
 # QDR/FWE/01 Oct 2018
 
+# Updated 02 Nov 2018 to run both remotely and locally
 
 # Define functions --------------------------------------------------------
 
@@ -64,11 +65,13 @@ read_lafa_workbook <- function(file) {
 
 files <- list.files('Q:/LAFA', full.names = TRUE)
 
-dairy <- read_lafa_workbook('Q:/LAFA/Dairy.xls')
-fat <- read_lafa_workbook('Q:/LAFA/fat.xls')
-fruit <- read_lafa_workbook('Q:/LAFA/Fruit.xls')
-grain <- read_lafa_workbook('Q:/LAFA/grain.xls')
-meat <- read_lafa_workbook('Q:/LAFA/meat.xls')
-sugar <- read_lafa_workbook('Q:/LAFA/sugar.xls')
-veg <- read_lafa_workbook('Q:/LAFA/veg.xls')
+if (length(files) > 0) fp <- 'Q:/LAFA' else fp <- '~/Dropbox/projects/foodwaste/Data/LAFA_localcopy'
+
+dairy <- read_lafa_workbook(file.path(fp, 'Dairy.xls'))
+fat <- read_lafa_workbook(file.path(fp, 'fat.xls'))
+fruit <- read_lafa_workbook(file.path(fp, 'Fruit.xls'))
+grain <- read_lafa_workbook(file.path(fp, 'grain.xls'))
+meat <- read_lafa_workbook(file.path(fp, 'meat.xls'))
+sugar <- read_lafa_workbook(file.path(fp, 'sugar.xls'))
+veg <- read_lafa_workbook(file.path(fp, 'veg.xls'))
 
