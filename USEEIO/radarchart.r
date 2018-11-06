@@ -11,4 +11,4 @@ scen_results_longer %>%
   mutate_if(is.double, funs(./max(.))) ->
   scen_grp
 
-ggradar(scen_grp)
+ggradar(scen_grp, legend.text.size = 14)

@@ -67,6 +67,8 @@ write.csv(demand, '~/Dropbox/projects/foodwaste/data/demand_scenarios.csv', row.
 # This is because demand should be less since less food is wasted.
 # Use the 1.67 multiplication for price (homescan), but use ratios of waste amounts for fruit and vegetable.
 
+source('USEEIO/lafa_fruitveg_loss.r')
+
 processed_fresh_price_ratio <- 1.67
 
 demand_reduction_freshfruit <- orig_demand[1] * 0.5
