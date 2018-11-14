@@ -50,7 +50,7 @@ def correct_demand_names( demand_dict, drc ):
 csv2 = 'C:/Users/qread/Dropbox/projects/foodwaste/Code/USEEIO-master/useeiopy/Model Builds/USEEIO2012/USEEIO2012_FinalDemand.csv'
 all_impacts = get_impacts('2012_US_Consumption', csv2)
     
-scen_csv = 'C:/Users/qread/Dropbox/projects/foodwaste/Data/demand_scenarios.csv'     
+scen_csv = 'C:/Users/qread/Dropbox/projects/foodwaste/Data/demand_scenarios_2012.csv'     
 baseline_freshfruit = get_impacts('baseline_freshfruit', scen_csv)
 baseline_freshveg = get_impacts('baseline_freshveg', scen_csv)
 baseline_cannedfruitveg = get_impacts('baseline_cannedfruitveg', scen_csv)
@@ -64,5 +64,5 @@ alltypes_results = pandas.concat([baseline_freshfruit, baseline_freshveg, baseli
 alltypes_results.columns = ['baseline_freshfruit', 'baseline_freshveg', 'baseline_cannedfruitveg',
                             'scenario2_freshfruit', 'scenario2_freshveg', 'scenario2_cannedfruitveg']    
 
-alltypes_results.to_csv('Q:/IO_output/twoscenarios_bytype.csv') # Remote version
-alltypes_results.to_csv('C:/Users/qread/Dropbox/projects/foodwaste/Data/twoscenarios_bytype.csv') # Local version
+alltypes_results.to_csv('Q:/IO_output/twoscenarios_bytype_2012.csv') # Remote version
+alltypes_results.to_csv('C:/Users/qread/Dropbox/projects/foodwaste/Data/twoscenarios_bytype_2012.csv') # Local version

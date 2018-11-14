@@ -64,7 +64,7 @@ fresh_veg_loss <- fresh_veg$Total_loss__all_levels_Percent
 # remote vs local file paths
 fp <- if (dir.exists('Q:/IO_output')) 'Q:/IO_output' else '~/Dropbox/projects/foodwaste/Data'
 
-scen_results_bytype <- read.csv(file.path(fp, 'twoscenarios_bytype.csv'), stringsAsFactors = FALSE) %>%
+scen_results_bytype <- read.csv(file.path(fp, 'twoscenarios_bytype_2012.csv'), stringsAsFactors = FALSE) %>%
   mutate(baseline_total = baseline_freshfruit + baseline_freshveg + baseline_cannedfruitveg,
          scenario2_total = scenario2_freshfruit + scenario2_freshveg + scenario2_cannedfruitveg)
 # The totals are the same results as the separate ones.
