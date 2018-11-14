@@ -57,8 +57,8 @@ old_new_mapping <- read.csv('Q:/BEA/formatted/old_to_new_mapping.csv', stringsAs
 
 # -----------------------------------------------------------------------------------
 
-# Let's try to go up to the same "rest of the world" row as for the older one and assemble USEEIO with the newer codes.
-idx_max <- which(use07$`Commodity Description` == 'Rest of the world adjustment')
+# Get rid of any rows past 'T008' row.
+idx_max <- which(use07$Code == 'T008')
 
 use07_out <- use07[1:idx_max, ]
 dimnames(use07_out)[[1]] <- use07_out$Code
@@ -117,6 +117,7 @@ for (i in 3:ncol(make12)) make12[,i] <- comma_to_num(make12[,i])
 
 # Compare row names in old one. Also try to reconstruct USEEIO's input format with old data to make sure they match.
 make_old_processed <- read.csv('~/Dropbox/projects/foodwaste/Code/USEEIO-master/SI/BEA/389_Make_2007_PRO_BeforeRedef.csv',row.names=1,check.names=F,nrows=389)
+make_old_processed_allrows <- read.csv('~/Dropbox/projects/foodwaste/Code/USEEIO-master/SI/BEA/389_Make_2007_PRO_BeforeRedef.csv',row.names=1,check.names=F)
 wb_make_old <- loadWorkbook('Q:/IO_tables/BEA2007/IOMake_Before_Redefinitions_2007_Detail.xlsx')
 make_old_raw <- readWorksheet(wb_make_old, '2007', startRow = 6, check.names = FALSE)
 
@@ -154,11 +155,9 @@ col_totals <- lapply(code_split_keys, function(ks) make_old_raw[which(make_old_r
 
 make07_agg <- many_to_one(make07_out, updated_rows, updated_cols)
 make07_agg_disagg <- one_to_many(make07_agg, codes_to_split, code_split_keys, row_totals, col_totals)
-make07_agg_disagg <- make07_agg_disagg[-which(dimnames(make07_agg_disagg)[[1]] == 'T007'), ]
 
 make12_agg <- many_to_one(make12_out, updated_rows, updated_cols)
 make12_agg_disagg <- one_to_many(make12_agg, codes_to_split, code_split_keys, row_totals, col_totals)
-make12_agg_disagg <- make12_agg_disagg[-which(dimnames(make12_agg_disagg)[[1]] == 'T007'), ]
 
 write.csv(make07_agg_disagg, 'Q:/BEA/formatted/make2007.csv')
 write.csv(make12_agg_disagg, 'Q:/BEA/formatted/make2012.csv')
