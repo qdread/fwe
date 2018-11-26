@@ -99,3 +99,41 @@ hist_lu_byregion_long <- hist_lu_byregion_long %>%
   mutate(rel_prop = area/max(area)) %>%
   ungroup
 ggplot(hist_lu_byregion_long, aes(x=year, y=rel_prop, group=US_L3NAME, color=US_L3NAME)) + geom_line()
+
+
+# Join historic landuse and BBS FG trend ----------------------------------
+
+bbs_fg_rolling_wide <- bbs_fg_rolling_wide %>%
+  left_join(bbs_rtemeta[,c('rteNo', 'US_L3CODE')])
+
+bbs_fg_rolling_byregion <- bbs_fg_rolling_wide %>%
+  group_by(US_L3CODE, Year) %>%
+  summarize_at(vars(Invertebrate:Total), median)
+
+bbs_fg_and_hist_lu <- bbs_fg_rolling_byregion %>%
+  ungroup %>%
+  rename(year = Year) %>%
+  mutate(US_L3CODE = as.integer(as.character(US_L3CODE))) %>%
+  left_join(hist_lu_byregion_long[,-1])
+
+ggplot(bbs_fg_and_hist_lu, aes(x = rel_prop, y = Invertebrate, group = US_L3CODE)) +
+  geom_point() + stat_smooth()
+
+library(lme4)
+lmertotal <- lmer(rel_prop ~ Total + (1|US_L3CODE), data = bbs_fg_and_hist_lu)
+lmerinsectivore <- lmer(rel_prop ~ Invertebrate + (1|US_L3CODE), data = bbs_fg_and_hist_lu)     
+lmeromnivore <- lmer(rel_prop ~ Omnivore + (1|US_L3CODE), data = bbs_fg_and_hist_lu)     
+lmerherbivore <- lmer(rel_prop ~ PlantSeed + (1|US_L3CODE), data = bbs_fg_and_hist_lu)     
+lmerwaterfowl <- lmer(rel_prop ~ Waterbird + (1|US_L3CODE), data = bbs_fg_and_hist_lu)     
+
+# Separate slopes for each one.
+bbs_lu_models <- bbs_fg_and_hist_lu %>%
+  melt(id.vars = c('US_L3CODE', 'year', 'area', 'rel_prop'), value.name = 'Richness', variable.name = 'FG') %>%
+  filter(!FG %in% 'Other') %>%
+  filter(complete.cases(.)) %>%
+  group_by(US_L3CODE, FG) %>%
+  do(mod = lm(.$Richness ~ .$rel_prop))
+
+bbs_lu_models <- bbs_lu_models %>%
+  ungroup %>%
+  mutate(slope = map_dbl(.$mod, function(m) coefficients(m)[2]))

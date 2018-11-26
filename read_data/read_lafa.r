@@ -24,6 +24,9 @@ read_lafa_sheet <- function(name, wb) {
   # Parse it
   unit_row_parsed <- trimws(gsub('-', '', as.character(unit_row)))
   unit_row_parsed <- gsub('/', '.', unit_row_parsed)
+  # Get rid of any characters that are not alphanumeric at the end of the line.
+  unit_row_parsed <- gsub('[^a-zA-Z0-9]*$', '', unit_row_parsed)
+  
   # Read in header rows (row1 always has a title)
   header_rows <- readWorksheet(wb, sheet = name, startRow = 2, endRow = 3, header = FALSE)
   # Fill first header row forward if there is a NA
@@ -33,6 +36,7 @@ read_lafa_sheet <- function(name, wb) {
   header_row_parsed <- if_else(is.na(header_row2), header_row1, paste(header_row1, header_row2, sep = '_'))
   header_row_parsed <- gsub('[0-9]', '', header_row_parsed)
   header_row_parsed <- gsub('[^a-zA-Z\\s]', '_', header_row_parsed)
+  
   
   # Get rid of excess header rows for cells present by mistake
   header_row_parsed <- header_row_parsed[2:(length(unit_row_parsed) + 1)]
@@ -63,9 +67,7 @@ read_lafa_workbook <- function(file) {
 
 # Read data ---------------------------------------------------------------
 
-files <- list.files('Q:/LAFA', full.names = TRUE)
-
-if (length(files) > 0) fp <- 'Q:/LAFA' else fp <- '~/Dropbox/projects/foodwaste/Data/LAFA_localcopy'
+if (file.exists('Q:/')) fp <- 'Q:/LAFA' else fp <- '~/Dropbox/projects/foodwaste/Data/LAFA_localcopy'
 
 dairy <- read_lafa_workbook(file.path(fp, 'Dairy.xls'))
 fat <- read_lafa_workbook(file.path(fp, 'fat.xls'))
