@@ -20,7 +20,7 @@ oldbbs_aous <- unique(oldbbs$Aou)
 
 table(oldbbs_aous %in% bbsspp$AOU)
 oldbbs_aous[!oldbbs_aous %in% bbsspp$AOU] # 4812 and 4813 # These appear to be scrub jays. 
-bbsspp$AOU_list[bbsspp$AOU == 4811] <- '4812 4813' # Link them with the other one.
+# bbsspp$AOU_list[bbsspp$AOU == 4811] <- '4812 4813' # This connection already done manually
 
 # This time let's do the following:
 # (1) Anything that is a hybrid, get rid of. (7) This totals a vanishingly tiny percent of the total. (0.0002%)
@@ -41,10 +41,14 @@ oldbbs_cleaned <- oldbbs %>% filter(!Aou %in% aous_exclude)
 sspaou <- bbsspp$AOU[bbsspp$Type %in% 'subspecies']
 parentaou <- as.numeric(bbsspp$AOU_list[bbsspp$Type %in% 'subspecies'])
 
+# Must include the scrub jays still as a manual correction.
+sspaou <- c(sspaou, 4812, 4813)
+parentaou <- c(parentaou, 4811, 4811)
+
 # Replace subspecies AOUs with the one from their parent species
 oldbbs_cleaned$Aou[oldbbs_cleaned$Aou %in% sspaou] <- na.omit(parentaou[match(oldbbs_cleaned$Aou, sspaou)])
 
-sppids <- sort(unique(oldbbs_cleaned$Aou)) # 651 final species.
+sppids <- sort(unique(oldbbs_cleaned$Aou)) # 649 final species.
 
 # Ensure that we have a functional guild identified for all the species.
 birdtrait <- read.csv('/nfs/qread-data/BBS/birdtraitmerged.csv', stringsAsFactors = FALSE)
@@ -60,8 +64,8 @@ birdtrait <- birdtrait %>%
   )
 
 bird_fg <- birdtrait[,c('AOU','FG')]
-missingAOUs <- c(4172, 4812, 4813, 16600)
-closest_to_missingAOUs <- c(4171, 4811, 4811, 7180)
+missingAOUs <- c(4172, 16600)
+closest_to_missingAOUs <- c(4171, 7180)
 bird_fg <- rbind(bird_fg, data.frame(AOU=missingAOUs, FG=bird_fg$FG[match(closest_to_missingAOUs, bird_fg$AOU)]))
 
 bird_fg <- unique(bird_fg)
