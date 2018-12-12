@@ -2,6 +2,8 @@
 # This also has new BBS in it, going up to 2016, in the same format!
 # QDR/FWE/19 Oct 2018
 
+# Modified 11 Dec: the manual correction is now removed, no longer necessary
+
 fp <- '/nfs/qread-data/BBS/States'
 state_files <- dir(fp, pattern = '*.csv', full.names = TRUE)
 fpnew <- '/nfs/qread-data/BBS/Post1997'
@@ -13,7 +15,7 @@ oldbbs <- map_dfr(state_files, read.csv) # Read all data, ~350MB, takes a little
 
 
 # "Fix" the bbs data using the same methods as I did for the newer data.
-bbsspp <- read.csv('/nfs/qread-data/BBS/bbs_species_lookup_table.csv', stringsAsFactors = FALSE)
+bbsspp <- read.csv('/nfs/qread-data/BBS/bbs_species_lookup_table_modified.csv', stringsAsFactors = FALSE)
 oldbbs_aous <- unique(oldbbs$Aou)
 
 table(oldbbs_aous %in% bbsspp$AOU)
