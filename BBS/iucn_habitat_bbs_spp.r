@@ -49,20 +49,21 @@ write.csv(us_birds, 'Q:/BBS/iucn_us_bird_spp.csv', row.names = FALSE)
 
 # Match IUCN names with BBS names -----------------------------------------
 
-bbsspp <- read.csv('Q:/BBS/bbs_species_lookup_table_modified.csv', stringsAsFactors = FALSE)
-iucnspp <- read.csv('Q:/BBS/iucn_us_bird_spp.csv', stringsAsFactors = FALSE)
+bbsspp <- read.csv('/nfs/qread-data/BBS/bbs_species_lookup_table_modified.csv', stringsAsFactors = FALSE)
+iucnspp <- read.csv('/nfs/qread-data/BBS/iucn_us_bird_spp.csv', stringsAsFactors = FALSE)
 
 table(bbsspp$Latin_Name_clean %in% iucnspp$scientific_name | bbsspp$Latin_Name_synonym %in% iucnspp$scientific_name | bbsspp$Latin_Name_synonym2 %in% iucnspp$scientific_name)
 
 nomatch <- !(bbsspp$Latin_Name_clean %in% iucnspp$scientific_name | bbsspp$Latin_Name_synonym %in% iucnspp$scientific_name | bbsspp$Latin_Name_synonym2 %in% iucnspp$scientific_name)
 bbsspp$Latin_Name_clean[nomatch] # Many of these are empty values so that's OK
 
-# Load big bbs data
-bbs <- read.csv('Q:/BBS/bbs_allyears_matrix.csv', check.names = FALSE)
+# Load bbs functional group dataframe
+bbsfg <- read.csv('/nfs/qread-data/BBS/bbs_fgs.csv', check.names = FALSE)
 
 # Get the species AOUs that actually appear in the "cleaned" dataset
-aous <- as.numeric(names(bbs)[-(1:5)])
+aous <- bbsfg$AOU
 
 bbsnames <- bbsspp$Latin_Name_clean[match(aous, bbsspp$AOU)]
 table(bbsnames %in% iucnspp$scientific_name) # Still 65 are missing
-bbsnames[!bbsnames %in% iucnspp$scientific_name]
+nomatchnames <- data.frame(bbs_name = bbsnames[!bbsnames %in% iucnspp$scientific_name])
+write.csv(nomatchnames, '/nfs/qread-data/BBS/bbs_iucn_crosswalk.csv', row.names = FALSE)
