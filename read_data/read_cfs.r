@@ -52,3 +52,70 @@ chordDiagram(value_mat)
 # Pull out some of the codes that have to do with the food system
 # 01 live animals, 02 cereal grains, 03 other ag products, 04 animal feed, eggs, honey, other animal products, 05 meat 
 # 06 milled grain and breads, 07 other prepared food, oil 08 alcoholic beverages
+
+
+
+# FAF data ----------------------------------------------------------------
+
+library(dplyr)
+library(tidyr)
+
+# This is based on the CFS data but has some modeled values in it.
+# Also already corrects for the weighting factors, etc
+
+faf <- read.csv('Q:/FAF/FAF4.4.1.csv', colClasses = c(rep('factor', 9), rep('numeric', 31-9)))
+
+# There are foreign and domestic origins.
+
+# Get the food system faf
+faf_food <- faf %>%
+  filter(sctg2 %in% paste0('0', 1:8))
+
+faf_food_exports <- faf_food %>%
+  group_by(dms_orig, sctg2, trade_type) %>%
+  summarize(weight = sum(tons_2012), value = sum(value_2012))
+
+faf_food_imports <- faf_food %>%
+  group_by(dms_dest, sctg2, trade_type) %>%
+  summarize(weight = sum(tons_2012), value = sum(value_2012))
+
+
+# Make map ----------------------------------------------------------------
+
+library(rgdal)
+cfsmap <- readOGR(dsn = 'Q:/FAF/Freight_Analysis_Framework_Regions', layer = 'cfs12')
+# Get rid of multiple spaces in the names.
+cfsmap$CFS12_NAME <- gsub('[ ]{2,}', ' ', as.character(cfsmap$CFS12_NAME))
+
+# Join map with some data
+cfsregs <- read.csv('Q:/FAF/faf4_region_lookup.csv', colClasses = c('factor', 'character', 'character', 'character', 'factor')) %>%
+  mutate(FAF.Region = gsub('\n', ' ', trimws(FAF.Region), fixed = TRUE))
+
+cfsmap$CFS12_NAME[match(c('Remainder of Alaska', 'Remainder of Idaho'), cfsmap$CFS12_NAME)] <- c('Alaska', 'Idaho')
+cfsmap$Code <- cfsregs$Code[match(cfsmap$CFS12_NAME, cfsregs$FAF.Region)]
+
+# Domestic agricultural trade, not including tobacco
+# Export by value
+
+totaldomesticexp <- faf_food_exports %>%
+  filter(trade_type == '1') %>%
+  group_by(dms_orig) %>%
+  summarize(value = sum(value))
+totaldomesticimp <- faf_food_imports %>%
+  filter(trade_type == '1') %>%
+  group_by(dms_dest) %>%
+  summarize(value = sum(value))
+
+impexp <- totaldomesticexp %>%
+  left_join(totaldomesticimp, by = c('dms_orig' = 'dms_dest')) %>%
+  rename(export = value.x, import = value.y, Code = dms_orig) %>%
+  mutate(net = export - import)
+
+cfsmap@data <- left_join(cfsmap@data, impexp)
+
+# Map (later can make better visualization, and projection)
+pdf('~/Dropbox/projects/foodwaste/Results/faf4_domestic_ag_trade_maps.pdf', height = 6, width = 8)
+spplot(cfsmap, zcol = 'export', xlim = c(-127, -65), ylim = c(25, 50), main = 'Domestic agricultural trade (outbound) by CFS region')
+spplot(cfsmap, zcol = 'import', xlim = c(-127, -65), ylim = c(25, 50), main = 'Domestic agricultural trade (inbound) by CFS region')
+spplot(cfsmap, zcol = 'net', xlim = c(-127, -65), ylim = c(25, 50), main = 'Domestic agricultural trade (net out-in) by CFS region')
+dev.off()
