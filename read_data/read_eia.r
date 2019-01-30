@@ -6,11 +6,6 @@ library(dplyr)
 
 fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data')
 
-
-eia_list <- lapply(1:10, function(i) {
-  
-})
-
 # HC1: fuels used and end uses
 hc1.1 <- readWorksheetFromFile(file.path(fp, 'EIA/hc1.1.xlsx'), sheet = 'data')
 hc2.1 <- readWorksheetFromFile(file.path(fp, 'EIA/hc2.1.xlsx'), sheet = 'data')
