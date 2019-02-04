@@ -28,6 +28,39 @@ for y in "${yrs[@]}"
 do
 	mkdir ./stub${y}
 	wget -P ./stub${y}/ https://www.bls.gov/cex/pumd/20${y}/csxintstub.txt
-	wget -P ./stub${y}/https://www.bls.gov/cex/pumd/20${y}/csxistub.txt
+	wget -P ./stub${y}/ https://www.bls.gov/cex/pumd/20${y}/csxistub.txt
 	wget -P ./stub${y}/ https://www.bls.gov/cex/pumd/20${y}/csxdstub.txt
 done
+
+# Consolidate all data for each year into a single folder instead of having a separate one for the interview and for the diary.
+# This is needed for the sample R scripts to run with minimal modification. (added 04 Feb 2019)
+
+cd /nfs/fwe-data/CEX
+yrs=( "08" "09" "10" "11" "12" "13" "14" "15" "16" "17" )
+
+for y in "${yrs[@]}"
+do
+	mkdir ./data${y}
+	mv ./diary${y}/* ./data${y}
+	mv ./expn${y}/* ./data${y}
+	mv ./intrvw${y}/* ./data${y}
+	mv ./para${y}/* ./data${y}
+	mv ./stub${y}/* ./data${y}
+done
+
+mv ./data08/diary08/* ./data08
+rm -rf ./data08/diary08/
+mv ./data09/diary09/* ./data09
+rm -rf ./data09/diary09/
+mv ./data10/diary10/* ./data10
+rm -rf /data10/diary10/
+mv ./data11/diary11/* ./data11
+rm -rf ./data11/diary11/
+mv ./data12/diary12/* ./data12
+rm -rf ./data12/diary12/
+
+rm -rf ./stub*
+rm -rf ./para*
+rm -rf ./diary*
+rm -rf ./intrvw*
+rm -rf ./expn*
