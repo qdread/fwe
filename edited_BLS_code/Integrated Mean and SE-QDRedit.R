@@ -19,10 +19,6 @@ library(tidyr)
 library(magrittr)
 library(readr)
 
-rm(list = ls())
-
-year <- 2017
-
 # File paths updated by QDR 04 Feb 2019.
 # Store the directory containing the data files. It is assumed that the FMLI,
 # FMLD, MTBI, EXPD, and ITBI files are all in the same folder
@@ -141,13 +137,19 @@ st <- st[substr(st, 1, 1) %in% c("*", 1, 2) &
 writeLines(st , tf)
 
 # Read in the cleaner version of the stub file in fixed-width format
+# Edited by Q: hardcode the line widths because some years have odd indentations
+hardcoded_widths <- fwf_widths(c(3, 3, 63, 10, 3, 3, 9), col_names = c("type", "level", "title", "UCC", "survey", "factor", "group"))
+calculated_widths <- fwf_empty(
+  tf, n = 1000L,
+  col_names = c("type", "level", "title", "UCC", "survey", "factor",
+                "group")
+)
+
+final_widths <- if (year %in% 2009:2012) hardcoded_widths else calculated_widths
+
 stub <- read_fwf(
     file = tf,
-    fwf_empty(
-        tf, n = 1000L,
-        col_names = c("type", "level", "title", "UCC", "survey", "factor",
-                      "group")
-    )
+    final_widths
 ) %>% select(-factor)
 
 # Concatenate the titles that run beyond 1 line into their respective first
