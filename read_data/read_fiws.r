@@ -53,9 +53,25 @@ bycropsum <- fiws %>%
   group_by(Year, State, VariableDescriptionPart1) %>%
   summarize(Amount = all_or_sum(VariableDescriptionPart2, Amount))
 
+# Labor expenses only
 laborexp <- fiws %>%
   filter(VariableDescriptionPart1 %in% 'Labor expenses') %>%
   select(Year, State, VariableDescriptionTotal, VariableDescriptionPart1, VariableDescriptionPart2, Amount)
+
+# All expenses
+expense_vars <- c('Capital consumption', 'Capital expenditures', 'Interest expenses', 'Intermediate product expenses', 'Labor expenses', 'Net rent to landowners', 'Production expenses', 'Property taxes')
+
+allexp <- fiws %>%
+  filter(VariableDescriptionPart1 %in% expense_vars) %>%
+  select(Year, State, VariableDescriptionTotal, VariableDescriptionPart1, VariableDescriptionPart2, Amount)
+
+table(allexp$Year) # Good data coverage from 1949-2017.
+allexp <- allexp %>% filter(between(Year, 1949, 2017))
+
+# Write to CSV
+write.csv(bycropsum, '/nfs/fwe-data/ERS/fiws_cash_receipts_by_crop.csv', row.names = FALSE)
+write.csv(laborexp, '/nfs/fwe-data/ERS/fiws_labor_expenses_by_state.csv', row.names = FALSE)
+write.csv(allexp, '/nfs/fwe-data/ERS/fiws_all_expenses_by_state.csv', row.names = FALSE)
 
 # Create visualizations of income data
 
