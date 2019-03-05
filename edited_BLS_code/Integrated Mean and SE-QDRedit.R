@@ -393,7 +393,7 @@ by_group <- bind_rows(
 
     left_join(stub, ., by = c("title", "rownum")) %>%
     mutate_at(vars(mn, se), funs(round(., 2))) %>%
-    select(inclass, title, group, rownum, mn, se) %>%
+    select(inclass, title, group, level, rownum, mn, se) %>% # Q added level to this.
     gather(estimate, value, mn, se) %>%
     filter(!(group %in% "CUCHARS" & estimate %in% "se")) %>%
     mutate(rownum = as.numeric(rownum)) %>%
@@ -409,7 +409,7 @@ by_group <- bind_rows(
     setnames(old = as.character(1:9), new = paste0("Inclass0", 1:9)) %>%
 
     arrange(rownum, estimate) %>%
-    select(title, estimate, Inclass01:Inclass09, rownum, group) %>%
+    select(title, level, estimate, Inclass01:Inclass09, rownum, group) %>%
     mutate_at(paste0("Inclass0", 1:9), funs(replace(., is.na(.), 0)))
 
 by_group[
