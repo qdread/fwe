@@ -25,7 +25,7 @@ library(readr)
 data_dir <- paste0("/nfs/fwe-data/CEX/data", substr(year,3,4))
 
 # Store the path of the integrated stub file
-stub_path <- file.path(data_dir, "csxistub.txt")
+stub_path <- file.path(data_dir, "csxintstub.txt")
 
 # Store the path to which you would like to store the final table
 out_path <- paste0("/nfs/fwe-data/CEX/CEX sample R output/Integrated_mean_se_", year, "_byincomeclass.csv")
@@ -137,7 +137,7 @@ st <- st[substr(st, 1, 1) %in% c("*", 1, 2) &
 writeLines(st , tf)
 
 # Read in the cleaner version of the stub file in fixed-width format
-# Edited by Q: hardcode the line widths because some years have odd indentations
+# Edited by Q: hardcode the line widths because some years have odd indentations (just 2012 I guess)
 hardcoded_widths <- fwf_widths(c(3, 3, 63, 10, 3, 3, 9), col_names = c("type", "level", "title", "UCC", "survey", "factor", "group"))
 calculated_widths <- fwf_empty(
   tf, n = 1000L,
@@ -145,7 +145,7 @@ calculated_widths <- fwf_empty(
                 "group")
 )
 
-final_widths <- if (year %in% 2009:2012) hardcoded_widths else calculated_widths
+final_widths <- if (year %in% 2012) hardcoded_widths else calculated_widths
 
 stub <- read_fwf(
     file = tf,
@@ -181,7 +181,7 @@ stub$title[stub$title == "Number of consumer units (in thousands)"] <-
     "Number of consumer units"
 
 
-write.csv(stub, file.path(data_dir, 'csxistub_cleaned.csv'), row.names = FALSE)
+write.csv(stub, file.path(data_dir, 'csxintstub_cleaned.csv'), row.names = FALSE)
 
 ################################################################################
 #                                                                              #
@@ -408,7 +408,8 @@ by_group <- bind_rows(
     # Change the names of the groups to be more legible
     #setnames(old = paste0("0", 1:9), new = paste0("Inclass0", 1:9)) %>%
     # Debug added by QDR 04 Feb 2019
-    setnames(old = as.character(1:9), new = paste0("Inclass0", 1:9)) %>%
+    # New debug added by QDR 08 Feb 2019
+    setnames(old = if ("1" %in% names(.)) as.character(1:9) else paste0("0",1:9), new = paste0("Inclass0", 1:9)) %>%
 
     arrange(rownum, estimate) %>%
     select(title, level, estimate, Inclass01:Inclass09, rownum, group) %>%
