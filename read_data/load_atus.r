@@ -1,12 +1,17 @@
 # American Time Use Survey datasets
 # Data from 2003-2016
 
+fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+
 library(atus)
 library(tidyverse)
 
 data(atusact) # Observations: respondent ID, activity tier code, duration
 data(atuscps) # Links respondent ID with current population survey info for that individual (sex, age, educ, race, etc)
 data(atusresp) # Same rows as atuscps, more information about the respondents, including what days they recorded the diary
+
+# Load lookup table of major categories
+atusdict <- read.csv(file.path(fp, 'ATUS/atus_dict.csv'), colClasses = rep('character',2)) 
 
 # Codes related to food
 household_food_codes <- c(food_prep = "020201",
@@ -21,26 +26,43 @@ eating_drinking_codes <- c(eating_drinking = "110101",
                            eating_drinking_nonspecified = "110199",
                            eating_drinking_waiting = "110281",
                            eating_drinking_waiting_nonspecified = "110289",
-                           eating_drinking_nonspecifiedtwice = "119999")
-socialservice_food_codes <- c(volunteering_food_prep = "150201")
+                           eating_drinking_nonspecifiedtwice = "119999",
+                           eating_drinking_atjob = "050202")
+misc_food_codes <- c(volunteering_food_prep = "150201",
+                     using_meal_prep_service = "090102")
 travel_food_codes <- c(grocery_shopping_travel = "180701",
                        eating_drinking_travel = "181101",
                        eating_drinking_travel_nonspecified = "181199")
-all_foodcodes <- c(household_food_codes, food_shopping_codes, eating_drinking_codes, socialservice_food_codes, travel_food_codes)
-all_foodcodes <- data.frame(tiercode = as.numeric(all_foodcodes), food_activity_name = names(all_foodcodes), food_activity_group = rep(c('household food prep and cleanup', 'grocery shopping', 'eating and drinking', 'volunteer food prep and cleanup', 'travel for grocery shopping or eating'), times = c(4,4,5,1,3)))
+all_foodcodes <- map2_dfr(list(household_food_codes, food_shopping_codes, eating_drinking_codes, misc_food_codes, travel_food_codes),
+                          c('household food prep and cleanup', 'grocery shopping', 'eating and drinking', 'misc food prep', 'travel for grocery shopping or eating'),
+                          ~ (data.frame(tiercode = .x, food_activity_name = names(.x), food_activity_group = .y)))
+  
 
 # Create visualizations of raw data and weighted averages
 
-# Add zeroes to df
-atusact_with0 <- atusact %>%
-  spread(tiercode, dur, fill = 0) %>%
-  gather(tiercode, dur, -tucaseid) %>%
-  mutate(tiercode = as.numeric(tiercode))
+# Add zeroes to df (don't do this since it makes it too big)
+# atusact_with0 <- atusact %>%
+#   mutate(tiercode = sprintf('%06d', tiercode)) %>%
+#   spread(tiercode, dur, fill = 0) %>%
+#   gather(tiercode, dur, -tucaseid) 
 
-atusact_classified <- atusact_with0 %>% 
+atusact_classified <- atusact %>%
+  mutate(tiercode = sprintf('%06d', tiercode)) %>%
   left_join(all_foodcodes) %>% 
-  mutate(food_activity_name = fct_explicit_na(food_activity_name, 'nonfood'),
-         food_activity_group = fct_explicit_na(food_activity_group, 'nonfood'))
+  mutate(major_category = atusdict$major_category[match(substr(tiercode, 1, 2), atusdict$code)],
+         food_activity_name = fct_explicit_na(food_activity_name, 'nonfood'),
+         food_activity_group = fct_explicit_na(food_activity_group, 'nonfood')) 
+  
+# Abbreviated version that sums up anything not potentially related to food
+atusact_sums <- atusact_classified %>%
+  ungroup %>%
+  mutate(tucaseid = as.character(tucaseid)) %>%
+  group_by(tucaseid, major_category, food_activity_group, food_activity_name) %>%
+  summarize(dur = sum(dur))
+
+write.csv(atusact_sums, file.path(fp, 'ATUS/final_data/atus_sums.csv'), row.names = FALSE)
+
+# Older code --------------------------------------------------------------
 
 # Check total durations
 totals <- atusact_classified %>% summarize(dur=sum(dur))
@@ -93,3 +115,6 @@ ggplot(atusact_sums_plot) +
   guides(color = guide_legend(nrow=3,byrow=TRUE, title = NULL))
 
 ggsave('~/Dropbox/projects/foodwaste/Results/food_timespent.png', height = 6, width = 6, dpi = 300)
+
+
+

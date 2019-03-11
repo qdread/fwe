@@ -28,7 +28,7 @@ data_dir <- paste0("/nfs/fwe-data/CEX/data", substr(year,3,4))
 stub_path <- file.path(data_dir, "csxintstub.txt")
 
 # Store the path to which you would like to store the final table
-out_path <- paste0("/nfs/fwe-data/CEX/CEX sample R output/Integrated_mean_se_", year, "_byincomeclass.csv")
+out_path <- paste0("/nfs/fwe-data/CEX/csv_output/Integrated_mean_se_", year, "_byincomeclass.csv")
 
 
 ################################################################################
