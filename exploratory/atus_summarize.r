@@ -128,4 +128,4 @@ atus_sums_weighted_education <- atus_sums %>% tabulate_atus(edu)
 atus_sums_weighted_race <- atus_sums %>% tabulate_atus(race)
 atus_sums_weighted_famincome <- atus_sums %>% tabulate_atus(famincome)
 
-save(list = ls(pattern = 'atus_sums'), file = file.path(fp, 'ATUS/final_data/sums_by_group.RData'))
+save(list = ls(pattern = 'atus_sums_agg|atus_sums_weighted'), file = file.path(fp, 'ATUS/final_data/sums_by_group.RData'))
