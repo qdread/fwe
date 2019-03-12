@@ -40,14 +40,14 @@ all_foodcodes <- map2_dfr(list(household_food_codes, food_shopping_codes, eating
 
 # Create visualizations of raw data and weighted averages
 
-# Add zeroes to df (don't do this since it makes it too big)
-# atusact_with0 <- atusact %>%
-#   mutate(tiercode = sprintf('%06d', tiercode)) %>%
-#   spread(tiercode, dur, fill = 0) %>%
-#   gather(tiercode, dur, -tucaseid) 
-
-atusact_classified <- atusact %>%
+# Add zeroes to df
+atusact_with0 <- atusact %>%
   mutate(tiercode = sprintf('%06d', tiercode)) %>%
+  spread(tiercode, dur, fill = 0) %>%
+  gather(tiercode, dur, -tucaseid)
+
+atusact_classified <- atusact_with0 %>%
+  ungroup %>%
   left_join(all_foodcodes) %>% 
   mutate(major_category = atusdict$major_category[match(substr(tiercode, 1, 2), atusdict$code)],
          food_activity_name = fct_explicit_na(food_activity_name, 'nonfood'),
@@ -55,12 +55,11 @@ atusact_classified <- atusact %>%
   
 # Abbreviated version that sums up anything not potentially related to food
 atusact_sums <- atusact_classified %>%
-  ungroup %>%
   mutate(tucaseid = as.character(tucaseid)) %>%
   group_by(tucaseid, major_category, food_activity_group, food_activity_name) %>%
   summarize(dur = sum(dur))
 
-write.csv(atusact_sums, file.path(fp, 'ATUS/final_data/atus_sums.csv'), row.names = FALSE)
+write.csv(atusact_sums, file.path(fp, 'ATUS/final_data/atus_sums_with0s.csv'), row.names = FALSE)
 
 # Older code --------------------------------------------------------------
 
