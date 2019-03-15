@@ -191,3 +191,7 @@ qfahpd2 <- qfahpd2 %>%
 
 write.csv(qfahpd1, file.path(fp, 'tidy_data/qfahpd1.csv'), row.names = FALSE)
 write.csv(qfahpd2, file.path(fp, 'tidy_data/qfahpd2.csv'), row.names = FALSE)
+
+# Write codebook for foods
+foodcodes <- codes_q2 %>% filter(group == 'Food Group')
+foodcodes$group <- rep(c('fruit', 'vegetables', 'grains', 'dairy', 'meat', 'nuts', 'eggs', 'fats'), c(3, 12, 6, 6, 7, ))
