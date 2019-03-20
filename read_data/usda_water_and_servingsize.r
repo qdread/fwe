@@ -20,3 +20,5 @@ watercontent <- watercontent %>%
   left_join(watercontent_old)
 
 watercontent %>% filter(!LAFA.equivalent %in% '')
+
+write.csv(watercontent, file.path(fp_usda))
