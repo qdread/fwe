@@ -21,4 +21,4 @@ watercontent <- watercontent %>%
 
 watercontent %>% filter(!LAFA.equivalent %in% '')
 
-write.csv(watercontent, file.path(fp_usda))
+write.csv(watercontent, file.path(fp_usda, 'watercontent_combined.csv'), row.names = FALSE)
