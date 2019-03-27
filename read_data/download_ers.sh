@@ -37,3 +37,42 @@ for y in "${filenames[@]}"
 do
 	wget -P ./foodexpenditure/ ${baseurl}${y}.xlsx
 done
+
+#-----------------------------------------------------------------
+# Added 27 March 2019: download FICRCD from food surveys research group (joint effort of ARS and ERS)
+cd /nfs/fwe-data/FICRCD
+filenames=( "2007_2008" "2005_2006" "2003_2004" "2001_2002" "1999_2000" "1994_1998" )
+baseurl="https://www.ars.usda.gov/ARSUserFiles/80400530/apps/FICRCD_"
+
+for y in "${filenames[@]}"
+do
+	wget ${baseurl}${y}_sas.exe
+done
+
+for y in "${filenames[@]}"
+do
+	chmod +x FICRCD_${y}_sas.exe
+	./FICRCD_${y}_sas.exe
+done
+
+#-----------------------------------------------------------------
+# Added 27 March 2019: download the *not* loss-adjusted food availability data system (FADS) from ERS
+# These are the 29 Oct 2018 data.
+cd /nfs/fwe-data/ERS/FADS
+filenames=( "ctcsp" "dyfluid" "dymfg" "eggs" "fats" "mtfish" "frtot" "fruitcan" "fruitdr" "fruitfr" "fruitfz" "fruitju" "fruitveg" "grains" "nuts" "pop" "mtpoulsu" "mtredsu" "mtpcc" "sweets" "vegtot" "vegcan" "vegfr" "vegfrz" "legumes" "potatoes" )
+baseurl="https://www.ers.usda.gov/webdocs/DataFiles/50472/"
+
+for y in "${filenames[@]}"
+do
+	wget ${baseurl}${y}.xls
+done
+
+# Two of the files are xlsx for some reason.
+wget ${baseurl}vegcan.xlsx
+wget ${baseurl}vegfr.xlsx
+
+# Convert to XLSX (run powershell as administrator on windows)
+$filenames = @("ctcsp", "dyfluid", "dymfg", "eggs", "fats", "mtfish", "frtot", "fruitcan", "fruitdr", "fruitfr", "fruitfz", "fruitju", "fruitveg", "grains", "nuts", "pop", "mtpoulsu", "mtredsu", "mtpcc", "sweets", "vegtot", "vegfrz", "legumes", "potatoes")
+foreach ($file in $filenames) {
+	& "C:\Program Files (x86)\Microsoft Office\Office16\excelcnv.exe" -oice "Z:\ERS\FADS\${file}.xls" "Z:\ERS\FADS\${file}.xlsx"
+}

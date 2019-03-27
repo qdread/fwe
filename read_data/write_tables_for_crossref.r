@@ -30,9 +30,13 @@ bea_eeio_table <- read.csv('Q:/IO_tables/USEEIO/bea_useeio_lookuptable.csv', str
 fao_item_names <- unique(c(fao_crops_names, fao_cropsprocessed_names, fao_livestockprimary_names, fao_livestockprocessed_names))
 lafa_category_names <- unique(c(lafa_dairy_names, lafa_fat_names, lafa_fruit_names, lafa_grain_names, lafa_meat_names, lafa_sugar_names, lafa_veg_names))
 
+# Added 27 Mar 2019: add the actual categories to lafa category names
+lafa_bygroup <- map2_dfr(c('dairy', 'fat','fruit', 'grain', 'meat', 'sugar', 'veg'), list(lafa_dairy_names, lafa_fat_names, lafa_fruit_names, lafa_grain_names, lafa_meat_names, lafa_sugar_names, lafa_veg_names), ~ data.frame(Foodgroup = .x, lafa_category_name = .y))
+
 write.csv(data.frame(fao_item_name = fao_item_names), file = 'Q:/crossreference_tables/fao_item_names.csv', row.names = FALSE)
 write.csv(data.frame(fao_price_name = fao_price_names), file = 'Q:/crossreference_tables/fao_price_names.csv', row.names = FALSE)
 write.csv(data.frame(lafa_category_name = lafa_category_names), file = 'Q:/crossreference_tables/lafa_category_names.csv', row.names = FALSE)
+write.csv(lafa_bygroup, file = 'Q:/crossreference_tables/lafa_category_names_bygroup.csv', row.names = FALSE)
 
 # Load the cross-referenced item names and add price names to this.
 fao_item_names_crossref <- read.csv('Q:/crossreference_tables/fao_item_names.csv', stringsAsFactors = FALSE)

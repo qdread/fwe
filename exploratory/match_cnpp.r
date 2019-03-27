@@ -1,10 +1,12 @@
 # see if cnpp matches any other data
 
+fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+
 library(XLConnect)
 library(tidyverse)
 library(sas7bdat)
 
-cnpp <- readWorksheetFromFile('Z:/USDAnutrients/FoodPricesDatabase0304.XLS', sheet = 1, startRow = 3, header = FALSE) %>%
+cnpp <- readWorksheetFromFile(file.path(fp, 'USDAnutrients/FoodPricesDatabase0304.XLS'), sheet = 1, startRow = 3, header = FALSE) %>%
   setNames(c('foodcode', 'foodname','price0304'))
 
 # Read SAS version of CNPP data
