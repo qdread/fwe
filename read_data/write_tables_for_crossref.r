@@ -51,13 +51,16 @@ write.table(data.frame(fao_item_name = extranames), file = 'Q:/crossreference_ta
 
 # Load non-loss-adj data
 fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/FADS/tidy_data')
+fpq <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 
 fruit_avail <- read.csv(file.path(fp, 'fruit_availability.csv'), stringsAsFactors = FALSE)
 veg_avail <- read.csv(file.path(fp, 'veg_availability.csv'), stringsAsFactors = FALSE)
 potato_avail <- read.csv(file.path(fp, 'potato_availability.csv'), stringsAsFactors = FALSE)
+fish_avail <- read.csv(file.path(fp, 'fish_availability.csv'), stringsAsFactors = FALSE)
 
 fruit_unique <- unique(fruit_avail[,c('type', 'food')])
 veg_unique <- unique(veg_avail[,c('type', 'food')])
 potato_unique <- cbind(type = unique(potato_avail$type), food = 'Potatoes')
+fish_unique <- unique(fish_avail[,c('type', 'food')])
 
-write.csv(rbind(fruit_unique, veg_unique, potato_unique), file = 'Q:/crossreference_tables/fads_category_names.csv', row.names = FALSE)
+write.csv(rbind(fruit_unique, veg_unique, potato_unique, fish_unique), file = file.path(fpq, 'fads_category_names.csv'), row.names = FALSE)
