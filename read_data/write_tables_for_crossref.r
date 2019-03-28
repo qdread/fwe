@@ -43,3 +43,19 @@ fao_item_names_crossref <- read.csv('Q:/crossreference_tables/fao_item_names.csv
 extranames <- setdiff(fao_price_names, fao_item_names_crossref$fao_item_name) # things in a not in b.
 
 write.table(data.frame(fao_item_name = extranames), file = 'Q:/crossreference_tables/fao_item_names.csv', append = TRUE, row.names = FALSE, col.names = FALSE)
+
+
+# nonlossadjusted to lossadjusted mapping ---------------------------------
+
+# Added 28 Mar 2019.
+
+# Load non-loss-adj data
+fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/FADS/tidy_data')
+
+fruit_avail <- read.csv(file.path(fp, 'fruit_availability.csv'), stringsAsFactors = FALSE)
+veg_avail <- read.csv(file.path(fp, 'veg_availability.csv'), stringsAsFactors = FALSE)
+
+fruit_unique <- unique(fruit_avail[,c('type', 'food')])
+veg_unique <- unique(veg_avail[,c('type', 'food')])
+
+write.csv(rbind(fruit_unique, veg_unique), file = 'Q:/crossreference_tables/fads_category_names.csv', row.names = FALSE)
