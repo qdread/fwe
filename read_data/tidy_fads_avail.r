@@ -17,7 +17,7 @@ files <- dir(fp, pattern = 'xlsx', full.names = TRUE)
 fruit_files <- files[grepl('fruit', files) & !grepl('veg', files)]
 veg_files <- files[grepl('veg', files) & !grepl('tot|fruit', files)]
 potato_files <- files[grepl('potato', files)]
-
+fish_files <- files[grepl('fish', files)]
 
 # Define "munging" functions ----------------------------------------------
 
@@ -142,6 +142,7 @@ modified_munge <- function(dat) {
 fruit_pcc <- map(fruit_files, get_pcc_tabs)
 veg_pcc <- map(veg_files, get_pcc_tabs)
 potato_pcc <- get_pcc_tabs(potato_files)
+fish_pcc <- get_pcc_tabs(fish_files)
 
 fruit_tidy <- map(fruit_pcc, ~ group_map(.x, ~ munge_tab(.x))) %>%
   map2(c('canned', 'dried', 'fresh', 'frozen', 'juice'), ~ data.frame(type = .y, .x, stringsAsFactors = FALSE)) %>%
@@ -161,6 +162,13 @@ potato_tidy <- potato_pcc %>%
   rename(availability_level = group4, supply_chain_stage = category, type = food) %>%
   select(availability_level, type, year, value, variable_unit)
 
+fish_tidy <- fish_pcc %>%
+  ungroup %>%
+  munge_tab %>%
+  rename(availability_level = group5, type = category) %>%
+  select(type, availability_level, food, year, value, variable_unit)
+
 write.csv(fruit_tidy, file.path(fp, 'tidy_data/fruit_availability.csv'), row.names = FALSE)
 write.csv(veg_tidy, file.path(fp, 'tidy_data/veg_availability.csv'), row.names = FALSE)
 write.csv(potato_tidy, file.path(fp, 'tidy_data/potato_availability.csv'), row.names = FALSE)
+write.csv(fish_tidy, file.path(fp, 'tidy_data/fish_availability.csv'), row.names = FALSE)
