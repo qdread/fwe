@@ -67,7 +67,6 @@ fic08_modified <- fic08 %>%
          OtherRootsAndTubers = TotalRootsAndTubers - Potatoes,
          OtherPoultry = TotalPoultry - (Chicken + Turkey),
          OtherMeat = TotalMeatPoultryFish - (Beef + Pork + TotalPoultry + FinAndShellfish),
-         OtherNuts = TotalNuts - (Peanuts + TreeNuts),
          OtherGrain = TotalGrain - (CornFlour + OatFlour + RiceDried + WheatFlour),
          OtherFruit = TotalFruit - (TotalApples + Bananas + Berries + Grapes + Melons + TotalOranges + OtherCitrusFruits + StoneFruits + TropicalFruits),
          TotalEggs = EggsWithShell + EggsNoShell)
