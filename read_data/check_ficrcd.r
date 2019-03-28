@@ -69,7 +69,8 @@ fic08_modified <- fic08 %>%
          OtherMeat = TotalMeatPoultryFish - (Beef + Pork + TotalPoultry + FinAndShellfish),
          OtherNuts = TotalNuts - (Peanuts + TreeNuts),
          OtherGrain = TotalGrain - (CornFlour + OatFlour + RiceDried + WheatFlour),
-         OtherFruit = TotalFruit - (TotalApples + Bananas + Berries + Grapes + Melons + TotalOranges + OtherCitrusFruits + StoneFruits + TropicalFruits))
+         OtherFruit = TotalFruit - (TotalApples + Bananas + Berries + Grapes + Melons + TotalOranges + OtherCitrusFruits + StoneFruits + TropicalFruits),
+         TotalEggs = EggsWithShell + EggsNoShell)
 
 # Find issues.
 sapply(fic08_modified, min)
