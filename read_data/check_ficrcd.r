@@ -55,6 +55,12 @@ fic08 %>%
   pull(diff) %>%
   mean
 
+# fats and oils
+fic08 %>%
+  mutate(oil_sum = Margarine + SaladCookingOils + Shortening + OtherOils,
+         diff = TotalFatAndOils - oil_sum) %>%
+  pull(diff) %>%
+  mean
 
 
 # There is no "Other" column for Brassica, leafy vegetables, roots and tubers, and vegetables in general.
@@ -69,12 +75,13 @@ fic08_modified <- fic08 %>%
          OtherMeat = TotalMeatPoultryFish - (Beef + Pork + TotalPoultry + FinAndShellfish),
          OtherGrain = TotalGrain - (CornFlour + OatFlour + RiceDried + WheatFlour),
          OtherFruit = TotalFruit - (TotalApples + Bananas + Berries + Grapes + Melons + TotalOranges + OtherCitrusFruits + StoneFruits + TropicalFruits),
+         OtherFatsAndOils = TotalFatAndOils - (Margarine + Shortening + SaladCookingOils + OtherOils),
          TotalEggs = EggsWithShell + EggsNoShell)
 
 # Find issues.
 sapply(fic08_modified, min)
 # All approx zero except for rounding error.
 fic08_modified <- fic08_modified %>%
-  mutate_at(vars(TotalDairy:OtherFruit), ~ if_else(.x < 0, 0.0, as.numeric(.x)))
+  mutate_at(vars(TotalDairy:OtherFatsAndOils), ~ if_else(.x < 0, 0.0, as.numeric(.x)))
 
 write.csv(fic08_modified, file.path(fp, 'food_consumption/FICRCD/corrected_ficrcd_2007_2008.csv'), row.names = FALSE)
