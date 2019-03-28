@@ -54,8 +54,10 @@ fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/FADS/tidy
 
 fruit_avail <- read.csv(file.path(fp, 'fruit_availability.csv'), stringsAsFactors = FALSE)
 veg_avail <- read.csv(file.path(fp, 'veg_availability.csv'), stringsAsFactors = FALSE)
+potato_avail <- read.csv(file.path(fp, 'potato_availability.csv'), stringsAsFactors = FALSE)
 
 fruit_unique <- unique(fruit_avail[,c('type', 'food')])
 veg_unique <- unique(veg_avail[,c('type', 'food')])
+potato_unique <- cbind(type = unique(potato_avail$type), food = 'Potatoes')
 
-write.csv(rbind(fruit_unique, veg_unique), file = 'Q:/crossreference_tables/fads_category_names.csv', row.names = FALSE)
+write.csv(rbind(fruit_unique, veg_unique, potato_unique), file = 'Q:/crossreference_tables/fads_category_names.csv', row.names = FALSE)
