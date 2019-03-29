@@ -58,9 +58,9 @@ veg_avail <- read.csv(file.path(fp, 'veg_availability.csv'), stringsAsFactors = 
 potato_avail <- read.csv(file.path(fp, 'potato_availability.csv'), stringsAsFactors = FALSE)
 fish_avail <- read.csv(file.path(fp, 'fish_availability.csv'), stringsAsFactors = FALSE)
 
-fruit_unique <- unique(fruit_avail[,c('type', 'food')])
-veg_unique <- unique(veg_avail[,c('type', 'food')])
-potato_unique <- cbind(type = unique(potato_avail$type), food = 'Potatoes')
-fish_unique <- unique(fish_avail[,c('type', 'food')])
+fruit_unique <- cbind(category = 'fruit', unique(fruit_avail[,c('type', 'food')]))
+veg_unique <- cbind(category = 'vegetables', unique(veg_avail[,c('type', 'food')]))
+potato_unique <- cbind(category = 'potatoes', cbind(type = unique(potato_avail$type), food = 'Potatoes'))
+fish_unique <- cbind(category = 'fish', unique(fish_avail[,c('type', 'food')]))
 
 write.csv(rbind(fruit_unique, veg_unique, potato_unique, fish_unique), file = file.path(fpq, 'fads_category_names.csv'), row.names = FALSE)
