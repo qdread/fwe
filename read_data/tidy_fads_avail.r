@@ -175,9 +175,11 @@ meat_tidy <- meat_pcc %>%
   group_map(~ munge_tab(.x)) %>%
   rename(type = sheet) %>%
   mutate(food = if_else(category == 'Total', 'Total meat', food)) %>%
-  mutate(food = if_else(category != 'Total' & food == 'Total', paste('Total', tolower(category)), food))
+  mutate(food = if_else(category != 'Total' & food == 'Total', paste('Total', tolower(category)), food)) %>%
+  select(type, food, year, value, variable_unit)
 
 write.csv(fruit_tidy, file.path(fp, 'tidy_data/fruit_availability.csv'), row.names = FALSE)
 write.csv(veg_tidy, file.path(fp, 'tidy_data/veg_availability.csv'), row.names = FALSE)
 write.csv(potato_tidy, file.path(fp, 'tidy_data/potato_availability.csv'), row.names = FALSE)
 write.csv(fish_tidy, file.path(fp, 'tidy_data/fish_availability.csv'), row.names = FALSE)
+write.csv(meat_tidy, file.path(fp, 'tidy_data/meat_availability.csv'), row.names = FALSE)
