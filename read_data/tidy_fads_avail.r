@@ -18,6 +18,7 @@ fruit_files <- files[grepl('fruit', files) & !grepl('veg', files)]
 veg_files <- files[grepl('veg', files) & !grepl('tot|fruit', files)]
 potato_files <- files[grepl('potato', files)]
 fish_files <- files[grepl('fish', files)]
+meat_files <- files[grepl('mtpcc', files)]
 
 # Define "munging" functions ----------------------------------------------
 
@@ -143,6 +144,7 @@ fruit_pcc <- map(fruit_files, get_pcc_tabs)
 veg_pcc <- map(veg_files, get_pcc_tabs)
 potato_pcc <- get_pcc_tabs(potato_files)
 fish_pcc <- get_pcc_tabs(fish_files)
+meat_pcc <- get_pcc_tabs(meat_files, name_string = 'Carcass|Retail|Boneless')
 
 fruit_tidy <- map(fruit_pcc, ~ group_map(.x, ~ munge_tab(.x))) %>%
   map2(c('canned', 'dried', 'fresh', 'frozen', 'juice'), ~ data.frame(type = .y, .x, stringsAsFactors = FALSE)) %>%
@@ -166,7 +168,14 @@ fish_tidy <- fish_pcc %>%
   ungroup %>%
   munge_tab %>%
   rename(availability_level = group5, type = category) %>%
-  select(type, availability_level, food, year, value, variable_unit)
+  select(type, availability_level, food, year, value, variable_unit) %>%
+  mutate(food = if_else(food == 'Total', 'Total fish and shellfish', food))
+
+meat_tidy <- meat_pcc %>%
+  group_map(~ munge_tab(.x)) %>%
+  rename(type = sheet) %>%
+  mutate(food = if_else(category == 'Total', 'Total meat', food)) %>%
+  mutate(food = if_else(category != 'Total' & food == 'Total', paste('Total', tolower(category)), food))
 
 write.csv(fruit_tidy, file.path(fp, 'tidy_data/fruit_availability.csv'), row.names = FALSE)
 write.csv(veg_tidy, file.path(fp, 'tidy_data/veg_availability.csv'), row.names = FALSE)
