@@ -4,7 +4,11 @@ library(dplyr)
 library(data.table)
 library(units)
 
-cfs <- fread('Q:/CFS/cfs_2012_pumf_csv.txt')
+fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp_cfs <- file.path(fp, 'commodity_flows/CFS')
+fp_faf <- file.path(fp, 'commodity_flows/FAF')
+
+cfs <- fread(file.path(fp_cfs, 'cfs_2012_pumf_csv.txt'))
 
 # calculate total values
 cfs <- cfs %>%
@@ -63,7 +67,7 @@ library(tidyr)
 # This is based on the CFS data but has some modeled values in it.
 # Also already corrects for the weighting factors, etc
 
-faf <- read.csv('Q:/FAF/FAF4.4.1.csv', colClasses = c(rep('factor', 9), rep('numeric', 31-9)))
+faf <- read.csv(file.path(fp_faf, 'FAF4.4.1.csv'), colClasses = c(rep('factor', 9), rep('numeric', 31-9)))
 
 # There are foreign and domestic origins.
 
@@ -83,12 +87,12 @@ faf_food_imports <- faf_food %>%
 # Make map ----------------------------------------------------------------
 
 library(rgdal)
-cfsmap <- readOGR(dsn = 'Q:/FAF/Freight_Analysis_Framework_Regions', layer = 'cfs12')
+cfsmap <- readOGR(dsn = file.path(fp_faf, 'Freight_Analysis_Framework_Regions'), layer = 'cfs12')
 # Get rid of multiple spaces in the names.
 cfsmap$CFS12_NAME <- gsub('[ ]{2,}', ' ', as.character(cfsmap$CFS12_NAME))
 
 # Join map with some data
-cfsregs <- read.csv('Q:/FAF/faf4_region_lookup.csv', colClasses = c('factor', 'character', 'character', 'character', 'factor')) %>%
+cfsregs <- read.csv(file.path(fp_faf, 'faf4_region_lookup.csv'), colClasses = c('factor', 'character', 'character', 'character', 'factor')) %>%
   mutate(FAF.Region = gsub('\n', ' ', trimws(FAF.Region), fixed = TRUE))
 
 cfsmap$CFS12_NAME[match(c('Remainder of Alaska', 'Remainder of Idaho'), cfsmap$CFS12_NAME)] <- c('Alaska', 'Idaho')
@@ -119,3 +123,39 @@ spplot(cfsmap, zcol = 'export', xlim = c(-127, -65), ylim = c(25, 50), main = 'D
 spplot(cfsmap, zcol = 'import', xlim = c(-127, -65), ylim = c(25, 50), main = 'Domestic agricultural trade (inbound) by CFS region')
 spplot(cfsmap, zcol = 'net', xlim = c(-127, -65), ylim = c(25, 50), main = 'Domestic agricultural trade (net out-in) by CFS region')
 dev.off()
+
+# Map with a better projection and appearance
+# ignore AK and HI
+aea_crs <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"
+cfsmap_aea <- spTransform(cfsmap, CRS(aea_crs))
+cfsmap_fort <- fortify(cfsmap, region = 'CFS12_NAME')
+cfsmap_fort <- cfsmap_fort %>%
+  rename(CFS12_NAME = id) %>%
+  left_join(cfsmap_aea@data)
+
+ggplot(cfsmap_fort, aes(x = long, y = lat, group = group, fill = export)) +
+  geom_polygon() +
+  scale_fill_viridis_c(trans = 'log', breaks = 10^c(3, 4, 5), name = 'Outbound', labels=c('$1B','$10B','$100B')) +
+  coord_map(projection = 'albers', lat0=23, lat1=29.5, xlim = c(-127,-65), ylim = c(25,50)) +
+  theme_bw() +
+  theme(axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  ggtitle('Domestic food-related commodity flows', 'source: Freight Analysis Framework v4')
+ggsave('/nfs/qread-data/figures/faf_outgoing_trade.png', height = 6, width = 10, dpi = 300)
+
+ggplot(cfsmap_fort, aes(x = long, y = lat, group = group, fill = import)) +
+  geom_polygon() +
+  scale_fill_viridis_c(trans = 'log', breaks = 10^c(3, 4, 5), name = 'Inbound', labels=c('$1B','$10B','$100B')) +
+  coord_map(projection = 'albers', lat0=23, lat1=29.5, xlim = c(-127,-65), ylim = c(25,50)) +
+  theme_bw() +
+  theme(axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  ggtitle('Domestic food-related commodity flows', 'source: Freight Analysis Framework v4')
+ggsave('/nfs/qread-data/figures/faf_incoming_trade.png', height = 6, width = 10, dpi = 300)
+
+ggplot(cfsmap_fort, aes(x = long, y = lat, group = group, fill = net)) +
+  geom_polygon(color = 'black', size = 0.2) +
+  scale_fill_gradientn(colours = rev(RColorBrewer::brewer.pal(9,'RdYlBu')), name = 'Net', labels = c('-$15B', '$0', '+$15B'), breaks = c(-15000,0,15000)) +
+  coord_map(projection = 'albers', lat0=23, lat1=29.5, xlim = c(-127,-65), ylim = c(25,50)) +
+  theme_bw() +
+  theme(axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
+  ggtitle('Domestic food-related commodity flows', 'source: Freight Analysis Framework v4')
+ggsave('/nfs/qread-data/figures/faf_net_trade.png', height = 6, width = 10, dpi = 300)

@@ -4,12 +4,12 @@
 library(tidyverse)
 
 fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
-
+fpcex <- file.path(fp, 'consumer_data/CEX/final_data')
 
 # Load/clean data ---------------------------------------------------------
 
-cex_byregion <- read.csv(file.path(fp, 'CEX/final_data/cex_region.csv'), stringsAsFactors = FALSE)
-cex_byincome <- read.csv(file.path(fp, 'CEX/final_data/cex_incomeclass.csv'), stringsAsFactors = FALSE)
+cex_byregion <- read.csv(file.path(fpcex, 'cex_region.csv'), stringsAsFactors = FALSE)
+cex_byincome <- read.csv(file.path(fpcex, 'cex_incomeclass.csv'), stringsAsFactors = FALSE)
 
 # Find duplicates
 isdup <- duplicated(cex_byregion[,1:4])
@@ -50,6 +50,8 @@ cex_byincomegrp <- cex_byincomegrp[order(match(cex_byincomegrp$id, cex_byincome$
 
 # Basic data viz ----------------------------------------------------------
 
+fpfig <- ifelse(dir.exists('Q:/'), 'Q:/figures', '/nfs/qread-data/figures')
+
 # For now just look at US wide data
 cex_all <- cex_byregiongrp %>%
   filter(grepl('All', region)) %>%
@@ -68,6 +70,7 @@ exp_all %>%
     scale_y_continuous(name = 'Expenditure', labels = scales::dollar) +
     labs(x = 'Year') +
     ggtitle('Total annual household expenditures')
+ggsave(file.path(fpfig, 'cex_totalexp.png'), height = 4, width = 6, dpi = 300)
 
 # total expenditures by income and region
 cex_byregiongrp %>%
@@ -79,6 +82,7 @@ cex_byregiongrp %>%
     scale_y_continuous(name = 'Expenditure', labels = scales::dollar) +
     labs(x = 'Year') +
     ggtitle('Total annual household expenditures')
+ggsave(file.path(fpfig, 'cex_totalexp_region.png'), height = 4, width = 7, dpi = 300)
 
 cex_byincomegrp %>%
   filter(title == 'Average annual expenditures', !income %in% 'All.CU.s', year == 2012) %>%
@@ -89,6 +93,7 @@ cex_byincomegrp %>%
     scale_y_continuous(name = 'Expenditure', labels = scales::dollar) +
     scale_x_discrete(name = 'Income class', labels = 1:9) +
     ggtitle('Total annual household expenditures, 2012')
+ggsave(file.path(fpfig, 'cex_totalexp_income2012.png'), height = 4, width = 6, dpi = 300)
 
 # Food at home and away from home
 
@@ -108,9 +113,11 @@ ggplot(fah_and_fafh, aes(x = factor(year), color = title, y = mn, ymin = mn - se
   geom_point() +
   theme_bw() +
   theme(legend.position = c(0.2, 0.2), legend.title = element_blank()) +
-  scale_y_continuous(name = 'Expenditure', labels = scales::dollar, limits = c(0, 4325), expand = c(0,0)) +
+  scale_y_continuous(name = 'Expenditure', labels = scales::dollar, limits = c(0, 4500), expand = c(0,0)) +
   labs(x = 'Year') +
   ggtitle('Total annual food expenditures')
+ggsave(file.path(fpfig, 'cex_foodexp.png'), height = 4, width = 6, dpi = 300)
+
 
 # Food at home and away from home by region and by income
 
@@ -146,6 +153,7 @@ ggplot(fah_fafh_byincome %>% filter(year == 2012, !income %in% 'All.CU.s'), aes(
   scale_y_continuous(name = 'Expenditure', labels = scales::dollar) +
   scale_x_discrete(name = 'Income class', labels = 1:9) +
   ggtitle('Total annual food expenditures, 2012')
+ggsave(file.path(fpfig, 'cex_foodexp_income2012.png'), height = 4, width = 6, dpi = 300)
 
 ggplot(fah_fafh_byregion %>% filter(year == 2012, !region %in% 'All.CU.s'), aes(x = factor(region), y = mn, ymin = mn - se, ymax = mn + se, color = title)) +
   geom_errorbar(width = 0.2) +
@@ -155,6 +163,7 @@ ggplot(fah_fafh_byregion %>% filter(year == 2012, !region %in% 'All.CU.s'), aes(
   scale_y_continuous(name = 'Expenditure', labels = scales::dollar, limits = c(0, 4500), expand = c(0, 0)) +
   scale_x_discrete(name = 'Region') +
   ggtitle('Total annual food expenditures, 2012')
+ggsave(file.path(fpfig, 'cex_totalexp_region2012.png'), height = 4, width = 6, dpi = 300)
 
 
 # Classify certain groups as food-related ---------------------------------
@@ -168,7 +177,7 @@ cex_all <- cex_all %>%
 
 # List relevant categories
 util_fuel_cats <- c('Plumbing and water heating', 'Natural gas', 'Electricity', 'Fuel oil and other fuels', 'Bottled gas', 'Water and sewerage maintenance', 'Trash and garbage collection')
-household_cats <- c('Laundry and cleaning supplies', 'Soaps and detergents', 'Dishwashers (built-in), garbage disposals, range hoods, (renter)', 'Dishwashers (built-in), garbage disposals, range hoods, (owned home)', 'Refrigerators, freezers (renter)', 'Refrigerators, freezers (owned home)', 'Cooking stoves, ovens (renter)', 'Cooking stoves, ovens (owned home)', 'Microwave ovens (renter)', 'Microwave ovens (owned home)', 'Portable dishwasher (renter)', 'Portable dishwasher (owned home)', 'Small appliances, miscellaneous housewares', 'Small electric kitchen appliances')
+household_cats <- c('Soaps and detergents', 'Dishwashers (built-in), garbage disposals, range hoods, (renter)', 'Dishwashers (built-in), garbage disposals, range hoods, (owned home)', 'Refrigerators, freezers (renter)', 'Refrigerators, freezers (owned home)', 'Cooking stoves, ovens (renter)', 'Cooking stoves, ovens (owned home)', 'Microwave ovens (renter)', 'Microwave ovens (owned home)', 'Portable dishwasher (renter)', 'Portable dishwasher (owned home)', 'Small appliances, miscellaneous housewares', 'Small electric kitchen appliances')
 travel_cats <- c('Gasoline', 'Diesel fuel', 'Intracity mass transit fares')
 
 # Different groups to be at least partially attributed to food.
@@ -189,8 +198,8 @@ write.csv(expend_byregion, file.path(fp, 'CEX/final_data/selectedexpenses_region
 
 # Data viz of expenditures ------------------------------------------------
 
-expend_byincome <- read.csv(file.path(fp, 'CEX/final_data/selectedexpenses_income.csv'), stringsAsFactors = FALSE)
-expend_byregion <- read.csv(file.path(fp, 'CEX/final_data/selectedexpenses_region.csv'), stringsAsFactors = FALSE)
+expend_byincome <- read.csv(file.path(fpcex, 'selectedexpenses_income.csv'), stringsAsFactors = FALSE)
+expend_byregion <- read.csv(file.path(fpcex, 'selectedexpenses_region.csv'), stringsAsFactors = FALSE)
 
 brewfill <- scale_fill_brewer(type = 'qual', palette = 'Set1')
 
@@ -201,6 +210,8 @@ ggplot(expend_byregion %>% filter(year == 2012, subcategory == 'utilities'), aes
   scale_x_discrete(name = 'Region', labels = c('All', 'Midwest', 'Northeast', 'South', 'West')) +
   theme_bw() +
   ggtitle('Average annual utility expenditures, 2012')
+ggsave(file.path(fpfig, 'cex_utilityexp_region2012.png'), height = 4, width = 7, dpi = 300)
+
 
 # Sum up owned home and renter categories to reduce the number of categories before doing "household"
 # Remove anything in parentheses at the end
@@ -215,10 +226,11 @@ expend_byregion_household <- expend_byregion %>%
 ggplot(expend_byregion_household %>% filter(year == 2012), aes(x = region, y = mn, fill = title)) +
   geom_col(position = 'stack') +
   brewfill +
-  scale_y_continuous(name = 'Expenditure', labels = scales::dollar, limits =c(0, 550), expand = c(0, 0)) +
+  scale_y_continuous(name = 'Expenditure', labels = scales::dollar, limits =c(0, 400), expand = c(0, 0)) +
   scale_x_discrete(name = 'Region', labels = c('All', 'Midwest', 'Northeast', 'South', 'West')) +
   theme_bw() +
   ggtitle('Average annual kitchen-related expenditures, 2012')
+ggsave(file.path(fpfig, 'cex_kitchenexp_region2012.png'), height = 4, width = 7, dpi = 300)
 
 ggplot(expend_byregion %>% filter(year == 2012, subcategory == 'travel'), aes(x = region, y = mn, fill = title)) +
   geom_col(position = 'stack') +
@@ -227,3 +239,4 @@ ggplot(expend_byregion %>% filter(year == 2012, subcategory == 'travel'), aes(x 
   scale_x_discrete(name = 'Region', labels = c('All', 'Midwest', 'Northeast', 'South', 'West')) +
   theme_bw() +
   ggtitle('Average annual local travel expenditures, 2012')
+ggsave(file.path(fpfig, 'cex_localtravelexp_region2012.png'), height = 4, width = 7, dpi = 300)

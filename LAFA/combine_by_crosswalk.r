@@ -1,7 +1,7 @@
 # Get price per serving for different foods, using the crosswalk tables
 
 library(tidyverse)
-
+library(XLConnect)
 
 # Load data and crosswalks ------------------------------------------------
 
