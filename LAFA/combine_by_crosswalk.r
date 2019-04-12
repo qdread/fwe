@@ -12,9 +12,16 @@ fp_usda <- file.path(fp, 'foods_consumption/USDAnutrients')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 fp_fads <- file.path(fp, 'ERS/FADS/tidy_data')
 
-# Load crosswalks
+# Load crosswalks - any that might be relevant
 naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_lafa_qfahpd_crosswalk_modified.csv'), stringsAsFactors = FALSE)
 lafaCW <- read.csv(file.path(fp_crosswalks, 'lafa_qfahpd_naics_crosswalk.csv'), stringsAsFactors = FALSE)
+fcidfoodsCW <- read.csv(file.path(fp_crosswalks, 'fcidfoods_naics_crosswalk.csv'), stringsAsFactors = FALSE)
+fcidingredientsCW <- read.csv(file.path(fp_crosswalks, 'fcid_lafa_naics_crosswalk.csv'), stringsAsFactors = FALSE)
+qfahpdCW <- read.csv(file.path(fp_crosswalks, 'qfahpd_lafa_naics_crosswalk.csv'), stringsAsFactors = FALSE)
+ficrcdCW <- read.csv(file.path(fp_crosswalks, 'ficrcd_lafa_crosswalk.csv'), stringsAsFactors = FALSE)
+ndbCW <- read.csv(file.path(fp_crosswalks, 'ndb_lafa_crosswalk.csv'), stringsAsFactors = FALSE)
+lafastatus <- read.csv(file.path(fp_crosswalks, 'lafa_food_status_by_stage.csv'), stringsAsFactors = FALSE)
+
 
 # Load other "bridge" datasets
 # CNPP food price data

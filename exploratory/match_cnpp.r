@@ -51,6 +51,7 @@ fndds_nutr <- readWorksheetFromFile(file.path(fp, 'food_consumption/FNDDS/2015-2
 
 table(cnpp$foodcode %in% fndds_ingr$Food.code) # About 1000 do not match unfortunately.
 compare(cnpp$foodcode, fndds_ingr$Food.code)
+
 compare(ndb$NDB_NO, fndds_ingr$Ingredient.code) # A lot of these match.
 
 head(cnpp$foodname[!cnpp$foodcode %in% fndds_ingr$Food.code])

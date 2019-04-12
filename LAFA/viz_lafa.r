@@ -219,7 +219,7 @@ the_seafood <- c('Canned fish and shellfish', 'Canned Salmon', 'Canned Sardines'
 meat <- meat %>%
   mutate(Prep_type = case_when(
     grepl('fresh and frozen', tolower(Category)) ~ 'fresh/frozen',
-    grepl('cured', tolower(Category)) ~ 'cured'
+    grepl('cured', tolower(Category)) ~ 'cured',
     grepl('fresh', tolower(Category)) ~ 'fresh',
     grepl('canned', tolower(Category)) ~ 'canned',
     grepl('frozen', tolower(Category)) ~ 'frozen',

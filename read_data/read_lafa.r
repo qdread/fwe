@@ -67,7 +67,7 @@ read_lafa_workbook <- function(file) {
 
 # Read data ---------------------------------------------------------------
 
-if (dir.exists('Z:/')) fp <- 'Z:/ERS/LAFA' else fp <- '~/Dropbox/projects/foodwaste/Data/LAFA_localcopy'
+fp <- ifelse(dir.exists('Z:/'), 'Z:/ERS/LAFA', ifelse(dir.exists('/nfs/fwe-data'), '/nfs/fwe-data/ERS/LAFA', '~/Dropbox/projects/foodwaste/Data/LAFA_localcopy'))
 
 dairy <- read_lafa_workbook(file.path(fp, 'Dairy.xls'))
 fat <- read_lafa_workbook(file.path(fp, 'fat.xls'))
