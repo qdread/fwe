@@ -189,3 +189,19 @@ ggplot(data.frame(x = c(0, 100)), aes(x)) +
                      axis.ticks.x = element_blank(),
                      axis.text.x = element_blank())
 ggsave('~/Dropbox/sesync/firstyear_talk/cost_of_reduction_steep.png', height = 3, width = 3, dpi = 300)
+
+
+# Estimates of food waste magnitude ---------------------------------------
+
+flwdat <- data.frame(Source = c('EPA\n(2016)', 'NRDC\n(2012)', 'ReFED\n(2016)', 'FAO\n(2011)', 'USDA\n(2014)'),
+           Weight = 2.204 * c(111, 253, 176, 285, 188)) %>%
+  mutate(Source = factor(Source, levels = Source[order(Weight)]))
+
+ggplot(flwdat, aes(x = Source, y = Weight, fill = Source)) +
+  geom_col() +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 640), name = 'Per capita food waste (lb)') +
+  scale_fill_brewer(type = 'qual', palette = 'Set2') +
+  theme_black() +
+  theme(panel.grid = element_blank(),
+        legend.position = 'none')
+ggsave('~/Dropbox/sesync/firstyear_talk/flw_estimate_barchart.png', height = 4, width = 5, dpi = 300)
