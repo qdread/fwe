@@ -40,3 +40,22 @@ naics_foodsystem <- naics_foodsystem %>%
 
 write.csv(naics_foodsystem, file = '/nfs/qread-data/scenario_inputdata/lossrates_by_naics.csv', row.names = FALSE)
 
+
+# Run locally: use rates to get scenario demand vectors -------------------
+
+demand <- read.csv('~/Dropbox/projects/foodwaste/Code/USEEIO-master/useeiopy/Model Builds/USEEIO2012/USEEIO2012_FinalDemand.csv', stringsAsFactors = FALSE, check.names = FALSE)
+
+naics_foodsystem <- read.csv('Q:/scenario_inputdata/lossrates_by_naics.csv', stringsAsFactors = FALSE)
+
+demand <- demand %>%
+  mutate(demand_baseline = .$`2012_US_Consumption`) %>%
+  left_join(naics_foodsystem) %>%
+  mutate(proportion_food = if_else(is.na(proportion_food), 0, proportion_food),
+         demand_baseline = demand_baseline * proportion_food,
+         demand_reduce1 = if_else(stage_code %in% 'L1', demand_baseline * reduce25pct_demand_factor, demand_baseline),
+         demand_reduce2 = if_else(stage_code %in% 'L2', demand_baseline * reduce25pct_demand_factor, demand_baseline),
+         demand_reduce3 = if_else(stage_code %in% 'L3', demand_baseline * reduce25pct_demand_factor, demand_baseline)) %>%
+  select(1:5, starts_with('demand'))
+        
+
+write.csv(demand, '~/Dropbox/projects/foodwaste/data/demand_scenarios_2012_wastereductionbystage.csv', row.names = FALSE)

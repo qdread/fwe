@@ -1,4 +1,6 @@
 # FAO percentages emoji plots!!!
+library(tidyverse)
+library(XLConnect)
 
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages.xlsx'), sheet = 1)
@@ -44,10 +46,30 @@ emojiplot <- ggplot(faoplotdat, aes(x = stage, y = weight, group = category)) +
   geom_emoji(data = faoplotdat %>% filter(emojicode=='1f9c0'), emoji='1f9c0') + 
   geom_emoji(data = faoplotdat %>% filter(emojicode=='1f95a'), emoji='1f95a') + 
   scale_y_continuous(limits = c(0.3, 1.05), expand = c(0, 0), breaks = c(0.4, 0.6, 0.8, 1), name = 'Mass remaining', labels = scales::percent) +
-  scale_x_discrete(labels = c('Processor', 'Retailer', 'Consumer', 'Final'), name = 'Supply chain stage') +
+  scale_x_discrete(labels = c('Producer', 'Retailer', 'Consumer', 'Final'), name = 'Supply chain stage') +
   theme_bw() +
   theme(panel.grid.major.x = element_blank())
 ggsave('/nfs/qread-data/figures/FAO_FLW_emojis.png', emojiplot, height = 5, width = 5, dpi = 400)
+
+# Emojiplot on black and white
+emojiplot <- ggplot(faoplotdat, aes(x = stage, y = weight, group = category)) +
+  geom_line(color = 'white') +
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f35e'), emoji='1f35e') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f954'), emoji='1f954') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f35f'), emoji='1f35f') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f331'), emoji='1f331') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f351'), emoji='1f351') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f96b'), emoji='1f96b') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f357'), emoji='1f357') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f41f'), emoji='1f41f') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f363'), emoji='1f363') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f9c0'), emoji='1f9c0') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f95a'), emoji='1f95a') + 
+  scale_y_continuous(limits = c(0.3, 1.05), expand = c(0, 0), breaks = c(0.4, 0.6, 0.8, 1), name = 'Mass remaining', labels = scales::percent) +
+  scale_x_discrete(labels = c('Producer', 'Retailer', 'Consumer', 'Final'), name = 'Supply chain stage') +
+  theme_black() +
+  theme(panel.grid.major.x = element_blank())
+ggsave('Q:/figures/FAO_FLW_emojis_BW.png', emojiplot, height = 5, width = 5, dpi = 400)
 
 # Key for emoji plot (legends aren't supported by emoGG)
 keydat <- data.frame(category = faopct$category, emojicode = emoji_mapping, x = 1, y = 1:11, stringsAsFactors = FALSE)
@@ -68,3 +90,22 @@ emojikey <- ggplot(keydat, aes(x,y)) +
   geom_emoji(emoji = '1f95a', x = 0.9, y = 11) +
   scale_x_continuous(limits=c(0,2))
 ggsave('/nfs/qread-data/figures/FAO_FLW_emojis_key.png', emojikey, height = 5, width = 5, dpi = 400)
+
+emojikey <- ggplot(keydat, aes(x,y)) +
+  geom_text(aes(label = category), hjust = 0, color = 'white') +
+  theme_void() +
+  theme(panel.background = element_rect(fill = 'black'),
+        plot.background = element_rect(fill = 'black')) +
+  geom_emoji(emoji = '1f35e', x = 0.9, y = 1) +
+  geom_emoji(emoji = '1f954', x = 0.9, y = 2) +
+  geom_emoji(emoji = '1f35f', x = 0.9, y = 3) +
+  geom_emoji(emoji = '1f331', x = 0.9, y = 4) +
+  geom_emoji(emoji = '1f351', x = 0.9, y = 5) +
+  geom_emoji(emoji = '1f96b', x = 0.9, y = 6) +
+  geom_emoji(emoji = '1f357', x = 0.9, y = 7) +
+  geom_emoji(emoji = '1f41f', x = 0.9, y = 8) +
+  geom_emoji(emoji = '1f363', x = 0.9, y = 9) +
+  geom_emoji(emoji = '1f9c0', x = 0.9, y = 10) +
+  geom_emoji(emoji = '1f95a', x = 0.9, y = 11) +
+  scale_x_continuous(limits=c(0,2))
+ggsave('Q:/figures/FAO_FLW_emojis_key_BW.png', emojikey, height = 5, width = 5, dpi = 400)
