@@ -3,23 +3,30 @@
 # QDR / FWE / 18 April 2019
 
 
-# Step 1: Get baseline loss rate for each row in BEA table ----------------
 
-# Weighting NAICS codes by FAO loss rates to get baseline loss rate
-# Convert this to get new loss rate for each scenario
+# Step 0: Load packages, set file paths, read data ------------------------
 
 library(tidyverse)
 library(XLConnect)
 library(reticulate)
 
-source('USEEIO/modify_make_and_use.r')
-
+fp_github <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/fwe', '~/fwe')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 fp_scenario <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_inputdata')
 fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA/formatted')
+fp_temp <- ifelse(dir.exists('~/Documents/temp'), '~/Documents/temp', '/nfs/qread-data/temp')
+fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
+fp_useeio <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/USEEIO', '~/USEEIO')
+
+source(file.path(fp_github, 'USEEIO/modify_make_and_use.r'))
 
 faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages.xlsx'), sheet = 1)
 naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_lafa_qfahpd_crosswalk_modified.csv'), stringsAsFactors = FALSE)
+
+# Step 1: Get baseline loss rate for each row in BEA table ----------------
+
+# Weighting NAICS codes by FAO loss rates to get baseline loss rate
+# Convert this to get new loss rate for each scenario
 
 naics_foodsystem <- naicsCW %>% 
   filter(food_system %in% c('partial', 'y'), nchar(FAO_category) > 0) %>%
@@ -85,24 +92,24 @@ U <- read.csv(file.path(fp_bea, 'use2012.csv'), row.names = 1, check.names = FAL
 MU_modified <- map(loss_rates %>% select(starts_with('demandchange')), ~ modify_and_renormalize_make_and_use(M, U, .x, loss_rates$BEA_389_code))
 
 # Write the make and use tables to CSVs
-iwalk(MU_modified, ~ write.csv(.x$M, file = file.path('~/Documents/temp', paste0('make_', .y, '.csv'))))
-iwalk(MU_modified, ~ write.csv(.x$U, file = file.path('~/Documents/temp', paste0('use_', .y, '.csv'))))
+iwalk(MU_modified, ~ write.csv(.x$M, file = file.path(fp_temp, paste0('make_', .y, '.csv'))))
+iwalk(MU_modified, ~ write.csv(.x$U, file = file.path(fp_temp, paste0('use_', .y, '.csv'))))
 
 
 # Step 4: Build USEEIO with each of the make and use tables ---------------
 
 # (Write the resulting model build files to a directory.)
 
-source('~/Dropbox/projects/foodwaste/Code/USEEIO-master/R/Model Build Scripts/USEEIO2012_buildfunction.R')
-model_build_path <- '~/Dropbox/projects/foodwaste/Code/USEEIO-master/useeiopy/Model Builds'
+source(file.path(fp_useeio, 'R/Model Build Scripts/USEEIO2012_buildfunction.R'))
+model_build_path <- file.path(fp_useeio, 'useeiopy/Model Builds')
 
 # Walk through the list of scenario names and build the model with the appropriate make and use tables.
 # Note: it takes a few seconds to build each model.
 walk(scenario_names, ~ build_USEEIO(outputfolder = file.path(model_build_path, paste0('scenario_', .x)),
                                     model = paste0('scenario_', .x),
-                                    usetablefile = file.path('~/Documents/temp', paste0('use_demandchange_', .x, '.csv')),
-                                    maketablefile = file.path('~/Documents/temp', paste0('make_demandchange_', .x, '.csv')),
-                                    code_path = '~/Dropbox/projects/foodwaste/Code/USEEIO-master'
+                                    usetablefile = file.path(fp_temp, paste0('use_demandchange_', .x, '.csv')),
+                                    maketablefile = file.path(fp_temp, paste0('make_demandchange_', .x, '.csv')),
+                                    code_path = fp_useeio
                                     )
      )
 
@@ -111,7 +118,7 @@ walk(scenario_names, ~ build_USEEIO(outputfolder = file.path(model_build_path, p
 
 # Read final demand CSV from each built model.
 all_final_demand <- map(scenario_names, ~ read.csv(file.path(model_build_path, paste0('scenario_', .x), paste0('scenario_', .x, '_FinalDemand.csv')), stringsAsFactors = FALSE))
-all_codes <- read.csv('~/Dropbox/projects/foodwaste/Data/all_codes.csv', stringsAsFactors = FALSE)
+all_codes <- read.csv(file.path(fp_crosswalks, 'all_codes.csv'), stringsAsFactors = FALSE)
 
 # Join each full final demand vector with food system proportions 
 # Also match these with the correct codes that have full description names
@@ -127,7 +134,7 @@ final_demand_lists <- map(all_final_demand, ~ list(codes = as.list(.x$sector_des
 # Step 6. Run the models! -------------------------------------------------
 
 # Source Python script which runs model
-source_python('USEEIO/eeio_lcia.py')
+source_python(file.path(fp_github, 'USEEIO/eeio_lcia.py'))
 
 # Run all scenarios. (takes a couple seconds per scenario)
 eeio_result <- map2(final_demand_lists, scenario_names, ~ eeio_lcia(paste0('scenario_', .y), .x$values, .x$codes))
@@ -138,9 +145,9 @@ eeio_result <- with(eeio_result, data.frame(scenario, impact_category = impact_c
 
 # Step 7. Write result to file and delete model files ---------------------
 
-write.csv(eeio_result, 'Q:/scenario_results/fao_scenario_lcia_results.csv', row.names = FALSE)
+write.csv(eeio_result, file.path(fp_output, 'fao_scenario_lcia_results.csv'), row.names = FALSE)
 
 # Delete the intermediate files (edited use tables, edited make tables, and model build folder) 
-invisible(file.remove(c(file.path('~/Documents/temp', paste0('use_demandchange_', scenario_names, '.csv')),
-                        file.path('~/Documents/temp', paste0('make_demandchange_', scenario_names, '.csv')))))
+invisible(file.remove(c(file.path(fp_temp, paste0('use_demandchange_', scenario_names, '.csv')),
+                        file.path(fp_temp, paste0('make_demandchange_', scenario_names, '.csv')))))
 unlink(file.path(model_build_path, paste0('scenario_', scenario_names)), recursive = TRUE)
