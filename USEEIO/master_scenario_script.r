@@ -26,8 +26,11 @@
 
 get_cells <- function(m, row_codes, col_codes) {
   require(purrr)
-  v <- map2_dbl(row_codes, col_codes, function(i, j) m[i, j])
-  return(data.frame(row = row_codes, col = col_codes, val = v, stringsAsFactors = FALSE))
+  row_x_col <- cross2(row_codes, col_codes)
+  v <- map_dbl(row_x_col, ~ m[.x[[1]], .x[[2]]])
+  return(data.frame(row = map_chr(row_x_col, 1), col = map_chr(row_x_col, 2), val = v, stringsAsFactors = FALSE))
+  #v <- map2_dbl(row_codes, col_codes, function(i, j) m[i, j])
+  #return(data.frame(row = row_codes, col = col_codes, val = v, stringsAsFactors = FALSE))
 }
 
 # Define function to change multiple cells of table -----------------------
@@ -56,6 +59,12 @@ retotal_usetable <- function(u) {
 }
 
 
+# Corrected function to retotal the formatted use table -------------------
+
+# This one explicitly takes the names from a separately created lookup table that I made, then sums them to get the correct values.
+
+
+
 # Code
 # ----
 
@@ -64,11 +73,16 @@ library(dplyr)
 # 1. Load the 2012 baseline use table and edit it based on user's input.
 # ----------------------------------------------------------------------
 
+# Set file paths of BEA data and crosswalks
+fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA')
+fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
+
+
 # Load table
-use2012 <- read.csv('Q:/BEA/formatted/use2012.csv', row.names = 1, check.names = FALSE)
+use2012 <- read.csv(file.path(fp_bea, 'formatted/use2012.csv'), row.names = 1, check.names = FALSE)
 
 # Load sectors
-eeio_sectors <- read.csv('~/Dropbox/projects/foodwaste/Data/useeio_sector_classification.csv', stringsAsFactors = FALSE)
+eeio_sectors <- read.csv(file.path(fp_crosswalks, 'naics_lafa_qfahpd_crosswalk_modified.csv'), stringsAsFactors = FALSE)
 
 # Example of change
 # Get all stages
