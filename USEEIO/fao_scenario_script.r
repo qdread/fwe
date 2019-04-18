@@ -16,7 +16,7 @@ fp_scenario <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'sc
 fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA/formatted')
 fp_temp <- ifelse(dir.exists('~/Documents/temp'), '~/Documents/temp', '/nfs/qread-data/temp')
 fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
-fp_useeio <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/USEEIO', '~/USEEIO')
+fp_useeio <- ifelse(dir.exists('~/Dropbox'), '~/Dropbox/projects/foodwaste/Code/USEEIO-master', '~/USEEIO')
 
 source(file.path(fp_github, 'USEEIO/modify_make_and_use.r'))
 
