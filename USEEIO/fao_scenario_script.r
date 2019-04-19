@@ -134,6 +134,8 @@ final_demand_lists <- map(all_final_demand, ~ list(codes = as.list(.x$sector_des
 # Step 6. Run the models! -------------------------------------------------
 
 # Source Python script which runs model
+# If run on server, specify we're using python3
+if (dir.exists('/nfs/fwe-data')) use_python('/usr/bin/python3')
 source_python(file.path(fp_github, 'USEEIO/eeio_lcia.py'))
 
 # Run all scenarios. (takes a couple seconds per scenario)
