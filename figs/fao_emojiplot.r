@@ -1,9 +1,13 @@
 # FAO percentages emoji plots!!!
+
+# Update 25 Apr: add direct labels; use alternative formulation of data
+
 library(tidyverse)
 library(XLConnect)
 
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages.xlsx'), sheet = 1)
+faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages_alternative.xlsx'), sheet = 1) # Switch processing to production group.
 
 # Make a figure or two of the FAO percentages so that it can be put in the PPTX
 library(directlabels) # Replace this with pictures later on
@@ -109,3 +113,58 @@ emojikey <- ggplot(keydat, aes(x,y)) +
   geom_emoji(emoji = '1f95a', x = 0.9, y = 11) +
   scale_x_continuous(limits=c(0,2))
 ggsave('Q:/figures/FAO_FLW_emojis_key_BW.png', emojikey, height = 5, width = 5, dpi = 400)
+
+
+# Emoji plot with labels --------------------------------------------------
+
+# manually jitter the points: all are on top of each other at w1
+# wt2: eggs and milk; fresh fish, processed fish, and oilseeds; fresh fruit and processed fruit; fresh roots and processed roots
+# wt3: eggs and milk; fresh fish and processed fruit
+# wt4: eggs, milk, and oilseeds
+
+faoplotdat$xpos <- rep(1:4, each = 11)
+faoplotdat$xpos[faoplotdat$category == 'eggs' & faoplotdat$stage == 'weight2'] <- 1.94
+faoplotdat$xpos[faoplotdat$category == 'milk' & faoplotdat$stage == 'weight2'] <- 2.06
+faoplotdat$xpos[faoplotdat$category == 'fish and seafood, fresh' & faoplotdat$stage == 'weight2'] <- 1.9
+faoplotdat$xpos[faoplotdat$category == 'oilseeds and pulses' & faoplotdat$stage == 'weight2'] <- 2.1
+faoplotdat$xpos[faoplotdat$category == 'roots and tubers, fresh' & faoplotdat$stage == 'weight2'] <- 1.94
+faoplotdat$xpos[faoplotdat$category == 'roots and tubers, processed' & faoplotdat$stage == 'weight2'] <- 2.06
+faoplotdat$xpos[faoplotdat$category == 'fruit and vegetable, fresh' & faoplotdat$stage == 'weight2'] <- 1.94
+faoplotdat$xpos[faoplotdat$category == 'fruit and vegetable, processed' & faoplotdat$stage == 'weight2'] <- 2.06
+faoplotdat$xpos[faoplotdat$category == 'eggs' & faoplotdat$stage == 'weight3'] <- 2.94
+faoplotdat$xpos[faoplotdat$category == 'milk' & faoplotdat$stage == 'weight3'] <- 3.06
+faoplotdat$xpos[faoplotdat$category == 'fish and seafood, fresh' & faoplotdat$stage == 'weight3'] <- 2.94
+faoplotdat$xpos[faoplotdat$category == 'fruit and vegetable, processed' & faoplotdat$stage == 'weight3'] <- 3.06
+faoplotdat$xpos[faoplotdat$category == 'eggs' & faoplotdat$stage == 'weight4'] <- 3.9
+faoplotdat$xpos[faoplotdat$category == 'oilseeds and pulses' & faoplotdat$stage == 'weight4'] <- 4.1
+
+keydat <- data.frame(category = faopct$category, emojicode = emoji_mapping, x = 1, y = 1:11, stringsAsFactors = FALSE)
+keydat$x <- 4.16
+keydat <- left_join(keydat, faoplotdat %>% filter(stage == 'weight4'))
+keydat$category[10] <- 'dairy'
+keydat$weight[4] <- 0.784
+keydat$weight[7] <- 0.76
+keydat$weight[10] <- 0.812
+keydat$weight[11] <- 0.83
+keydat$x[11] <- 3.9
+
+emojiplot_jittered <- ggplot(faoplotdat, aes(x = xpos, y = weight, group = category)) +
+  geom_line(size = 0.6) +
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f35e'), emoji='1f35e') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f954'), emoji='1f954') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f35f'), emoji='1f35f') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f351'), emoji='1f351') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f96b'), emoji='1f96b') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f357'), emoji='1f357') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f41f'), emoji='1f41f') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f363'), emoji='1f363') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f9c0'), emoji='1f9c0') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f95a'), emoji='1f95a') + 
+  geom_emoji(data = faoplotdat %>% filter(emojicode=='1f331'), emoji='1f331') + 
+  scale_y_continuous(limits = c(0.3, 1.05), expand = c(0, 0), breaks = c(0.4, 0.6, 0.8, 1), name = 'Mass remaining', labels = scales::percent) +
+  scale_x_continuous(breaks = 1:4, labels = c('Producer', 'Retailer', 'Consumer', 'Final'), name = 'Supply chain stage', limits = c(1, 5.5)) +
+  geom_text(data = keydat, aes(x = x, y = weight, label = category), hjust = 0, size = 2.5) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_blank())
+
+ggsave('Q:/figures/FAO_FLW_emojis_jitterplot.png', emojiplot_jittered, height = 5, width = 5, dpi = 400)
