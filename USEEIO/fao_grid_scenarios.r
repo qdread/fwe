@@ -131,13 +131,13 @@ get_eeio_result <- function(v, i) {
   # Step 5. Extract demand vector for food system from scenario.
   # Join this with the food system proportions and with the correct demand codes (full description names)
   all_final_demand <- read.csv(file.path(model_build_path, paste0('scenario_', i), paste0('scenario_', i, '_FinalDemand.csv')), stringsAsFactors = FALSE) %>%
-    left_join(naics_foodsystem) %>% 
+    left_join(naics_foodsystem, by = c('BEA_389_code', 'BEA_389_def')) %>% 
     filter(!is.na(proportion_food)) %>%
     left_join(all_codes, by = c('BEA_389_code' = 'sector_code_uppercase'))
   # Convert demand vector to separate list of codes and values
   final_demand_list <- with(all_final_demand, list(codes = as.list(sector_desc_drc), values = as.list(X2012_US_Consumption * proportion_food)))
   # Step 6. Run the model!
-  eeio_result <- eeio_lcia(paste0('scenario_', i), final_demand_list$values, final_demand_list$codes)
+  eeio_result <- eeio_lcia(paste0('scenario_', i), final_demand_list$values, final_demand_list$codes) 
   eeio_result <- data.frame(scenario = i, impact_category = rownames(eeio_result), value = eeio_result$Total, stringsAsFactors = FALSE)
   # Step 7. Delete the intermediate files (edited use tables, edited make tables, and model build folder) 
   invisible(file.remove(c(file.path(fp_mu, paste0('use_', i, '.csv')),
@@ -151,5 +151,5 @@ eeio_result <- future_imap_dfr(loss_rates %>% select(starts_with('demandchange')
 
 # Step 8. Write result to file -----------------------------------------------
 
-write.csv(eeio_result, file.path(fp_output, 'fao_grid_scenario_lcia_results.csv'), row.names = FALSE)
+write.csv(cbind(reduction_rates[rep(1:nrow(reduction_rates), each = length(unique(eeio_result$impact_category))),], eeio_result), file.path(fp_output, 'fao_grid_scenario_lcia_results.csv'), row.names = FALSE)
 
