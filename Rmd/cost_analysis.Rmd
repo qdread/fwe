@@ -1,0 +1,32 @@
+---
+title: 'FLW scenarios: methods and preliminary results'
+author: "Quentin D. Read"
+date: "May 10, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overarching question
+
+The motivating question for this study is: how cost-effective are interventions targeted at reducing food loss and waste (FLW interventions) at different stages of the food supply chain (FSC)? Here, we define cost as the annual monetary cost of implementing an intervention at the national scale, and we measure effectiveness in terms of percentage reduction in environmental impact across multiple categories.
+
+# Models and data
+
+In order to answer the question above, we need the following:
+
+1. A model of environmental impact of each stage of the FSC
+2. Baseline rates of FLW at each stage of the FSC
+3. Information on the cost of achieving a particular rate of waste reduction at each stage of the FSC (i.e., the effectiveness of FLW interventions in waste-reduction units)
+
+## 1. Modeling environmental impact
+
+Currently, we are using the EPA's USEEIO model to estimate environmental impacts at each stage of the FSC. This model has the advantage of being very detailed in terms of environmental impact categories. The satellite tables that the EPA researchers compiled include values across 389 industries by 21 environmental impact categories that represent the incremental increase of environmental impact in that category for each additional \$1 of output produced by that industry. For example to produce an additional \$1 of output by the bread industry results in a certain amount of GHG emissions, land use, N runoff, water use, etc. In some cases the satellite tables include variable per-unit impacts depending on the state in which the commodity is produced, but currently we are using US-wide aggregated values.
+
+The disadvantage of the EPA model is that it was not designed in particular to 
+
+## 2. Estimating baseline rates of FLW
+
+## 3. Estimating the cost of reducing FLW
