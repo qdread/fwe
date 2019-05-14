@@ -94,31 +94,71 @@ api_create(p3d_enrg, 'energyuse_reduction_3dplot')
 
 # 2d plots of two reduction combos ----------------------------------------
 
-x <- seq(0, 100, by = 10)
-dat_ghg_reduced <- grid_result %>%
-  mutate(L1 = L1*100, L2 = L2*100, L3 = L3*100) %>%
-  filter(grepl('co2', impact_category), L1 %in% x, L2 %in% x, L3 %in% x, (L1 == 0 | L2 == 0 | L3 == 0)) %>%
-  mutate(value = value/max(value))
+library(cowplot)
 
-ggplot(dat_ghg_reduced %>% filter(L3 == 0), aes(x = L1, y = L2, fill = value)) +
-  geom_tile() +
-  scale_fill_viridis_c(limits = c(0.9, 1)) +
-  scale_x_continuous(expand = c(0,0), breaks = x, name = 'Reduction in production waste', labels = paste0(x, '%')) +
-  scale_y_continuous(expand = c(0,0), breaks = x, name = 'Reduction in retail waste', labels = paste0(x, '%')) +
-  ggtitle('GHG reduction by FLW reduction', 'reduction in production and retail waste, holding consumer waste constant') +
-  theme(legend.position = 'none')
+# Function to produce grid plot for a given impact category.
 
-ggplot(dat_ghg_reduced %>% filter(L2 == 0), aes(x = L1, y = L3, fill = value)) +
-  geom_tile() +
-  scale_fill_viridis_c(limits = c(0.9, 1)) +
-  scale_x_continuous(expand = c(0,0), breaks = x, name = 'Reduction in production waste', labels = paste0(x, '%')) +
-  scale_y_continuous(expand = c(0,0), breaks = x, name = 'Reduction in consumer waste', labels = paste0(x, '%')) +
-  ggtitle('GHG reduction by FLW reduction', 'reduction in production and consumer waste, holding retail waste constant') +
-  theme(legend.position = 'none')
+threegrids <- function(cat_name, main_title, color_limits = c(0.9, 1), color_breaks = c(0.9, 0.95, 1)) {
+  x <- seq(0, 100, by = 10)
+  dat_reduced <- grid_result %>%
+    mutate(L1 = L1*100, L2 = L2*100, L3 = L3*100) %>%
+    filter(grepl(cat_name, impact_category), L1 %in% x, L2 %in% x, L3 %in% x, (L1 == 0 | L2 == 0 | L3 == 0)) %>%
+    mutate(value = value/max(value))
+  color_labels <- paste0(color_breaks * 100, '%')
+  
+  p12 <- ggplot(dat_reduced %>% filter(L3 == 0), aes(x = L1, y = L2, fill = value)) +
+    geom_tile() +
+    scale_fill_viridis_c(limits = color_limits) +
+    scale_x_continuous(expand = c(0,0), breaks = x, name = 'Reduction in production waste', labels = paste0(x, '%')) +
+    scale_y_continuous(expand = c(0,0), breaks = x, name = 'Reduction in retail waste', labels = paste0(x, '%')) +
+    ggtitle('Reduction in production and retail waste,\nholding consumer waste constant') +
+    theme(legend.position = 'none', plot.title = element_text(size = 10, face = 'plain'), axis.text = element_text(size = 10)) +
+    panel_border(colour = 'black')
+  
+  p13 <- ggplot(dat_reduced %>% filter(L2 == 0), aes(x = L1, y = L3, fill = value)) +
+    geom_tile() +
+    scale_fill_viridis_c(limits = color_limits) +
+    scale_x_continuous(expand = c(0,0), breaks = x, name = 'Reduction in production waste', labels = paste0(x, '%')) +
+    scale_y_continuous(expand = c(0,0), breaks = x, name = 'Reduction in consumer waste', labels = paste0(x, '%')) +
+    ggtitle('Reduction in production and consumer waste,\nholding retail waste constant') +
+    theme(legend.position = 'none', plot.title = element_text(size = 10, face = 'plain'), axis.text = element_text(size = 10)) +
+    panel_border(colour = 'black')
+  
+  p23 <- ggplot(dat_reduced %>% filter(L1 == 0), aes(x = L2, y = L3, fill = value)) +
+    geom_tile() +
+    scale_fill_viridis_c(limits = color_limits, name = 'Impact relative\n to baseline', breaks = color_breaks, labels = color_labels) +
+    scale_x_continuous(expand = c(0,0), breaks = x, name = 'Reduction in retail waste', labels = paste0(x, '%')) +
+    scale_y_continuous(expand = c(0,0), breaks = x, name = 'Reduction in consumer waste', labels = paste0(x, '%')) +
+    ggtitle('Reduction in retail and consumer waste,\nholding production waste constant') +
+    theme(plot.title = element_text(size = 10, face = 'plain'), axis.text = element_text(size = 10)) +
+    panel_border(colour = 'black')
+  
+  joint_title <- ggdraw() + draw_label(main_title, fontface='bold')
+  
+  p_row <- plot_grid(plotlist = list(p12, p13, p23), nrow = 1, rel_widths = c(1, 1, 1.3)) 
+  
+  p_final <- plot_grid(joint_title, p_row, ncol=1, rel_heights=c(0.1, 1))
+  
+  return(p_final)
+  
+}
 
-ggplot(dat_ghg_reduced %>% filter(L1 == 0), aes(x = L2, y = L3, fill = value)) +
-  geom_tile() +
-  scale_fill_viridis_c(limits = c(0.9, 1), name = 'Impact relative\n to baseline', breaks = c(.9, .95, 1), labels = c('90%', '95%', '100%')) +
-  scale_x_continuous(expand = c(0,0), breaks = x, name = 'Reduction in retail waste', labels = paste0(x, '%')) +
-  scale_y_continuous(expand = c(0,0), breaks = x, name = 'Reduction in consumer waste', labels = paste0(x, '%')) +
-  ggtitle('GHG reduction by FLW reduction', 'reduction in retail and consumer waste, holding production waste constant') 
+# Print minima, where at least one category is zero
+grid_result %>% 
+  filter(L1 == 0 | L2 == 0 | L3 == 0) %>%
+  group_by(impact_category) %>% 
+  summarize(min_relative=min(value)/max(value)) %>% 
+  print(n=nrow(.))
+
+lims <- c(0.87, 1)
+brks <- c(0.9, 0.95, 1)
+p_ghg <- threegrids('co2', 'GHG reduction with FLW reduction', lims, brks)
+p_land <- threegrids('land', 'Land use reduction with FLW reduction', lims, brks)
+p_enrg <- threegrids('enrg', 'Energy use reduction with FLW reduction', lims, brks)
+p_watr <- threegrids('watr', 'Water use reduction with FLW reduction', lims, brks) 
+
+# Draw pngs of the results
+ggsave(file.path(fp_fig, 'reduction_grid_GHG.png'), p_ghg, height = 5, width = 15, dpi = 300)
+ggsave(file.path(fp_fig, 'reduction_grid_land.png'), p_land, height = 5, width = 15, dpi = 300)
+ggsave(file.path(fp_fig, 'reduction_grid_energy.png'), p_enrg, height = 5, width = 15, dpi = 300)
+ggsave(file.path(fp_fig, 'reduction_grid_water.png'), p_watr, height = 5, width = 15, dpi = 300)
