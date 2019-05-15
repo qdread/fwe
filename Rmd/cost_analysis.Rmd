@@ -1,7 +1,9 @@
 ---
 title: 'FLW scenarios: methods and preliminary results'
 author: "Quentin D. Read"
-date: "May 10, 2019"
+date: "May 15, 2019"
+header-includes:
+  - \usepackage{caption}
 output: pdf_document
 ---
 
@@ -13,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 The motivating question for this study is: how cost-effective are interventions targeted at reducing food loss and waste (FLW interventions) at different stages of the food supply chain (FSC)? Here, we define cost as the annual monetary cost of implementing an intervention at the national scale, and we measure effectiveness in terms of percentage reduction in environmental impact across multiple categories.
 
-# Models and data
+# Description of models and data
 
 In order to answer the question above, we need the following:
 
@@ -23,10 +25,136 @@ In order to answer the question above, we need the following:
 
 ## 1. Modeling environmental impact
 
-Currently, we are using the EPA's USEEIO model to estimate environmental impacts at each stage of the FSC. This model has the advantage of being very detailed in terms of environmental impact categories. The satellite tables that the EPA researchers compiled include values across 389 industries by 21 environmental impact categories that represent the incremental increase of environmental impact in that category for each additional \$1 of output produced by that industry. For example to produce an additional \$1 of output by the bread industry results in a certain amount of GHG emissions, land use, N runoff, water use, etc. In some cases the satellite tables include variable per-unit impacts depending on the state in which the commodity is produced, but currently we are using US-wide aggregated values.
+An environmentally extended input-output model is appropriate to model the environmental impact of the food supply chain, accounting for direct and indirect impacts. 
+The model consists of a matrix of coefficients representing economic flows between industry sectors, a final demand vector representing the final industry output available to consumers after accounting intermediate uses of gross industry output by other industrial processes, and satellite tables including the direct environmental impact of producing a given amount of output by each industry. 
+The model assumes strictly linear relationships between input, output, and impact. For example, doubling the final demand would double the amount of inputs required to satisfy that demand, and would also double the environmental impacts generated.
 
-The disadvantage of the EPA model is that it was not designed in particular to 
+The most prominent source of data used to parameterize input-output models in the United States are the Bureau of Economic Analysis' input-output accounts. 
+Benchmark input-output tables are released every 5 years, with 2012 being the most recent year where the fully processed data are available. 
+These tables show the relationships among around 400 industries. For intervening years, the Bureau of Labor Statistics produces input-output tables at a somewhat coarser level of aggregation, with around 80 industries.
+
+Currently, we are using the EPA's USEEIO model (Yang et al. 2017) to estimate environmental impacts at each stage of the FSC. This model has the advantage of being very detailed in terms of environmental impact categories. 
+The satellite tables that the EPA researchers compiled include values across 389 industries by 21 environmental impact categories that represent the incremental increase of environmental impact in that category for each additional \$1 of output produced by that industry. 
+For example, to produce an additional \$1 of output by the bread industry results in a certain amount of GHG emissions, land use, N runoff, water use, etc. The satellite table includes the direct impacts of the bread industry, but if bread final demand is increased in the final model, the other indirect impacts of bread production (e.g., from the wheat farming sector) would be included.
+In some cases the satellite tables include variable per-unit impacts depending on the state in which the commodity is produced, but currently we are using US-wide aggregated values.
+
+The disadvantage of the EPA model is that it was not designed in particular to study the impacts of the FSC. 
+Of course the FSC is included implicitly but some sectors include both food and non-food components, and it is hard to isolate the FSC-specific components of impact. 
+In addition, I am not sure that the links between the FSC stages are directly accounted for -- for example it does not represent the grocery and restaurant sectors as directly purchasing output from food processing sectors, which does not seem to capture the input-output relationships correctly. 
+However, work done at ERS (Canning et al. 2016) that was involved with creating the [Food Dollar Series](https://www.ers.usda.gov/data-products/food-dollar-series/) may be useful to tease apart the FSC impacts. 
+The ERS study starts with the BEA benchmark tables and uses a matrix reduction procedure to transform the ~400 by 400 matrix to a matrix with rows and columns representing 8 stages of the FSC. 
+The flows among the other stages are aggregated within the FSC cells. In addition, the ERS study corrects for food imports and exports in various ways. 
+Currently I am trying to get more information on this model from the authors so that we can replicate some of their methods, which would make our model more interpretable. In principle the matrix reduction done by ERS could be applied to the EPA model which would then combine the high number of environmental impact categories with an input-output table that explicitly represents FSC stages. If we do use the ERS methods, the results may change, reflecting the new methodology.
 
 ## 2. Estimating baseline rates of FLW
 
+There are a few different data sources to estimate the loss rates for different food commodity groups at different stages of the FSC. The FAO (Gustavsson et al. 2011, 2013) broke down the FSC into five stages and estimated the loss rates for 11 food groups at each stage. Data for North America and Oceania are pooled, but for most of those data sources, the USA was used as representative of the region. For now, the FAO values are being used. However, in the future I will replace them with USDA LAFA data which are more highly resolved and more specific to the USA.
+
 ## 3. Estimating the cost of reducing FLW
+
+This component of the required data does not have one or a few central data sources. It must be compiled from as many peer-reviewed and gray literature sources as possible. For one thing, there are relatively few data sources combining both efficacy of a particular FLW reduction with information on how much the intervention cost to implement, and at what scale.
+
+# Estimating environmental impacts of the food supply chain under different levels of food loss and waste
+
+## 1. Isolating the FSC elements of the USA's economy
+
+I assigned each industry sector in the 389-by-389 BEA input-output table to either belong to the FSC or not. Some sectors are aggregated such that they only partially belong to the FSC. 
+For example, the wholesale trade sector aggregates food and non-food wholesale industries. I found various data sources for total revenues of the more finely resolved sectors in order to assign a proportion FSC value to those aggregated sectors. 
+In addition, I grouped the FSC sectors into FSC stages. For the current analysis I defined three stages: stage 1 (production) represents farming and food processing, stage 2 (retail) represents retail and distribution, and stage 3 (consumption) includes residential consumption and the various parts of the food service industry. 
+As mentioned above, this may not correspond directly to the loss stages in the FAO or LAFA data because the food commodity groups do not necessarily pass through the processing and retail stages before reaching consumers, as represented in the EEIO model. This is something that needs improvement. 
+
+## 2. Weighting each FSC sector by composition of food commodity groups
+
+In order to determine the baseline FLW rate for each sector, it is necessary to determine what food commodity groups comprise it. 
+I roughly estimated this for this preliminary work by assuming that each FSC sector is composed in equal proportions of one or more food commodity groups. 
+This could be improved by doing better weightings within sectors by food type, but this would require a lot of effort and not necessarily make the results more accurate if the weightings are not correct.
+
+## 3. Computing changes in demand associated with reductions in FLW, and altering model structure to reflect those changes
+
+Here, we assume that both intermediate and final demand of a particular sector are decreased when food loss and waste in that sector are reduced. For example, if the retail sector generates 10% less waste but continues to satisfy the same amount of demand, this should be applied both to its final uses and to the intermediate uses by other sectors. 
+This requires changes to the coefficients in the make and use tables that underlie the EEIO model. I wrote a routine to modify the coefficients to create counterfactual make and use tables and correctly recalculate all the row and column totals so that they agree with one another.
+
+The change to intermediate and final demand amounts to achieve a given rate of FLW reduction is:
+
+$$d_{new}  = d_{old}\bigg(1 + p \Big(\frac{1 - W_{old}}{1 - W_{old}(1 - r)} - 1\Big)\bigg)$$
+where $W_{old}$ is the baseline rate of waste in that sector, $r$ is the proportion by which the waste rate is reduced, and $p$ is the proportion of that sector's output that is associated with the FSC. As mentioned above $p = 1$ for many sectors such as bread production but $p < 1$ for sectors like warehousing and wholesaling.
+
+After applying the changes to the final demand vectors and make and use tables and rebuilding the model, I evaluated the model which results in a vector of environmental impacts across 21 different categories. Below, only a few selected categories are shown in detail.
+
+## 4. Generating FSC-wide impact estimates for different levels of FLW
+
+Ignoring the cost or feasibility of reducing FLW for the moment, I ran the model for all 10% increments of food waste reduction from 0% to 100% for each of the three FSC stages. 
+For all impact categories, I calculated the environmental impact associated with satisfying all food system-related demand relative to the baseline impact (Fig. 1-4). 
+The individual FSC sectors differ significantly in terms of intensity of impact in the different categories, leading to dramatically different results in terms of which FSC stage reduces impact the most by reducing FLW. 
+For example, GHG emission reduction benefits can be achieved regardless of the FSC stage targeted (Fig. 1), but energy use reduction benefits are highest when FLW reduction efforts target the consumer stage (Fig. 4).
+
+![GHG reduction at different levels of FLW reduction across supply chain](Q:/figures/reduction_grid_GHG.png)
+
+![Land use reduction at different levels of FLW reduction across supply chain](Q:/figures/reduction_grid_land.png)
+
+![Water use reduction at different levels of FLW reduction across supply chain](Q:/figures/reduction_grid_water.png)
+
+![Energy use reduction at different levels of FLW reduction across supply chain](Q:/figures/reduction_grid_energy.png)
+
+\newpage
+
+An alternative way to show the tradeoffs among impact categories resulting from where we reduce waste is shown in the following "radar charts." In these charts, points further from the center indicate greater *reduction* of impacts in that category. 
+The first chart shows impact reduction when waste is reduced by 25% in a single stage (Fig. 5). Reducing only consumer-level waste reduces energy use the most, while reducing producer-level waste reduces water use the most, for example. 
+However, if a total of 25% waste reduction is spread evenly across 2 or 3 stages, the total environmental impact is reduced more evenly across categories (Fig. 6).
+
+![Effect of FLW reduction at a single stage](Q:/figures/fao_radarplot_1stage.png){ width=65% }
+
+![Effect of FLW reduction spread across 2 to 3 stages](Q:/figures/fao_radarplot_2and3stages.png){ width=65% }
+
+\newpage
+
+# Determinining the optimal allocation of funds to reduce food loss and waste to minimize environmental impacts
+
+## Cost curves for each stage
+
+Because I have not yet assembled adequate data to parameterize the intervention cost curves for each FSC stage, *the figures presented beyond this point are not based on actual data and are only to illustrate that the method works!* 
+I used a logistic functional form to create a "fake" cost curve for each of the three FSC stages, that is applied separately to each of the sectors within that stage. 
+For each sector, the rate of food waste $W$ as a function of the amount of money $x$ invested in waste reduction is expressed as follows:
+
+$$W(x) = A + \frac{W_{u} - A}{(1 + e^{-Bx})^{\frac{1}{\nu}}}; A = \frac{W_{0} - 2^{\frac{-1}{\nu}}W_{u}}{1 - 2^{\frac{-1}{\nu}}}$$
+
+Here, $W_{0}$ is the baseline waste rate for the sector (rate of food waste if $x = 0$) and $W_{u}$ is the unavoidable waste rate for the sector (lower asymptote or amount that no FLW reduction efforts can eliminate). $B$ and $\nu$ are parameters associated with each stage. 
+As $B$ increases, the slope of the cost curve becomes steeper, indicating that there is a faster rate of return on investment in FLW reduction. 
+A value of $\nu = 1$ indicates no startup costs, such that the fastest marginal rate of FLW reduction is at $x = 0$. As $\nu$ decreases, there is a higher initial cost before reductions in the waste rate occur.
+
+For this toy example, I used $W_{0}$ determined from the FAO data for each sector. I made up values for the other parameters. I set $W_{u}$ to 25% of the value of $W_{0}$, representing that a fourth of FLW in each sector is unavoidable. I selected the following values for $B$ and $\nu$:
+
+Stage           | $B$         | $\nu$
+----------------|-------------|-------
+Production      | 0.005       | 0.1
+Retail          | 0.005       | 0.2
+Consumption     | 0.002       | 1
+
+This indicates that the rate of return on investment is faster for the production and retail stages, but that there is some initial cost involved for those two stages. The rate is slower for the consumer stage but there are no initial costs. These values may not be realistic and do not represent any actual data, especially with regard to plausible values of $x$ at which the waste rate gets close to the asymptote line. Figure 7 shows the fake cost curves.
+
+![Cost curves for each sector using the parameters for each stage](Q:/figures/costcurve_fake_example.png){ width=70% }
+
+## Results of optimization
+
+I ran an optimization with an objective function representing the total environmental impact as a function of the vector $x = (x_1, x_2, x_3)$ where the three values are the amounts of money invested in FLW reduction at each of the supply chain stages. Each time the objective function is evaluated, the following happens: 
+
+1. The amount of money invested in each stage is divided evenly among the sectors making up each stage. 
+2. The waste rate at each stage is calculated using the logistic cost curve.
+3. The final and intermediate demand changes associated with the reduced waste rates for each sector are calculated.
+4. The EEIO model is rebuilt with the new final and intermediate demands.
+5. The EEIO model is evaluated and the environmental impact value for the chosen impact category across the entire food system is extracted.
+
+The optimization is subject to the constraint that $x_1 + x_2 + x_3 = C_{total}$, representing the total amount of money available for FLW reduction.
+
+I ran a separate optimization for four different values of $C_{total}$: 500, 1000, 2000, and 5000, which would be divided among the 3 FSC stages and then equally among the sectors making up each stage (11 production sectors, 20 retail sectors, and 8 consumption sectors). For each value of $C_{total}$, I optimized for minimizing GHG emissions, land use, water use, and energy use, for a total of 16 optimizations.
+
+Taking GHG emissions as an example, the optimal waste rate across all sectors that is achieved with the cost allocation that minimizes emissions shows interesting patterns as total available FLW reduction funds change (Fig. 8). 
+For total funds of 500 and 1000, the optimal solution is to target all FLW reduction efforts at the consumer stage, due to the lack of "startup" costs required to achieve significant reductions at that stage. 
+For total funds of 2000, the optimal solution is to invest all funds into the retail stage. 
+Above 2000, the retail waste has already been reduced to the "unavoidable" level so it is optimal to invest additional funds in reducing FLW at the producer stage. If $C_{total}$ is increased still further, eventually funds are allocated to reduce all avoidable waste in all categories (not shown).
+
+![Waste rates minimizing GHG emissions](Q:/figures/costcurve_fake_example_ratesbycost.png){ width=80% }
+
+The optimal solution for different values of $C_{total}$ is very different depending on what environmental impact category we aim to minimize, because the different FSC industry sectors vary in their intensity across impact categories (Fig. 9). 
+
+![Optimal allocations across total cost values and across impact categories](Q:/figures/costcurve_fake_example_allocations4impacts.png)
