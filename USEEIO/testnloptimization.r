@@ -207,8 +207,7 @@ waste_rate_df %>%
   geom_line(color = 'black') + geom_point() +
   ggtitle('Waste rates minimizing GHG emissions given total cost') +
   theme_bw() +
-  theme(axis.title.x = element_blank(), 
-        panel.grid.major.x = element_blank(), 
+  theme(panel.grid.major.x = element_blank(), 
         panel.grid.minor.x = element_blank(),
         legend.position = 'bottom')
 ggsave('/nfs/qread-data/figures/costcurve_fake_example_ratesbycost.png', height = 6, width = 6, dpi = 300)
@@ -223,8 +222,7 @@ ggplot(optimal_df, aes(x = total_cost, y = cost, color = stage, group = stage)) 
   scale_color_brewer(type='qual', palette='Set2') +
   ggtitle('Optimal allocation of FLW reduction funds to minimize GHG emissions', 'for a number of possible total investments') +
   theme_bw() +
-  theme(axis.title.x = element_blank(), 
-       panel.grid.major.x = element_blank(), 
+  theme(panel.grid.major.x = element_blank(), 
        panel.grid.minor.x = element_blank(),
        legend.position = 'bottom')
 ggsave('/nfs/qread-data/figures/costcurve_fake_example_allocationsbycost.png', height = 6, width = 6, dpi = 300)
@@ -261,8 +259,7 @@ ggplot(optimal_df_all, aes(x = total_cost, y = cost, color = stage, group = stag
   scale_color_brewer(type='qual', palette='Set2') +
   ggtitle('Optimal allocation of FLW reduction funds to minimize environmental impact', 'for a number of possible total investments') +
   theme_bw() +
-  theme(axis.title.x = element_blank(), 
-        panel.grid.major.x = element_blank(), 
+  theme(panel.grid.major.x = element_blank(), 
         panel.grid.minor.x = element_blank(),
         legend.position = 'bottom')
 ggsave('/nfs/qread-data/figures/costcurve_fake_example_allocations4impacts.png', height = 9, width = 9, dpi = 300)
