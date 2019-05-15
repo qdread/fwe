@@ -228,3 +228,41 @@ ggplot(optimal_df, aes(x = total_cost, y = cost, color = stage, group = stage)) 
        panel.grid.minor.x = element_blank(),
        legend.position = 'bottom')
 ggsave('/nfs/qread-data/figures/costcurve_fake_example_allocationsbycost.png', height = 6, width = 6, dpi = 300)
+
+
+# Run optimization with other categories ----------------------------------
+
+# Do with several total cost amounts
+Ctotal_vec <- c(500, 1000, 2000, 5000)
+land_name <- "resource use/land/m2*yr"
+water_name <- "resource use/watr/m3"
+energy_name <- "resource use/enrg/mj"
+
+optim_land <- map(Ctotal_vec, ~ solnp(pars = rep(.x/3, 3), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = land_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, sector_stage_codes = naics_foodsystem$stage_code, Ctotal = .x))
+optim_water <- map(Ctotal_vec, ~ solnp(pars = rep(.x/3, 3), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = water_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, sector_stage_codes = naics_foodsystem$stage_code, Ctotal = .x))
+optim_energy <- map(Ctotal_vec, ~ solnp(pars = rep(.x/3, 3), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = energy_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, sector_stage_codes = naics_foodsystem$stage_code, Ctotal = .x))
+
+makeoptimdf <- function(o) map2_dfr(o, Ctotal_vec, ~ data.frame(total_cost = .y, stage = factor(c('production', 'retail', 'consumption'), levels = c('production', 'retail', 'consumption')), cost = .x$pars))
+
+optimal_df_ghg <- makeoptimdf(optim_bytotals)
+optimal_df_land <- makeoptimdf(optim_land)
+optimal_df_water <- makeoptimdf(optim_water)
+optimal_df_energy <- makeoptimdf(optim_energy)
+
+optimal_df_all <- map2_dfr(c('GHG','land','water','energy'), list(optimal_df_ghg, optimal_df_land, optimal_df_water, optimal_df_energy), ~ cbind(category = .x, .y)) %>%
+  mutate(cost = round(cost))
+
+# Plot all optima.
+ggplot(optimal_df_all, aes(x = total_cost, y = cost, color = stage, group = stage)) +
+  facet_wrap(~ category) +
+  geom_point(size = 2) + geom_line() +
+  scale_x_continuous(name = 'Total invested in FLW reduction', breaks = c(0, 500, 1000, 2000, 5000)) +
+  scale_y_continuous(name = 'Amount invested in each stage') +
+  scale_color_brewer(type='qual', palette='Set2') +
+  ggtitle('Optimal allocation of FLW reduction funds to minimize environmental impact', 'for a number of possible total investments') +
+  theme_bw() +
+  theme(axis.title.x = element_blank(), 
+        panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        legend.position = 'bottom')
+ggsave('/nfs/qread-data/figures/costcurve_fake_example_allocations4impacts.png', height = 9, width = 9, dpi = 300)
