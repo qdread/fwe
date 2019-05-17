@@ -40,11 +40,17 @@ In some cases the satellite tables include variable per-unit impacts depending o
 
 The disadvantage of the EPA model is that it was not designed in particular to study the impacts of the FSC. 
 Of course the FSC is included implicitly but some sectors include both food and non-food components, and it is hard to isolate the FSC-specific components of impact. 
-In addition, I am not sure that the links between the FSC stages are directly accounted for -- for example it does not represent the grocery and restaurant sectors as directly purchasing output from food processing sectors, which does not seem to capture the input-output relationships correctly. 
+In addition, I am not sure that the links between the FSC stages are directly accounted for -- for example it only represents the grocery and restaurant sectors as purchasing a relatively small amount of output from food processing sectors, which does not seem to capture the input-output relationships correctly. Some of the output of those processing sectors is ascribed directly to personal consumption expenditures (final demand), rather than being recorded as being sold by a retail establishment. This does not seem realistic because it does not seem likely that, say, the breakfast cereal industry sells most of its output directly to consumers.
 However, work done at ERS (Canning et al. 2016) that was involved with creating the [Food Dollar Series](https://www.ers.usda.gov/data-products/food-dollar-series/) may be useful to tease apart the FSC impacts. 
 The ERS study starts with the BEA benchmark tables and uses a matrix reduction procedure to transform the ~400 by 400 matrix to a matrix with rows and columns representing 8 stages of the FSC. 
 The flows among the other stages are aggregated within the FSC cells. In addition, the ERS study corrects for food imports and exports in various ways. 
 Currently I am trying to get more information on this model from the authors so that we can replicate some of their methods, which would make our model more interpretable. In principle the matrix reduction done by ERS could be applied to the EPA model which would then combine the high number of environmental impact categories with an input-output table that explicitly represents FSC stages. If we do use the ERS methods, the results may change, reflecting the new methodology.
+
+### Pre-processing steps required before running model
+
+The EEIO model was originally built with the 2007 BEA benchmark input-output tables. Although the model was released in 2017, the benchmark tables for 2012 were not yet available at that time because of the long time lag required to produce the tables. Some of the NAICS classifications changed between 2007 and 2012 so I mapped the new codes to the old codes. Some needed to be split and some needed to be aggregated. This was done using the ratios from the 2007 tables where necessary.
+
+It would be possible to update the model to an even more recent year than 2012. Either the yearly input-output tables with fewer sectors could be disaggregated with the 2012 table as a key, or the consumer price index could be used to update the gross outputs of the 2012 table to 2018 prices then the table could be renormalized using the updated totals. If we deem necessary, I could update those values.
 
 ## 2. Estimating baseline rates of FLW
 
@@ -158,3 +164,14 @@ Above 2000, the retail waste has already been reduced to the "unavoidable" level
 The optimal solution for different values of $C_{total}$ is very different depending on what environmental impact category we aim to minimize, because the different FSC industry sectors vary in their intensity across impact categories (Fig. 9). 
 
 ![Optimal allocations across total cost values and across impact categories](Q:/figures/costcurve_fake_example_allocations4impacts.png)
+
+\newpage
+
+# Code pipeline used for analysis
+
+This is documentation of the scripts on the [FWE GitHub repository](https://github.com/qdread/fwe) that are needed to do this analysis. The underlying data is on the SESYNC server at `nfs/fwe-data/`.
+
+* `create_2012_bea.r`: This script maps the 2007 sector codes from the BEA input-output benchmark table to the 2012 codes and retotals the make and use tables for 2012. In other words it creates 2012 make-use tables with 2007's sectoral classification. This calls some functions in `reaggregate_mat.r`.
+* `load_scenario_data.r`: This script loads the baseline food waste rate data (currently sourced from FAO) and a table that contains the data for each of the BEA/NAICS sectors including which FSC stage they are classified in, proportion of food outputs for sectors that are only partially in the FSC, and what FAO categories each sector maps to. Later this should include which LAFA categories each sector maps to. This script also sources the Python script to build the USEEIO model, `USEEIO2012_buildfunction.R` and an R script to modify the make and use tables given an alternative intermediate demand scenario, `modify_make_and_use.r`. It also loads the formatted make and use tables created in the previous script. Finally, it defines a function which accepts a vector of waste reduction values across all sectors as input, modifies the make and use tables accordingly, builds the USEEIO model, runs it also with modified final demand, and returns the LCIA impact values as output.
+* `fao_grid_scenarios.r`: This script runs the model for all 10% waste reduction increments, producing the grid plots above.
+* `testnloptimization.r`: This script runs the nonlinear optimization using the R package `Rsolnp` using the fake cost curves shown above, and plots the results.
