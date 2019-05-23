@@ -18,10 +18,10 @@ fp_temp <- ifelse(dir.exists('~/Documents/temp'), '~/Documents/temp', '/tmp')
 fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
 fp_useeio <- ifelse(dir.exists('~/Dropbox'), '~/Dropbox/projects/foodwaste/Code/USEEIO-master', '/research-home/qread/USEEIO')
 
-source(file.path(fp_github, 'USEEIO/modify_retotal_make_and_use.r'))
+source(file.path(fp_github, 'USEEIO/modify_make_and_use.r'))
 
 faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages.xlsx'), sheet = 1)
-naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_crosswalk_allproportions.csv'), stringsAsFactors = FALSE)
+naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_lafa_qfahpd_crosswalk_modified.csv'), stringsAsFactors = FALSE)
 
 # Step 1: Get baseline loss rate for each row in BEA table ----------------
 
@@ -29,29 +29,23 @@ naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_crosswalk_allproportions.csv
 # Convert this to get new loss rate for each scenario
 
 naics_foodsystem <- naicsCW %>% 
-  filter(food_system %in% c('partial', 'y')) %>%
+  filter(food_system %in% c('partial', 'y'), nchar(FAO_category) > 0) %>%
   arrange(stage) %>%
+  mutate(proportion_food = if_else(is.na(proportion_food), 1, proportion_food)) %>%
   mutate(stage_code = case_when(
     stage %in% 'agriculture' ~ 'L1',
     stage %in% 'processing' ~ 'L2',
-    stage %in% c('retail', 'wholesale') ~ 'L3',
-    stage %in% 'foodservice' ~ 'L4a',
-    stage %in% 'institutional' ~ 'L4b'
+    TRUE ~ 'L3'
   ))
 
-# Get baseline waste rate for each sector using the stage it belongs to and weighted average of the food categories in that sector
-# Original version has equal proportions of all relevant food categories in each sector
-# Later will be replaced with a correct weighted average
-faopct <- faopct %>%
-  mutate(L1 = loss_ag_production,
-         L2 = 1 - (1 - loss_handling_storage) * (1 - loss_processing_packaging),
-         L3 = loss_distribution,
-         L4a = loss_consumption,
-         L4b = loss_consumption)
+# Parse the FAO category comma separated lists of numbers into vectors.
+FAO_category_vectors <- sapply(naics_foodsystem$FAO_category, function(x) {
+  if (nchar(x) == 0) return(NA)
+  eval(parse(text = paste0('c(',x,')')))
+})
 
-waste_rate_bysector <- t(faopct[, naics_foodsystem$stage_code])
-fao_category_weights <- naics_foodsystem %>% select(cereals:eggs)
-baseline_waste_rate <- rowSums(waste_rate_bysector * fao_category_weights) / rowSums(fao_category_weights)
+# Get baseline waste rate for each one
+baseline_waste_rate <- map2_dbl(FAO_category_vectors, 1:nrow(naics_foodsystem), ~ mean(faopct[.x, naics_foodsystem$stage_code[.y]])) %>% as.numeric
 
 # Source Python script which runs model
 # If run on server, specify we're using python3
@@ -73,12 +67,11 @@ if (!dir.exists(file.path(fp_temp, 'fwe'))) dir.create(file.path(fp_temp, 'fwe')
 fp_mu <- file.path(fp_temp, 'fwe')
 
 # Master function to run steps 3 through 7
-# Takes several inputs: v is the demand vector, c_mod are the columns to modify (same length as v), r_mod are the rows to modify, and i is the name of the scenario
+# v is the demand vector and i is the name of the scenario
 
 get_eeio_result <- function(v, i = 'no_name') {
   # Step 3. Create modified make and use tables for each scenario and write them to CSVs.
-  MU_modified_intermediate <- modify_make_and_use(M, U, R = v, c_int_mod = c_mod, c_final_mod = 'F01000', r_mod = r_mod)
-  MU_modified <- retotal_make_and_use(M = MU_modified_intermediate$M, U = MU_modified_intermediate$U)
+  MU_modified <- modify_and_renormalize_make_and_use(M, U, v, naics_foodsystem$BEA_389_code)
   write.csv(MU_modified$M, file = file.path(fp_mu, paste0('make_', i, '.csv')))
   write.csv(MU_modified$U, file = file.path(fp_mu, paste0('use_', i, '.csv')))
   # Step 4. Build USEEIO with those make and use tables

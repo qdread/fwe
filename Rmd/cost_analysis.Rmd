@@ -85,6 +85,8 @@ The change to intermediate and final demand amounts to achieve a given rate of F
 $$d_{new}  = d_{old}\bigg(1 + p \Big(\frac{1 - W_{old}}{1 - W_{old}(1 - r)} - 1\Big)\bigg)$$
 where $W_{old}$ is the baseline rate of waste in that sector, $r$ is the proportion by which the waste rate is reduced, and $p$ is the proportion of that sector's output that is associated with the FSC. As mentioned above $p = 1$ for many sectors such as bread production but $p < 1$ for sectors like warehousing and wholesaling.
 
+If we simulate reduction in FLW in a particular sector, say production, this has two different impacts on the structure of the use table. For instance, say bread production, a sector with 100% FSC-related output, has a baseline loss rate of 20%. If we reduce the loss rate by 25% in that sector, we have a new loss rate of 15%. Using the equation above, the bread sector now demands 94.1% of the amount of inputs to produce the same amount of outputs (i.e., it is more efficient due to the reduction in FLW). We modify the use table accordingly by multiplying all the intermediate inputs to the bread production sector by 0.941. In addition, we multiply the **this paragraph is incomplete -- I will revise this once I come up with the newer scenario analysis stuff.**
+
 After applying the changes to the final demand vectors and make and use tables and rebuilding the model, I evaluated the model which results in a vector of environmental impacts across 21 different categories. Below, only a few selected categories are shown in detail.
 
 ## 4. Generating FSC-wide impact estimates for different levels of FLW
