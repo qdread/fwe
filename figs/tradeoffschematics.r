@@ -205,3 +205,42 @@ ggplot(flwdat, aes(x = Source, y = Weight, fill = Source)) +
   theme(panel.grid = element_blank(),
         legend.position = 'none')
 ggsave('~/Dropbox/sesync/firstyear_talk/flw_estimate_barchart.png', height = 4, width = 5, dpi = 300)
+
+# Version for graphical abstract.
+library(tidyverse)
+flwdat <- data.frame(Source = c('EPA\n(2016)', 'NRDC\n(2012)', 'ReFED\n(2016)', 'FAO\n(2011)', 'USDA\n(2014)'),
+                     Weight = 2.204 * c(111, 253, 176, 285, 188)) %>%
+  mutate(Source = factor(Source, levels = Source[order(Weight)]))
+
+p_abs <- ggplot(flwdat, aes(x = Source, y = Weight, fill = Source)) +
+  geom_col() +
+  geom_text(aes(label = Source), y = 50, color = 'white') +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 640), name = 'Food waste\n(pounds per person per year)') +
+  scale_fill_brewer(type = 'qual', palette = 'Set1') +
+  theme_classic() +
+  theme(panel.grid = element_blank(),
+        legend.position = 'none',
+        axis.text.x = element_blank(), axis.title.x = element_blank(), axis.ticks.x = element_blank(),
+        panel.background = element_rect(fill = "transparent", colour = NA), 
+        plot.background = element_rect(fill = "transparent", colour = NA))
+ggsave('~/google_drive/SESYNC Food Waste/Synthesis_MS/imgs for abstract/barchart_forabstract.png', p_abs, height = 3, width = 4, dpi = 300)
+
+# Disposal to landfill.
+disposaldat <- data.frame(destination = c('compost', 'bioenergy', 'landfill'), weight = c(2.1, 7.4, 30.3))
+p_abs_donut <- ggplot(disposaldat, aes(x = 2, y = weight, fill = destination)) +
+  geom_bar(stat = 'identity', color = 'white') +
+  coord_polar(theta = 'y', start = 0) +
+  xlim(1, 2.5) +
+  scale_fill_brewer(type = 'qual', palette = 'Set1') +
+  theme_void() +
+  theme(legend.title = element_blank(),
+        panel.background = element_rect(fill = "transparent", colour = NA), 
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.background = element_rect(fill = "transparent"), # get rid of legend bg
+        legend.box.background = element_rect(fill = "transparent", colour = NA),
+        legend.text = element_text(size = 16))
+ggsave('~/google_drive/SESYNC Food Waste/Synthesis_MS/imgs for abstract/donutchart_forabstract.png', p_abs_donut, height = 3, width = 4, dpi = 300)
+
+# RGB
+hexcodes <- RColorBrewer::brewer.pal(5, 'Set1')
+col2rgb(hexcodes)

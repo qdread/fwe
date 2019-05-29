@@ -9,11 +9,9 @@ demand_reductions <- demand_change_fn(W0 = baseline_waste_rate, r = 0.5, p = nai
 
 
 # First example: only change intermediate (scenarios 1,2,3)
+# =========================================================
 # v <- vector of demand factors
 # c_mod <- vector of columns to change, same length as v
-
-MU_modified_intermediate <- modify_make_and_use(M, U, R = v, c_int_mod = c_mod, c_final_mod = character(0), r_mod = character(0))
-MU_modified <- retotal_make_and_use(M = MU_modified_intermediate$M, U = MU_modified_intermediate$U)
 
 # Scenario 1
 v <- demand_reductions[naics_foodsystem$stage_code == 'L1']
