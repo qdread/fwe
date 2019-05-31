@@ -214,3 +214,17 @@ optim_land <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eq
 optim_water <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = water_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = fake_unavoidable_waste_rate, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
 
 optim_energy <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = energy_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = fake_unavoidable_waste_rate, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+
+# Process output and write.
+stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
+makeoptimdf <- function(o) map2_dfr(o, Ctotal_vec, ~ data.frame(total_cost = .y, stage = factor(stage_full_names, levels = stage_full_names), cost = .x$pars))
+
+optimal_df_ghg <- makeoptimdf(optim_ghg)
+optimal_df_land <- makeoptimdf(optim_land)
+optimal_df_water <- makeoptimdf(optim_water)
+optimal_df_energy <- makeoptimdf(optim_energy)
+
+optimal_df_all <- map2_dfr(c('GHG','land','water','energy'), list(optimal_df_ghg, optimal_df_land, optimal_df_water, optimal_df_energy), ~ cbind(category = .x, .y)) %>%
+  mutate(cost = round(cost))
+
+write.csv(optimal_df_all, '/nfs/qread-data/scenario_results/sixstage_scenario_fake_opt_results.csv', row.names = FALSE)
