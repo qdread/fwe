@@ -9,6 +9,7 @@ library(tidyverse)
 library(XLConnect)
 library(reticulate)
 library(furrr)
+library(rslurm)
 
 fp_fwe <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/fwe', '/research-home/qread/fwe')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
@@ -50,6 +51,12 @@ waste_rate_bysector <- t(faopct[, naics_foodsystem$stage_code])
 fao_category_weights <- naics_foodsystem %>% select(cereals:eggs)
 baseline_waste_rate <- rowSums(waste_rate_bysector * fao_category_weights) / rowSums(fao_category_weights)
 
+# Load make and use tables
+M <- read.csv(file.path(fp_bea, 'make2012.csv'), row.names = 1, check.names = FALSE)
+U <- read.csv(file.path(fp_bea, 'use2012.csv'), row.names = 1, check.names = FALSE)
+
+# Load demand codes
+all_codes <- read.csv(file.path(fp_crosswalks, 'all_codes.csv'), stringsAsFactors = FALSE)
 
 # Step 2: Source model code -----------------------------------------------
 
@@ -62,29 +69,28 @@ source_python(file.path(fp_fwe, 'USEEIO/eeio_lcia.py'))
 source(file.path(fp_useeio, 'R/Model Build Scripts/USEEIO2012_buildfunction.R'))
 model_build_path <- file.path(fp_useeio, 'useeiopy/Model Builds')
 
-# Load make and use tables
-M <- read.csv(file.path(fp_bea, 'make2012.csv'), row.names = 1, check.names = FALSE)
-U <- read.csv(file.path(fp_bea, 'use2012.csv'), row.names = 1, check.names = FALSE)
-
-# Load demand codes
-all_codes <- read.csv(file.path(fp_crosswalks, 'all_codes.csv'), stringsAsFactors = FALSE)
-
 # Master function to run steps 3 through 6
-# Takes several inputs: v is the demand vector, c_mod are the columns to modify (same length as v), r_mod are the rows to modify, and i is the name of the scenario
+# Takes several inputs: 
+# c_factor is the factor to multiply the intermediate column inputs (vector), 
+# r_factor is the factor to multiply the rows of the final demand column (vector),   
+# c_names is the names of the columns to multiply by c_factor (vector with same length as c_factor)
+# r_names is the names of the rows to multiply by r_factor (vector with same length as r_factor)
+# i is the name of the scenario
+# By default the only final demand column we modify is F01000: personal consumption expenditures (PCE)
 
-get_eeio_result <- function(v, c_mod, r_mod, i = 'no_name') {
+get_eeio_result <- function(c_factor, r_factor, c_names, r_names, i = 'no_name') {
 
   # Step 3. Build USEEIO with specifications for modifying intermediate and final demand.
   build_USEEIO(outputfolder = file.path(model_build_path, paste0('scenario_', i)),
                model = paste0('scenario_', i),
-               usetablefile = file.path(fp_mu, paste0('use_', i, '.csv')),
-               maketablefile = file.path(fp_mu, paste0('make_', i, '.csv')),
+               usetablefile = file.path(fp_bea, 'use2012.csv'),
+               maketablefile = file.path(fp_bea, 'make2012.csv'),
                code_path = fp_useeio,
-               intermediate_columns_modify = c_mod,
-               intermediate_change_factor = v,
-               final_rows_modify = r_mod,
+               intermediate_columns_modify = c_names,
+               intermediate_change_factor = c_factor,
+               final_rows_modify = r_names,
                final_columns_modify = c('F01000'),
-               final_change_factor = v
+               final_change_factor = r_factor
   )
   # Step 4. Extract demand vector for food system from scenario.
   # Join this with the food system proportions and with the correct demand codes (full description names)
