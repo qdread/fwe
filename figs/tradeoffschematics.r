@@ -209,13 +209,13 @@ ggsave('~/Dropbox/sesync/firstyear_talk/flw_estimate_barchart.png', height = 4, 
 # Version for graphical abstract.
 library(tidyverse)
 flwdat <- data.frame(Source = c('EPA\n(2016)', 'NRDC\n(2012)', 'ReFED\n(2016)', 'FAO\n(2011)', 'USDA\n(2014)'),
-                     Weight = 2.204 * c(111, 253, 176, 285, 188)) %>%
+                     Weight = c(111, 253, 176, 285, 188)) %>%
   mutate(Source = factor(Source, levels = Source[order(Weight)]))
 
 p_abs <- ggplot(flwdat, aes(x = Source, y = Weight, fill = Source)) +
   geom_col() +
-  geom_text(aes(label = Source), y = 50, color = 'white') +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 640), name = 'Food waste\n(pounds per person per year)') +
+  geom_text(aes(label = Source), y = 25, color = 'white') +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 300), name = 'Food waste\n(kg per person per year)') +
   scale_fill_brewer(type = 'qual', palette = 'Set1') +
   theme_classic() +
   theme(panel.grid = element_blank(),
