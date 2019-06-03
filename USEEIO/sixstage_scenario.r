@@ -94,9 +94,20 @@ reduction_rate_grid_list <- setNames(split(reduction_rate_grid, seq(nrow(reducti
 
 
 # Run grid with furrr
-plan(multiprocess(workers = 8))
+# plan(multiprocess(workers = 8))
+# 
+# eeio_result_grid <- future_imap_dfr(reduction_rate_grid_list, function(reduction_by_stage, scenario_id) {
+#   intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
+#   final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[final_demand_sector_codes], naics_foodsystem$proportion_food))
+#   get_eeio_result(c_factor = intermediate_demand_change_factors,
+#                   c_names = sector_long_names,
+#                   r_factor = final_demand_change_factors,
+#                   r_names = sector_short_names,
+#                   i = scenario_id)
+# }, .progress = TRUE)
 
-eeio_result_grid <- future_imap_dfr(reduction_rate_grid_list, function(reduction_by_stage, scenario_id) {
+# Run in parallel with mcmapply
+get_reduction <- function(reduction_by_stage, scenario_id) {
   intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
   final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[final_demand_sector_codes], naics_foodsystem$proportion_food))
   get_eeio_result(c_factor = intermediate_demand_change_factors,
@@ -104,45 +115,29 @@ eeio_result_grid <- future_imap_dfr(reduction_rate_grid_list, function(reduction
                   r_factor = final_demand_change_factors,
                   r_names = sector_short_names,
                   i = scenario_id)
-}, .progress = TRUE)
-
-# Test: run with rslurm
-# Set up slurm options and write wrapper function
-sopts <- list(partition = 'sesync', time = '4:00:00')
-eeio_parallel_fn <- function(n) {
-  reduction_by_stage <- reduction_rate_grid_list[[n]]
-  intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
-  final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[final_demand_sector_codes], naics_foodsystem$proportion_food))
-  get_eeio_result(c_factor = intermediate_demand_change_factors,
-                  c_names = sector_long_names,
-                  r_factor = final_demand_change_factors,
-                  r_names = sector_short_names,
-                  i = names(reduction_rate_grid_list)[[n]])
 }
 
-eeiogridjob <- slurm_apply(eeio_parallel_fn, data.frame(n = 1:length(reduction_rate_grid_list)),
-                           nodes = 2, cpus_per_node = 4,
-                           slurm_options = sopts,
-                           add_objects = c('baseline_waste_rate', 'sector_stage_codes', 'naics_foodsystem', 'sector_long_names', 'sector_short_names', 'demand_change_fn', 'reduction_rate_grid_list'))
+library(parallel)
+short_list <- reduction_rate_grid_list[1:40]
+eeio_result_grid <- mcmapply(get_reduction, reduction_by_stage = short_list, scenario_id = 1:length(short_list), mc.cores = 4, SIMPLIFY = FALSE)
+eeio_result_grid_df <- bind_rows(eeio_result_grid)
 
-print_job_status(eeiogridjob)
-
-# Test: run serial
-eeio_result_grid_list <- list()
-for (i in 1:length(reduction_rate_grid_list)) {
-  reduction_by_stage <- reduction_rate_grid_list[[i]]
-  intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
-  final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[final_demand_sector_codes], naics_foodsystem$proportion_food))
-  eeio_result_grid_list[[i]] <- get_eeio_result(c_factor = intermediate_demand_change_factors,
-                  c_names = sector_long_names,
-                  r_factor = final_demand_change_factors,
-                  r_names = sector_short_names,
-                  i = names(reduction_rate_grid_list)[i])
-}
-
-# Put output into data frame and write to CSV.
-
-eeio_result_grid_df <- cbind(reduction_rate_grid[rep(1:nrow(reduction_rate_grid), each = nrow(eeio_result_grid_list[[1]])), ], bind_rows(eeio_result_grid_list))
+# # Test: run serial
+# eeio_result_grid_list <- list()
+# for (i in 1:length(reduction_rate_grid_list)) {
+#   reduction_by_stage <- reduction_rate_grid_list[[i]]
+#   intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
+#   final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[final_demand_sector_codes], naics_foodsystem$proportion_food))
+#   eeio_result_grid_list[[i]] <- get_eeio_result(c_factor = intermediate_demand_change_factors,
+#                   c_names = sector_long_names,
+#                   r_factor = final_demand_change_factors,
+#                   r_names = sector_short_names,
+#                   i = names(reduction_rate_grid_list)[i])
+# }
+# 
+# # Put output into data frame and write to CSV.
+# 
+# eeio_result_grid_df <- cbind(reduction_rate_grid[rep(1:nrow(reduction_rate_grid), each = nrow(eeio_result_grid_list[[1]])), ], bind_rows(eeio_result_grid_list))
 
 # To see if results are plausible, look at results where a single sector is reduced by 100%
 oneby100 <- rowSums(eeio_result_grid_df[,1:6]) == 1 & rowSums(eeio_result_grid_df[,1:6] > 0) == 1
