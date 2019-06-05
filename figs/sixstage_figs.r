@@ -2,10 +2,11 @@
 # QDR / FWE / 31 May 2019
 
 library(tidyverse)
+fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data')
 
 stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
-optimal_df_all <- read.csv('/nfs/qread-data/scenario_results/sixstage_scenario_fake_opt_results.csv')
-grid_result <- read.csv('/nfs/qread-data/scenario_results/sixstage_scenario_grid_lcia_results.csv', stringsAsFactors = FALSE)
+optimal_df_all <- read.csv(file.path(fp, 'scenario_results/sixstage_scenario_fake_opt_results.csv'))
+grid_result <- read.csv(file.path(fp, 'scenario_results/sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE)
 
 # Grid plots
 # ==========
@@ -177,13 +178,44 @@ allseq100plot <- rbind(co2sequence100, watrsequence100, landsequence100, enrgseq
           plot.subtitle = element_text(size = 10),
           legend.position = c(0.8, 0.8)) 
 
-fpfig <- '/nfs/qread-data/figures'    
+fpfig <- file.path(fp, 'figures')    
 ggsave(file.path(fpfig, 'sixstage_grid_co2by50pct.png'), co2seqplot, height = 6, width = 6, dpi = 300)
 ggsave(file.path(fpfig, 'sixstage_grid_landby50pct.png'), landseqplot, height = 6, width = 6, dpi = 300)
 ggsave(file.path(fpfig, 'sixstage_grid_waterby50pct.png'), watrseqplot, height = 6, width = 6, dpi = 300)
 ggsave(file.path(fpfig, 'sixstage_grid_energyby50pct.png'), enrgseqplot, height = 6, width = 6, dpi = 300)
 ggsave(file.path(fpfig, 'sixstage_grid_allcategoriesby100pct.png'), allseq100plot, height = 6, width = 6, dpi = 300)
 
+# Radar charts showing tradeoffs among scenarios
+# ==============================================
+
+# Radar plot to visualize several relevant categories at once
+library(ggradar)
+
+# the radar plot requires "wide" data
+# We want this for the ones where a single sector is reduced by 50%.
+
+category_lookup <- data.frame(impact_category = c("impact potential/eutr/kg n eq", "impact potential/gcc/kg co2 eq", 
+                                "resource use/enrg/mj", "resource use/land/m2*yr", "resource use/watr/m3"),
+                              impact_category_name = c('eutrophication\npotential', 'GHG emissions', 'energy use', 'land use', 'water use'))
+
+radardat_singlestagereduced <- grid_result %>%
+  filter((rowSums(.[,1:6]) == 0.5 & rowSums(.[,1:6] > 0) == 1) | (rowSums(.[,1:6]) == 0), grepl('enrg|watr|land|co2|eutr', impact_category)) %>%
+  group_by(impact_category) %>%
+  mutate(value = value / max(value)) %>%
+  ungroup %>%
+  filter(value < 1) %>%
+  mutate(scenario = factor(stage_full_names[apply(.[,1:6], 1, function(x) which(x>0))], levels = stage_full_names),
+         value = 1 - value) %>%
+  left_join(category_lookup) %>%
+  select(scenario, impact_category_name, value) %>%
+  spread(impact_category_name, value)
+
+radar1 <- ggradar(radardat_singlestagereduced, 
+        grid.max = 0.1, label.gridline.max = TRUE, label.gridline.min = TRUE, axis.label.size = 3.5, values.radar = c('0%', '5%', '10%')) +
+  ggtitle('Magnitude of impact reduction by waste reduction scenario', '50% waste reduction at single supply chain stages') +
+  theme(title = element_text(size = 12), legend.position = 'bottom')
+
+ggsave(file.path(fpfig, 'sixstage_radar_singlestages.png'), radar1, height = 12, width = 8, dpi = 300)
 
 # Fake cost curves for optimization
 # =================================
