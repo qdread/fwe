@@ -170,7 +170,7 @@ These values may not be realistic and do not represent any actual data, especial
 
 ## Results of optimization
 
-I ran an optimization with an objective function representing the total environmental impact as a function of the vector $C = (C_1, C_2, C_3, C_4, C_5, C_6)$ where the six values are the amounts of money invested in FLW reduction at each of the supply chain stages. Each time the objective function is evaluated, the following happens: 
+I ran an optimization with an objective function representing the total environmental impact as a function of the vector $x = (x_1, x_2, x_3, x_4, x_5, x_6)$ where the six values are the amounts of money invested in FLW reduction at each of the supply chain stages. Each time the objective function is evaluated, the following happens: 
 
 1. The amount of money invested in each stage is divided evenly among the sectors making up each stage. 
 2. The waste rate at each stage is calculated using the logistic cost curve.
@@ -178,18 +178,18 @@ I ran an optimization with an objective function representing the total environm
 4. The EEIO model is rebuilt with the new final and intermediate demands.
 5. The EEIO model is evaluated and the environmental impact value for the chosen impact category across the entire food system is extracted.
 
-The optimization is subject to the constraint that $\sum\limits_{i=1}^6 C_i = C_{total}$, representing the total amount of money available for FLW reduction.
+The optimization is subject to the constraint that $\sum\limits_{i=1}^6 x_i = x_{total}$, representing the total amount of money available for FLW reduction.
 
-I ran a separate optimization for four different values of $C_{total}$: 500, 1000, 2000, and 5000, which would be divided among the 6 FSC stages and then equally among the sectors making up each stage. I corrected for sectors that are only partially involved in the food supply chain (for example, the amusement park industry's expenses are about 12% to food system sectors. Making the simplifying assumption that this corresponds to 12% of its final demand being food purchases, the final demand modification for that industry only modifies that proportion of the final demand.) For each value of $C_{total}$, I optimized for minimizing GHG emissions, land use, water use, and energy use, for a total of 16 optimizations.
+I ran a separate optimization for four different values of $x_{total}$: 500, 1000, 2000, and 5000, which would be divided among the 6 FSC stages and then equally among the sectors making up each stage. I corrected for sectors that are only partially involved in the food supply chain (for example, the amusement park industry's expenses are about 12% to food system sectors. Making the simplifying assumption that this corresponds to 12% of its final demand being food purchases, the final demand modification for that industry only modifies that proportion of the final demand.) For each value of $x_{total}$, I optimized for minimizing GHG emissions, land use, water use, and energy use, for a total of 16 optimizations.
 
 Taking GHG emissions as an example, the optimal waste rate across all sectors that is achieved with the cost allocation that minimizes emissions shows interesting patterns as total available FLW reduction funds change (Figure 8, top right-hand panel). 
 For total funds of 500 and 1000, the optimal solution is to target all FLW reduction efforts at the food service consumption stage, due to the lack of "startup" costs required to achieve significant reductions at that stage. 
 For total funds of 2000, the optimal solution is to invest half into reducing waste in food service and the other half into institutions. This is interesting because when costs are ignored, the effect of reducing waste in institutions is shown to be low, but at least in this fake example, it is the most cost-effective after the food service industry.
-At 5000 invested, the two consumption stages have already been reduced to the "unavoidable" level so additional funds are divided fairly evenly over 3 of the remaining 4 sectors. If $C_{total}$ is increased still further, eventually funds are allocated to reduce all avoidable waste in the final remaining sector, agricultural production (not shown). 
+At 5000 invested, the two consumption stages have already been reduced to the "unavoidable" level so additional funds are divided fairly evenly over 3 of the remaining 4 sectors. If $x_{total}$ is increased still further, eventually funds are allocated to reduce all avoidable waste in the final remaining sector, agricultural production (not shown). 
 
 ![Optimal allocations across total cost values and across impact categories](Q:/figures/sixstage_costcurve_fake_example_allocations4impacts.png)
 
-The optimal solution for different values of $C_{total}$ is different depending on what environmental impact category we aim to minimize. For example, if land use is what we want to minimize, and we have limited resources to invest, waste reduction should target the food processing sector.
+The optimal solution for different values of $x_{total}$ is different depending on what environmental impact category we aim to minimize. For example, if land use is what we want to minimize, and we have limited resources to invest, waste reduction should target the food processing sector.
 
 \newpage 
 
@@ -203,3 +203,10 @@ This is documentation of the scripts on the [FWE GitHub repository](https://gith
 * `sixstage_scenario.r`: This script runs the model for all 25% waste reduction increments, and it runs the nonlinear optimization using the R package `Rsolnp` using the fake cost curves shown above.
 * `sixstage_figs.r`: This script includes code to make all the figures shown here.
 
+# Works cited
+
+Canning, P., Rehkamp, S., Waters, A. & Etemadnia, H. (2016). The Role of Fossil Fuels in the U.S. Food System and the American Diet (Economic Research Report No. 224). USDA Economic Research Service.  
+Gustavsson, J., Cederberg, C. & Sonesson, U. (2011). Global food losses and food waste: extent, causes and prevention; study conducted for the International Congress Save Food! at Interpack 2011, [16 - 17 May], Düsseldorf, Germany. Food and Agriculture Organization of the United Nations, Rome.  
+Gustavsson, J., Cederberg, C. & Sonesson, U. (2013). The methodology of the FAO study: “Global Food Losses and Food Waste - extent, causes and prevention”- FAO, 201, 70.  
+Wiebe, K.S., Bjelle, E.L., Többen, J. & Wood, R. (2018). Implementing exogenous scenarios in a global MRIO model for the estimation of future environmental footprints. Economic Structures, 7, 20.  
+Yang, Y., Ingwersen, W.W., Hawkins, T.R., Srocka, M. & Meyer, D.E. (2017). USEEIO: A new and transparent United States environmentally-extended input-output model. Journal of Cleaner Production, 158, 308–318.
