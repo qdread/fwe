@@ -137,7 +137,7 @@ This chart shows impact reduction when waste is reduced by 50% in a single stage
 
 \newpage
 
-# Determinining the optimal allocation of funds to reduce food loss and waste to minimize environmental impacts
+# Determining the optimal allocation of funds to reduce food loss and waste to minimize environmental impacts
 
 ## Cost curves for each stage
 

@@ -225,6 +225,20 @@ p_abs <- ggplot(flwdat, aes(x = Source, y = Weight, fill = Source)) +
         plot.background = element_rect(fill = "transparent", colour = NA))
 ggsave('~/google_drive/SESYNC Food Waste/Synthesis_MS/imgs for abstract/barchart_forabstract.png', p_abs, height = 3, width = 4, dpi = 300)
 
+# With one color
+p_abs <- ggplot(flwdat, aes(x = Source, y = Weight, fill = Source)) +
+  geom_col(fill = "#377EB8") +
+  geom_text(aes(label = Source), y = 25, color = 'white') +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 300), name = 'Food waste\n(kg per person per year)') +
+  theme_classic() +
+  theme(panel.grid = element_blank(),
+        legend.position = 'none',
+        axis.text.x = element_blank(), axis.title.x = element_blank(), axis.ticks.x = element_blank(),
+        panel.background = element_rect(fill = "transparent", colour = NA), 
+        plot.background = element_rect(fill = "transparent", colour = NA))
+ggsave('~/google_drive/SESYNC Food Waste/Synthesis_MS/imgs for abstract/barchart_forabstract_blue.png', p_abs, height = 3, width = 4, dpi = 300)
+
+
 # Disposal to landfill.
 disposaldat <- data.frame(destination = c('compost', 'bioenergy', 'landfill'), weight = c(2.1, 7.4, 30.3))
 p_abs_donut <- ggplot(disposaldat, aes(x = 2, y = weight, fill = destination)) +
