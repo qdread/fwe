@@ -2,14 +2,13 @@
 # QDR / FWE / 07 May 2019
 
 # Modified 29 May 2019: Use new routine for modifying intermediate and final demand values for scenarios.
+# Modified 11 Jun 2019: Change crosswalk table and FAO percentage table to updated version.
 
 # Step 0: Load packages, set file paths, read data ------------------------
 
 library(tidyverse)
 library(XLConnect)
 library(reticulate)
-library(furrr)
-library(rslurm)
 
 fp_fwe <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/fwe', '/research-home/qread/fwe')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
@@ -18,8 +17,8 @@ fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA/forma
 fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
 fp_useeio <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/USEEIO', '/research-home/qread/USEEIO')
 
-faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages.xlsx'), sheet = 1)
-naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_crosswalk_allproportions.csv'), stringsAsFactors = FALSE)
+faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages_extended.xlsx'), sheet = 1)
+naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_crosswalk_final.csv'), stringsAsFactors = FALSE)
 
 # Step 1: Get baseline loss rate for each row in BEA table ----------------
 
@@ -48,8 +47,8 @@ faopct <- faopct %>%
          L4b = loss_consumption)
 
 waste_rate_bysector <- t(faopct[, naics_foodsystem$stage_code])
-fao_category_weights <- naics_foodsystem %>% select(cereals:eggs)
-baseline_waste_rate <- rowSums(waste_rate_bysector * fao_category_weights) / rowSums(fao_category_weights)
+fao_category_weights <- naics_foodsystem %>% select(cereals:beverages)
+baseline_waste_rate <- rowSums(waste_rate_bysector * fao_category_weights, na.rm = TRUE) / rowSums(fao_category_weights)
 
 # Load make and use tables
 M <- read.csv(file.path(fp_bea, 'make2012.csv'), row.names = 1, check.names = FALSE)

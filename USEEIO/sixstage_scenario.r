@@ -8,7 +8,7 @@
 # Load data ---------------------------------------------------------------
 
 # Load scenario data
-source('USEEIO/load_scenario_data.r')
+source('~/fwe/USEEIO/load_scenario_data.r')
 
 ### Sector codes and full names
 sector_stage_codes <- naics_foodsystem$stage_code
@@ -118,8 +118,8 @@ get_reduction <- function(reduction_by_stage, scenario_id) {
 }
 
 library(parallel)
-short_list <- reduction_rate_grid_list[1:40]
-eeio_result_grid <- mcmapply(get_reduction, reduction_by_stage = short_list, scenario_id = 1:length(short_list), mc.cores = 4, SIMPLIFY = FALSE)
+#short_list <- reduction_rate_grid_list[1:40]
+eeio_result_grid <- mcmapply(get_reduction, reduction_by_stage = reduction_rate_grid_list, scenario_id = 1:length(reduction_rate_grid_list), mc.cores = 4, SIMPLIFY = FALSE)
 eeio_result_grid_df <- bind_rows(eeio_result_grid)
 
 # # Test: run serial
