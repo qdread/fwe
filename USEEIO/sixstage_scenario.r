@@ -135,9 +135,11 @@ eeio_result_grid_df <- bind_rows(eeio_result_grid)
 #                   i = names(reduction_rate_grid_list)[i])
 # }
 # 
-# # Put output into data frame and write to CSV.
-# 
 # eeio_result_grid_df <- cbind(reduction_rate_grid[rep(1:nrow(reduction_rate_grid), each = nrow(eeio_result_grid_list[[1]])), ], bind_rows(eeio_result_grid_list))
+
+
+# Put output into data frame and write to CSV.
+eeio_result_grid_df <- cbind(reduction_rate_grid[rep(1:nrow(reduction_rate_grid), each = 21), ], eeio_result_grid_df)
 
 # To see if results are plausible, look at results where a single sector is reduced by 100%
 oneby100 <- rowSums(eeio_result_grid_df[,1:6]) == 1 & rowSums(eeio_result_grid_df[,1:6] > 0) == 1

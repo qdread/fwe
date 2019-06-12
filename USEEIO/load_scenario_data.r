@@ -7,7 +7,6 @@
 # Step 0: Load packages, set file paths, read data ------------------------
 
 library(tidyverse)
-library(XLConnect)
 library(reticulate)
 
 fp_fwe <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/fwe', '/research-home/qread/fwe')
@@ -17,7 +16,7 @@ fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA/forma
 fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
 fp_useeio <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/USEEIO', '/research-home/qread/USEEIO')
 
-faopct <- readWorksheetFromFile(file.path(fp_crosswalks, 'fao_percentages_extended.xlsx'), sheet = 1)
+faopct <- read.csv(file.path(fp_crosswalks, 'fao_percentages_extended.csv'), stringsAsFactors = FALSE)
 naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_crosswalk_final.csv'), stringsAsFactors = FALSE)
 
 # Step 1: Get baseline loss rate for each row in BEA table ----------------
