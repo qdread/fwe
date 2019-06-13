@@ -211,7 +211,7 @@ radardat_singlestagereduced <- grid_result %>%
   spread(impact_category_name, value)
 
 radar1 <- ggradar(radardat_singlestagereduced, 
-        grid.max = 0.1, label.gridline.max = TRUE, label.gridline.min = TRUE, axis.label.size = 3.5, values.radar = c('0%', '5%', '10%')) +
+        grid.max = 0.05, label.gridline.max = TRUE, label.gridline.min = TRUE, axis.label.size = 3.5, values.radar = c('0%', '2.5%', '5%')) +
   ggtitle('Magnitude of impact reduction by waste reduction scenario', '50% waste reduction at single supply chain stages') +
   theme(title = element_text(size = 12), legend.position = 'bottom')
 
@@ -270,4 +270,4 @@ ggplot(optimal_df_all, aes(x = total_cost, y = cost, fill = stage, group = stage
         panel.grid.minor.y = element_blank(),
         legend.position = 'bottom')
 
-ggsave('/nfs/qread-data/figures/sixstage_costcurve_fake_example_allocations4impacts.png', height = 9, width = 9, dpi = 300)
+ggsave(file.path(fpfig, 'sixstage_costcurve_fake_example_allocations4impacts.png'), height = 9, width = 9, dpi = 300)
