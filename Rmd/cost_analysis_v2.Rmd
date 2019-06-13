@@ -1,7 +1,7 @@
 ---
 title: 'FLW scenarios: methods and preliminary results (V2)'
 author: "Quentin D. Read"
-date: "June 4, 2019"
+date: "June 12, 2019"
 header-includes:
   - \usepackage{caption}
 output: pdf_document
@@ -10,6 +10,12 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+# Version history
+
+* V1 created May 15, 2019
+* V2 created June 4, 2019
+* Last modified June 12, 2019
 
 # Overarching question
 
@@ -21,7 +27,7 @@ In order to answer the question above, we need the following:
 
 1. A model of environmental impact of each stage of the FSC
 2. Baseline rates of FLW at each stage of the FSC
-3. Information on the cost of achieving a particular rate of waste reduction at each stage of the FSC (i.e., the effectiveness of FLW interventions in waste-reduction units)
+3. Information on the cost of achieving a particular rate of waste reduction at each stage of the FSC (i.e., the effectiveness of FLW interventions expressed as a percentage reduction of the baseline rate of waste)
 
 ## 1. Modeling environmental impact
 
@@ -29,9 +35,12 @@ An environmentally extended input-output model is appropriate to model the envir
 The model consists of a matrix of coefficients representing economic flows between industry sectors, a final demand vector representing the final industry output available to consumers after accounting intermediate uses of gross industry output by other industrial processes, and satellite tables including the direct environmental impact of producing a given amount of output by each industry. 
 The model assumes strictly linear relationships between input, output, and impact. For example, doubling the final demand would double the amount of inputs required to satisfy that demand, and would also double the environmental impacts generated.
 
-The most prominent source of data used to parameterize input-output models in the United States are the Bureau of Economic Analysis' input-output accounts. 
+The most prominent source of data used to parameterize input-output models in the United States are the Bureau of Economic Analysis' (BEA's) input-output accounts. 
 Benchmark input-output tables are released every 5 years, with 2012 being the most recent year where the fully processed data are available. 
-These tables show the relationships among around 400 industries. For intervening years, the Bureau of Labor Statistics produces input-output tables at a somewhat coarser level of aggregation, with around 80 industries.
+These tables show the relationships among ~400 industries. For intervening years, the Bureau of Labor Statistics produces input-output tables at a somewhat coarser level of aggregation, with ~80 industries.
+
+The BEA produces a "make table" and a "use table." The make table has rows representing industries and columns representing commodities. The values in the table are the dollar value of each commodity produced by each industry. If each industry only produced a single commodity, and none of them overlapped in what they produced, the make table would have positive values on the diagonal and zeroes elsewhere. In reality, there are some nonzero values off the diagonal. In the idealized input-output model, it is assumed that each industry only produces one type of output, and the make table is used to proportionally assign the off-diagonal values to the correct place. Variations in the make table do not have a huge impact on the model output. 
+The use table is much more important. It has rows representing commodities and columns representing industries. The values in the table represent the dollar value of the commodity in the row, purchased by the industry in that column. In addition, the use table has additional columns for final demand in various categories (household, government, exports, and others). We are mainly concerned with values in the use table, including both the intermediate demand and final demand. The use table is available in both producer's price and purchaser's price values. We use the producer's price.
 
 Currently, we are using the EPA's USEEIO model (Yang et al. 2017) to estimate environmental impacts at each stage of the FSC. This model has the advantage of being very detailed in terms of environmental impact categories. 
 The satellite tables that the EPA researchers compiled include values across 389 industries by 21 environmental impact categories that represent the incremental increase of environmental impact in that category for each additional \$1 of output produced by that industry. 
@@ -39,7 +48,7 @@ For example, to produce an additional \$1 of output by the bread industry result
 In some cases the satellite tables include variable per-unit impacts depending on the state in which the commodity is produced, but currently we are using US-wide aggregated values.
 
 The disadvantage of the EPA model is that it was not designed in particular to study the impacts of the FSC. 
-Of course the FSC is included implicitly but some sectors include both food and non-food components, and it is hard to isolate the FSC-specific components of impact. 
+Of course the FSC is included implicitly, since the model simulates the economy of the United States, but some sectors include both food and non-food components, and it is hard to isolate the FSC-specific components of impact. 
 In addition, I am not sure that the links between the FSC stages are directly accounted for -- for example it only represents the grocery and restaurant sectors as purchasing a relatively small amount of output from food processing sectors, which does not seem to capture the input-output relationships correctly. Some of the output of those processing sectors is ascribed directly to personal consumption expenditures (final demand), rather than being recorded as being sold by a retail establishment. This does not seem realistic because it does not seem likely that, say, the breakfast cereal industry sells most of its output directly to consumers.
 However, work done at ERS (Canning et al. 2016) that was involved with creating the [Food Dollar Series](https://www.ers.usda.gov/data-products/food-dollar-series/) may be useful to tease apart the FSC impacts. 
 The ERS study starts with the BEA benchmark tables and uses a matrix reduction procedure to transform the ~400 by 400 matrix to a matrix with rows and columns representing 8 stages of the FSC. 
@@ -48,17 +57,29 @@ Currently I am trying to get more information on this model from the authors so 
 
 ### Pre-processing steps required before running model
 
-The EEIO model was originally built with the 2007 BEA benchmark input-output tables. Although the model was released in 2017, the benchmark tables for 2012 were not yet available at that time because of the long time lag required to produce the tables. Some of the NAICS classifications changed between 2007 and 2012 so I mapped the new codes to the old codes. Some needed to be split and some needed to be aggregated. This was done using the ratios from the 2007 tables where necessary.
+The EEIO model was originally built with the 2007 BEA benchmark input-output tables. Although the model was released in 2017, the benchmark tables for 2012 were not yet available at that time because of the long time lag required to produce the tables. Some of the NAICS classifications changed between 2007 and 2012 so I mapped the new codes to the old codes. Some needed to be split and some needed to be aggregated. This was done using the ratios of total column values from the 2007 make and use tables where necessary.
 
 It would be possible to update the model to an even more recent year than 2012. Either the yearly input-output tables with fewer sectors could be disaggregated with the 2012 table as a key, or the consumer price index could be used to update the gross outputs of the 2012 table to 2018 prices then the table could be renormalized using the updated totals. If we deem necessary, I could update those values. I would not expect the fundamental results to change much if we applied those corrections.
 
 ## 2. Estimating baseline rates of FLW
 
-There are a few different data sources to estimate the loss rates for different food commodity groups at different stages of the FSC. The FAO (Gustavsson et al. 2011, 2013) broke down the FSC into five stages and estimated the loss rates for 11 food groups at each stage. Data for North America and Oceania are pooled, but for most of those data sources, the USA was used as representative of the region. 
+There are a few different data sources to estimate the loss rates for different food commodity groups at different stages of the FSC. The FAO (Gustavsson et al. 2011, 2013) broke down the FSC into five stages and estimated the loss rates for 11 food groups at each stage (Table 1). The loss estimates come from quite a few disparate data sources, which are documented in the 2013 methods appendix. Data for North America and Oceania are pooled, but for most of those data sources, the USA was used as representative of the region. 
 
-The five stages in the FAO report are agricultural production, handling & storage, processing & packaging, distribution, and consumption. We combined handling & storage with processing & packaging to represent the processing stage, and we took the distribution stage to represent retail loss. We used the same consumption loss rate for the food service industry, institutional consumption, and household consumption.
+The five stages in the FAO report are agricultural production, handling & storage, processing & packaging, distribution, and consumption. We combined handling & storage with processing & packaging to represent the processing stage, and we took the distribution stage to represent retail loss. We used the same consumption loss rate for the foodservice industry, institutional consumption, and household consumption. 
+The foodservice industry includes all types of restaurants, as well as food sold by the transportation, recreation, and hospitality sectors. Institutional foodservice includes food provided by schools, universities, hospitals, residential facilities, community services, and government facilities.
 
-I hope to supplement the FAO values with data from USDA LAFA data which are more highly resolved and more specific to the USA. However, LAFA does a poor job of capturing losses outside of the consumption stage and assumes zero loss rate for many food groups in certain stages, which I think is not correct.
+```{r echo = FALSE}
+library(knitr)
+library(kableExtra)
+options(knitr.kable.NA = '---')
+faotab <- read.csv('~/google_drive/SESYNC Food Waste/Model_MS1/fao_percentages_extended.csv', check.names = FALSE)
+kable(faotab[,-1], format = 'latex', escape = FALSE, caption = 'Loss rates (Gustavsson et al. 2013 and other sources)') %>%
+  column_spec(2:6, width = '2cm')
+```
+
+The FAO dataset excludes two important categories: sugar/sweeteners and beverages. Those two groups represent a fairly large portion of the USA's food system. I used data from several different sources to get the best possible estimate of loss rates for those groups (Table 1). Despite the poor quality of the numbers, excluding those groups entirely would also systematically bias results downward.
+
+I hope to supplement the FAO values with data from USDA LAFA data which are more highly resolved and more specific to the USA. However, LAFA does a poor job of capturing losses outside of the consumption stage, does not include agricultural losses, and assumes zero loss rate for many food groups in the processing stage. The zeroes are a result of processing loss already being accounted for in some of the input data LAFA works with. If we later decide to work with LAFA data and only use FAO data to fill in gaps, we will end up with higher estimates of consumption impacts because of the higher consumption waste rates in LAFA relative to FAO.
 
 ## 3. Estimating the cost of reducing FLW
 
@@ -69,23 +90,36 @@ This component of the required data does not have one or a few central data sour
 ## 1. Isolating the FSC elements of the USA's economy
 
 I assigned each industry sector in the 389-by-389 BEA input-output table to either belong to the FSC or not. Some sectors are aggregated such that they only partially belong to the FSC. 
-For example, the wholesale trade sector aggregates food and non-food wholesale industries. I found various data sources for total revenues of the more finely resolved sectors in order to assign a proportion FSC value to those aggregated sectors. 
+For example, the wholesale trade sector aggregates food and non-food wholesale industries. I found various data sources for total revenues of the more finely resolved sectors in order to assign a proportion FSC value to those aggregated sectors (Table 2). 
 In addition, I grouped the FSC sectors into FSC stages. For the current analysis I defined four stages: stage 1 (production) represents farming, or the sectors of the US economy that produce raw agricultural products, stage 2 (processing) and food processing, the sectors of the US economy that produce processed food items, stage 3 (retail) represents retail and distribution, and stage 4 (consumption) is divided into 3 portions: consumption in the food service industry including hotels and the tourist industry, consumption in institutions such as schools and hospitals, and household consumption.
-As mentioned above, this may not correspond directly to the loss stages in the FAO or LAFA data because the food commodity groups do not necessarily pass through the processing and retail stages before reaching consumers, as represented in the EEIO model. This is something that needs improvement. 
+
+The agriculture stage is assigned the agricultural production loss rate, the processing stage is assigned the total loss rate between handling/storage and processing/packaging, the retail stage is assigned the distribution loss rate, and all consumption stages are assigned the consumption loss rate.
+
+```{r echo = FALSE}
+fsctab <- read.csv('Q:/crossreference_tables/naics_crosswalk_final.csv') 
+names(fsctab)[1:6] <- c('BEA code', 'Sector description', 'foodsystem', 'Stage', 'f', 'Proportion FSC')
+fsctab <- subset(fsctab, foodsystem %in% c('y','partial'))[,c(1,2,4,6)]
+fsctab[,4] <- round(fsctab[,4], 3)
+kable(fsctab, format = 'latex', escape = FALSE, longtable = TRUE, caption = 'Food supply chain sectors of the US economy') %>%
+  column_spec(2, width = '4cm') %>%
+  kable_styling(latex_options = 'repeat_header')
+```
 
 ## 2. Weighting each FSC sector by composition of food commodity groups
 
 In order to determine the baseline FLW rate for each sector, it is necessary to determine what food commodity groups comprise it. 
 I roughly estimated this for this preliminary work by assuming that each FSC sector is composed in equal proportions of one or more food commodity groups. 
-For agricultural sectors, there was typically only a single FAO category of its output. Some produce multiple outputs so I used the number of employees for the subsectors from QCEW to assign proportions to the outputs.
-For processing sectors, if the sector's output is still assignable to a single FAO category, such as the processed dairy product and meat sectors, I assigned the entire output to that category. If the processed output is more of a composite food with a lot of ingredients, such as the frozen food sector, I assigned the output proportionally to the same categories as the proportions of inputs.
-For the foodservice and institutional sectors, I also assumed the output is proportionally in the same categories as the inputs they receive from the food production and processing sectors.
+For agricultural sectors (NAICS codes starting with 1), there was typically only a single FAO category of its output. Some produce multiple outputs so I used the number of employees for the subsectors from QCEW to assign proportions to the outputs.
+For processing sectors (NAICS codes starting with 3), if the sector's output is still assignable to a single FAO category, such as the processed dairy product and meat sectors, I assigned the entire output to that category. If the processed output is more of a composite food with a lot of ingredients, such as the frozen food sector, I assigned the output proportionally to the same categories as the proportions of inputs.
+For the foodservice and institutional sectors (NAICS codes 4 and above), I also assumed the output is proportionally in the same categories as the inputs they receive from the food production and processing sectors.
+
+The category weights are shown in a supplemental table (too large to print directly in this document).
 
 ## 3. Computing changes in demand associated with reductions in FLW, and altering model structure to reflect those changes
 
 Here, we assume that reducing food waste in FSC sectors that produce output (the production, processing, retail, food service, and institutional sectors) reduces the intermediate inputs required for those sectors to produce output. Reducing food waste on the consumer side (in the food service, institutional, and household consumption phases) reduces final demand. Note that reducing food waste in the institutional and food service sectors would reduce both intermediate and final demand. 
 For example, if the retail sector generates 10% less waste but continues to satisfy the same amount of demand, the column of input coefficients to the retail sector should decrease.
-If the household consumption sector becomes 10% less wasteful, final demand for all food-related products should decrease. 
+If the household consumption sector becomes 10% less wasteful, final demand by households for all food-related products should decrease. 
 If the food service or institutional food service sectors become 10% less wasteful, that would be reflected in a decrease of both intermediate and final demand in those sectors.
 
 ### Operationalizing demand changes in the model
