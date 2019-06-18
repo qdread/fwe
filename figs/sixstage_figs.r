@@ -166,13 +166,14 @@ allseq100plot <- rbind(co2sequence100, watrsequence100, landsequence100, enrgseq
   group_by(impact_category) %>%
   mutate(value = value / max(value)) %>%
   ungroup %>%
+  mutate(impact_category = rep(c('GHG', 'water', 'land', 'energy'), each = 7)) %>%
   ggplot(aes(x = nbypct, y = value, group = impact_category)) +
     geom_line(aes(color = impact_category), size = 1) +
     geom_point(aes(color = impact_category), size = 3) +
     #geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
     scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
     scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
-    scale_color_brewer(name = 'Impact category', type = 'qual', palette = 'Set2', labels = c('GHG', 'Energy', 'Land', 'Water')) +
+    scale_color_brewer(name = 'Impact category', type = 'qual', palette = 'Set2') +
     ggtitle('Impact of FLW reduction on environmental metrics', 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 100%') +
     theme_bw() +
     theme(panel.grid.minor.x = element_blank(),
