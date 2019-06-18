@@ -3,10 +3,12 @@
 
 library(tidyverse)
 fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data')
+fpfig <- file.path(fp, 'figures') 
+fp_output <- file.path(fp, 'scenario_results')
 
 stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
-optimal_df_all <- read.csv(file.path(fp, 'scenario_results/sixstage_scenario_fake_opt_results.csv'))
-grid_result <- read.csv(file.path(fp, 'scenario_results/sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE)
+optimal_df_all <- read.csv(file.path(fp_output, 'sixstage_scenario_opt_results.csv'))
+grid_result <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE)
 
 # Grid plots
 # ==========
@@ -236,8 +238,8 @@ ggplot(dat_for_curves %>% filter(stage %in% c('L1','L2','L3','L4a')), aes(x = x,
 ggsave('/nfs/qread-data/figures/sixstage_costcurve_fake_example.png', height = 6, width = 6, dpi = 300)
 
 
-# Results of "fake" optimization
-# ==============================
+# Results of optimization
+# =======================
 
 # Plot all optima.
 
@@ -247,14 +249,17 @@ optimal_df_all <- optimal_df_all %>%
 ggplot(optimal_df_all, aes(x = total_cost, y = cost, color = stage, group = stage)) +
   facet_wrap(~ category) +
   geom_point(size = 2) + geom_line() +
-  scale_x_continuous(name = 'Total invested in FLW reduction', breaks = c(0, 500, 1000, 2000, 5000)) +
-  scale_y_continuous(name = 'Amount invested in each stage') +
+  scale_x_continuous(name = 'Total invested in FLW reduction (million USD)', breaks = c(0, 500, 1000, 2000, 5000)) +
+  scale_y_continuous(name = 'Amount invested in each stage (million USD)') +
   scale_color_brewer(type='qual', palette='Set2') +
   ggtitle('Optimal allocation of FLW reduction funds to minimize environmental impact', 'for a number of possible total investments') +
   theme_bw() +
   theme(panel.grid.major.x = element_blank(), 
         panel.grid.minor.x = element_blank(),
+        strip.background = element_blank(),
         legend.position = 'bottom')
+
+ggsave(file.path(fpfig, 'sixstage_costcurve_allocations4impacts_lineplot.png'), height = 9, width = 9, dpi = 300)
 
 # Do with bars.
 ggplot(optimal_df_all, aes(x = total_cost, y = cost, fill = stage, group = stage)) +
@@ -270,13 +275,39 @@ ggplot(optimal_df_all, aes(x = total_cost, y = cost, fill = stage, group = stage
         panel.grid.minor.y = element_blank(),
         legend.position = 'bottom')
 
-ggsave(file.path(fpfig, 'sixstage_costcurve_fake_example_allocations4impacts.png'), height = 9, width = 9, dpi = 300)
+ggsave(file.path(fpfig, 'sixstage_costcurve_allocations4impacts_barplot.png'), height = 9, width = 9, dpi = 300)
 
+# Compare optimization results to the baseline.
+optimal_value_all <- read.csv(file.path(fp_output, 'sixstage_scenario_opt_values.csv'), stringsAsFactors = FALSE)
+
+# Add baseline values.
+baseline <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE) %>%
+  filter(rowSums(.[,1:6]) == 0)
+
+baseline <- baseline %>% 
+  filter(grepl('gcc|land|watr|enrg', impact_category)) %>%
+  mutate(category = c('energy', 'GHG', 'land', 'water'), total_cost = 0)
+
+optimal_value_all <- optimal_value_all %>%
+  rbind(baseline[,c('category','total_cost','value')]) %>%
+  group_by(category) %>%
+  mutate(value = value/max(value))
+
+ggplot(optimal_value_all, aes(x = total_cost, y = value, color = category)) + 
+  geom_point() + geom_line() +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank()) +
+  scale_x_continuous(breaks = c(0,500,1000,2000,5000), name = 'Total invested (million $)') +
+  scale_y_continuous(labels = scales::percent, name = 'Impact (percent of baseline)') +
+  scale_color_brewer(name = 'Impact category', type = 'qual', palette = 'Set2') +
+  ggtitle('Impact reduction by total invested', 'optimizing for each impact category separately')
+
+ggsave(file.path(fpfig, 'sixstage_impactreduction_bytotalinvested.png'), height = 6, width = 6, dpi = 300)
 
 # Cost curves based on ReFED data
 # ===============================
 
-sectorpars <- read.csv(file.path(fp, 'scenario_results/sector_parameters.csv'), stringsAsFactors = FALSE)
+sectorpars <- read.csv(file.path(fp_output, 'sector_parameters.csv'), stringsAsFactors = FALSE)
 
 w <- function(x, W0, Wu, B, ...) {
   2*(W0-Wu)/(exp(B*x) + 1) + Wu

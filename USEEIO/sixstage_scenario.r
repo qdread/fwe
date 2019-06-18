@@ -269,3 +269,15 @@ optimal_df_all <- map2_dfr(c('GHG','land','water','energy'), list(optimal_df_ghg
   mutate(cost = round(cost))
 
 write.csv(optimal_df_all, '/nfs/qread-data/scenario_results/sixstage_scenario_opt_results.csv', row.names = FALSE)
+
+# Also get the actual value that is minimized from each optimization.
+makeoptimvaldf <- function(o) map2_dfr(o, Ctotal_vec, ~ data.frame(total_cost = .y, value = .x$values[length(.x$values)]))
+
+optimal_val_ghg <- makeoptimvaldf(optim_ghg)
+optimal_val_land <- makeoptimvaldf(optim_land)
+optimal_val_water <- makeoptimvaldf(optim_water)
+optimal_val_energy <- makeoptimvaldf(optim_energy)
+
+optimal_value_all <- map2_dfr(c('GHG','land','water','energy'), list(optimal_val_ghg, optimal_val_land, optimal_val_water, optimal_val_energy), ~ cbind(category = .x, .y))
+
+write.csv(optimal_value_all, '/nfs/qread-data/scenario_results/sixstage_scenario_opt_values.csv', row.names = FALSE)
