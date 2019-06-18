@@ -271,3 +271,46 @@ ggplot(optimal_df_all, aes(x = total_cost, y = cost, fill = stage, group = stage
         legend.position = 'bottom')
 
 ggsave(file.path(fpfig, 'sixstage_costcurve_fake_example_allocations4impacts.png'), height = 9, width = 9, dpi = 300)
+
+
+# Cost curves based on ReFED data
+# ===============================
+
+sectorpars <- read.csv(file.path(fp, 'scenario_results/sector_parameters.csv'), stringsAsFactors = FALSE)
+
+w <- function(x, W0, Wu, B, ...) {
+  2*(W0-Wu)/(exp(B*x) + 1) + Wu
+}
+
+sectorpars_final <- with(sectorpars, data.frame(W0 = W0, Wu = Wu_final, B = B_final))
+xmax <- 200
+
+yvals_curves <- pmap(sectorpars, w, x = seq(0, xmax, 1))
+yvals_curves_final <- pmap(sectorpars_final, w, x = seq(0, xmax, 1))
+dat_for_curves <- imap_dfr(yvals_curves, ~ data.frame(sector = sectorpars$sector_name[.y], stage = sectorpars$stage[.y], x = seq(0, xmax, 1), y = .x))
+dat_for_curves_household <- imap_dfr(yvals_curves_final, ~ data.frame(sector = paste(sectorpars$sector_name[.y], 'final'), code = sectorpars$stage_code_final[.y], x = seq(0, xmax, 1), y = .x)) %>%
+  filter(code %in% 'L5') %>%
+  mutate(stage = 'household') %>%
+  select(sector, stage, x, y)
+dat_for_curves <- rbind(dat_for_curves, dat_for_curves_household)
+
+ggplot(dat_for_curves, aes(x = x, y = y, color = stage, group = sector)) +
+  geom_line() +
+  theme_bw() +
+  scale_color_brewer(type='qual', palette='Set2') +
+  scale_x_continuous(name = 'Cost (million $)', expand = c(0,0), limits = c(0, xmax)) +
+  scale_y_continuous(name = 'Waste rate', expand = c(0,0), labels = scales::percent, limits = c(0, 0.26)) +
+  ggtitle('Cost curves for each FSC sector from ReFED data', 'Each stage has multiple sectors')
+
+# Show averages over all the sectors
+dat_for_curves %>%
+  group_by(stage, x) %>%
+  summarize(y = mean(y)) %>%
+ggplot(aes(x = x, y = y, color = stage)) +
+  geom_line() +
+  theme_bw() +
+  scale_color_brewer(type='qual', palette='Set2') +
+  scale_x_continuous(name = 'Cost (million $)', expand = c(0,0), limits = c(0, 100)) +
+  scale_y_continuous(name = 'Waste rate', expand = c(0,0), labels = scales::percent, limits = c(0, 0.15)) +
+  ggtitle('Cost curves for each FSC stage from ReFED data', 'Average curve over all sectors in each stage')
+ggsave('/nfs/qread-data/figures/sixstage_costcurve_refedcurvesbystage.png', height = 6, width = 6, dpi = 300)

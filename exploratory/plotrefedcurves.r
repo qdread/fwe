@@ -14,7 +14,7 @@
 # This can be used to parameterize the cost curve!
 
 fpcrosswalk <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
-refed <- read.csv('Q:/crossreference_tables/refed_testvalues.csv', stringsAsFactors = FALSE)
+refed <- read.csv(file.path(fpcrosswalk, 'refed_testvalues.csv'), stringsAsFactors = FALSE)
 
 refed$Wu <- with(refed, 1 - addressable/net)
 refed$W1 <- with(refed, 1 - diversion.potential/net)
@@ -22,7 +22,7 @@ refed$W1 <- with(refed, 1 - diversion.potential/net)
 refed$b <- with(refed, log(2 * (1-Wu)/(W1-Wu))/cost)
 
 w <- function(x, W0, Wu, b, ...) {
-  2*(w0-wu)/(exp(b*x) + 1) + wu
+  2*(W0-Wu)/(exp(b*x) + 1) + Wu
 }
 
 # Plot assuming W0=1 and other numbers as a function of W0.
@@ -35,6 +35,5 @@ refedplotdat <- refed %>%
   do(data.frame(C = seq(0, Cmax, by = 1),
                 W = w(x = seq(0, Cmax, by = 1), W0 = 1, Wu = .$Wu, b = .$b)))
 
-refedplotdat <- pmap_dfr(refed, w, x = seq(0, Cmax, by=1), W0 = 1)
-
+# This only shows them starting at 1 but they start at different levels.
 ggplot(refedplotdat, aes(x=C, y=W, color=stage)) + geom_line() 

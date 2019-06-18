@@ -2,8 +2,9 @@
 # Six possible parameters for reduction
 # QDR / FWE / 29 May 2019
 
-# reduction areas: agriculture, processing, retail, institutional consumption, food service consumption, household consumption
+# Modified 17 June 2019: Use refed numbers for the cost curve part.
 
+# 6 reduction areas: agriculture, processing, retail, institutional consumption, food service consumption, household consumption
 
 # Load data ---------------------------------------------------------------
 
@@ -153,23 +154,53 @@ write.csv(eeio_result_grid_df, file = '/nfs/qread-data/scenario_results/sixstage
 
 library(Rsolnp)
 
+# Get parameters for abatement curves from Refed data.
+refed_params <- read.csv(file.path(fp_crosswalks, 'refed_testvalues.csv'), stringsAsFactors = FALSE) %>%
+  mutate(Wu = 1 - addressable/net,
+         W1 = 1 - diversion.potential/net,
+         C1 = cost,
+         stage_code = c('L1', 'L2', 'L3', 'L4a', 'L4b', 'L5'))
+
+# Get parameters for each sector using stage level values
+# Wu: Unavoidable waste rate 
+Wu_sectors <- baseline_waste_rate * refed_params$Wu[match(sector_stage_codes, refed_params$stage_code)]
+Wu_sectors_final <- baseline_waste_rate * refed_params$Wu[match(final_demand_sector_codes, refed_params$stage_code)]
+
+# W1: Diverted waste amount at C1
+W1_sectors <- baseline_waste_rate * refed_params$W1[match(sector_stage_codes, refed_params$stage_code)]
+W1_sectors_final <- baseline_waste_rate * refed_params$W1[match(sector_stage_codes, refed_params$stage_code)]
+
+# C1: Cost to achieve W1
+C1_sectors <- refed_params$C1[match(sector_stage_codes, refed_params$stage_code)]
+C1_sectors_final <- refed_params$C1[match(final_demand_sector_codes, refed_params$stage_code)]
+
+# B: Slope
+b <- function(W0, W1, Wu, C1) log(2 * (W0 - Wu)/(W1 - Wu)) / C1
+
+B_sectors <- b(W0 = baseline_waste_rate, W1 = W1_sectors, Wu = Wu_sectors, C1 = C1_sectors)
+B_sectors_final <- b(W0 = baseline_waste_rate, W1 = W1_sectors_final, Wu = Wu_sectors_final, C1 = C1_sectors_final)
+
+# nu: Currently set to 1 for all.
+nu_sectors <- rep(1, length(B_sectors))
+nu_sectors_final <- rep(1, length(B_sectors_final))
+
 # For now, use fake abatement cost curves to test and make sure it works.
-
-# Fake parameters to test if procedure works:
-# fake unavoidable waste rate -- assume 25% of food waste is unavoidable
-fake_unavoidable_waste_rate <- baseline_waste_rate * 0.25
-
-# Parameters by stage
-# Assume faster returns on investment for level 1 and level 2
-# Assume higher startup costs for level 1, intermediate for level 2, none for level 3
-B_stages <- c(L1 = 0.005, L2 = 0.005, L3 = 0.002, L4a = 0.003, L4b = 0.003, L5 = 0.007)
-nu_stages <- c(L1 = 0.1, L2 = 0.2, L3 = 1, L4a = 0.9, L4b = 0.9, L5 = 0.05)
-
-B_sectors <- B_stages[sector_stage_codes]
-nu_sectors <- nu_stages[sector_stage_codes]
-
-B_sectors_final <- B_stages[final_demand_sector_codes]
-nu_sectors_final <- nu_stages[final_demand_sector_codes]
+# 
+# # Fake parameters to test if procedure works:
+# # fake unavoidable waste rate -- assume 25% of food waste is unavoidable
+# fake_unavoidable_waste_rate <- baseline_waste_rate * 0.25
+# 
+# # Parameters by stage
+# # Assume faster returns on investment for level 1 and level 2
+# # Assume higher startup costs for level 1, intermediate for level 2, none for level 3
+# B_stages <- c(L1 = 0.005, L2 = 0.005, L3 = 0.002, L4a = 0.003, L4b = 0.003, L5 = 0.007)
+# nu_stages <- c(L1 = 0.1, L2 = 0.2, L3 = 1, L4a = 0.9, L4b = 0.9, L5 = 0.05)
+# 
+# B_sectors <- B_stages[sector_stage_codes]
+# nu_sectors <- nu_stages[sector_stage_codes]
+# 
+# B_sectors_final <- B_stages[final_demand_sector_codes]
+# nu_sectors_final <- nu_stages[final_demand_sector_codes]
 
 # Find the proportion of waste reduction dollars allocated to each sector within each stage of the food supply chain
 # Use the baseline values for gross output from each sector to get the weights. (this is T008 in the make table)
@@ -181,8 +212,21 @@ proportion_gross_outputs <- gross_outputs / gross_outputs_by_stage[sector_stage_
 gross_outputs_by_stage_final <- tapply(gross_outputs, final_demand_sector_codes, sum)
 proportion_gross_outputs_final <- gross_outputs / gross_outputs_by_stage_final[final_demand_sector_codes]
 
+# Write all the parameter values to a CSV for later plotting
+sectorpars <- data.frame(sector_code = naics_foodsystem$BEA_389_code,
+                         sector_name = naics_foodsystem$BEA_389_def,
+                         stage = naics_foodsystem$stage,
+                         stage_code = sector_stage_codes,
+                         stage_code_final = final_demand_sector_codes,
+                         Wu = Wu_sectors,
+                         Wu_final = Wu_sectors_final,
+                         W0 = baseline_waste_rate,
+                         B = B_sectors,
+                         B_final = B_sectors_final)
+write.csv(sectorpars, file.path(fp_output, 'sector_parameters.csv'), row.names = FALSE)
+
 # Constraint: total cost - pulled out of thin air.
-Ctotal <- 1000
+Ctotal <- 1000 # in units of million USD
 
 
 # Optimization
@@ -198,19 +242,19 @@ water_name <- "resource use/watr/m3"
 energy_name <- "resource use/enrg/mj"
 
 # Test. (looks like the 6 parameters take longer to evaluate than the 3 situation)
-res_test <- solnp(pars = x0, fun = eval_f_eeio, eqfun = eval_eq_total, eqB = Ctotal, LB = lb, UB = ub, category = ghg_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = fake_unavoidable_waste_rate, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = Ctotal)
+res_test <- solnp(pars = x0, fun = eval_f_eeio, eqfun = eval_eq_total, eqB = Ctotal, LB = lb, UB = ub, category = ghg_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = Ctotal)
 ### works.
 
 # Optimize across each of the 4 categories and for each of several values of Ctotal
 Ctotal_vec <- c(500, 1000, 2000, 5000)
 
-optim_ghg <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = ghg_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = fake_unavoidable_waste_rate, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+optim_ghg <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = ghg_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
 
-optim_land <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = land_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = fake_unavoidable_waste_rate, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+optim_land <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = land_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
 
-optim_water <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = water_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = fake_unavoidable_waste_rate, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+optim_water <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = water_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
 
-optim_energy <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = energy_name, W0_sectors = baseline_waste_rate, Wu_sectors = fake_unavoidable_waste_rate, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = fake_unavoidable_waste_rate, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+optim_energy <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = lb, UB = ub, category = energy_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
 
 # Process output and write.
 stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
@@ -224,4 +268,4 @@ optimal_df_energy <- makeoptimdf(optim_energy)
 optimal_df_all <- map2_dfr(c('GHG','land','water','energy'), list(optimal_df_ghg, optimal_df_land, optimal_df_water, optimal_df_energy), ~ cbind(category = .x, .y)) %>%
   mutate(cost = round(cost))
 
-write.csv(optimal_df_all, '/nfs/qread-data/scenario_results/sixstage_scenario_fake_opt_results.csv', row.names = FALSE)
+write.csv(optimal_df_all, '/nfs/qread-data/scenario_results/sixstage_scenario_opt_results.csv', row.names = FALSE)
