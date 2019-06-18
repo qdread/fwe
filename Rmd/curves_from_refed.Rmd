@@ -1,0 +1,58 @@
+---
+title: "Generate cost curves from ReFED"
+author: "Quentin D. Read"
+date: "June 17, 2019"
+header-includes:
+  - \usepackage{caption}
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Purpose
+
+To move forward with our food waste reduction cost optimization, I am going to begin by using data from ReFED's 2016 "roadmap" report to crudely estimate waste abatement cost curves for a typical intervention for each of the food supply chain stages. This is a quick description of how to convert ReFED's numbers (estimates of baseline waste, total addressable waste, waste prevented by the intervention, and cost of preventing the waste) into parameters of a cost curve. We will feed the parameters into our optimization to determine which interventions are most cost-effective.
+
+The most important parameter we need to know is $b$, the slope parameter of the curve. This essentially represents how quickly we achieve waste abatement when the intervention is starting from scratch, before it eventually flattens off to the unavoidable value when you reach the ceiling of effectiveness for that intervention.
+
+# What we know
+
+Most of the numbers we need to create the curves are provided for each intervention by ReFED. They are mostly produced by expert elicitation and will need to be taken with a big grain of salt. Also, we will need to test any and all assumptions with sensitivity analysis.
+
+* $W_{0}$: Baseline waste rates for each of the sectors, expressed as a percentage. **Source: FAO data.**
+* $N$: Net waste in the entire food supply chain stage targeted by the intervention, expressed as a quantity in millions of tons. **Source: ReFED.**
+* $A$: Addressable waste in the food supply chain stage, that could potentially be reduced if intervention is maximally effective, expressed as a quantity in millions of tons. **Source: ReFED.**
+* $D$: Diversion potential of the intervention, or waste averted if the intervention is as effective as expected. **Source: ReFED.**
+* $C_{1}$: Cost of reducing waste to the diversion potential level. **Source: ReFED.**
+
+# Calculations
+
+We convert the unavoidable waste from a quantity in tons to a percentage which we call $W_{u}$: 
+
+$$ W_u = W_0(1 - \frac{A}{N})$$
+
+We convert the expected diverted waste from a quantity in tons to a percentage which we call $W_{1}$:
+
+$$ W_1 = W_0(1 - \frac{D}{N})$$
+
+This gives us all the information shown in Figure 1.
+
+![Information from ReFED and FAO](Q:/figures/schematic1.png)
+
+# Creating the curve
+
+We are using the following equation to get the waste rate as a function of cost (amount invested in waste reduction). It is a curve that has a value of $W_0$ when $C = 0$, starts out decreasing, and then flattens out as cost increases, to a lower asymptote of $W_u$.
+
+$$ W(C) = \frac{2(W_0 - W_u)}{e^{bC} + 1} + W_u $$
+
+Since we know the value of $W$ at $C = 0$, one point on the curve $(C_1, W_1)$, and the lower asymptote $W_u$, we can find the value of $b$ and put a curve through the points as in Figure 2.
+
+We find $b$ by evaluating the equation above at $(C_1, W_1)$ and solving for $b$:
+
+$$ b = \frac{1}{C_1} \log \bigg( 2\big( \frac{W_0 - W_u}{W_1 - W_u} \big) - 1 \bigg) $$
+
+As I mentioned above, this is very crude but we can think of it as a decent starting point.
+
+![Fitting a curve through the points](Q:/figures/schematic2.png)
