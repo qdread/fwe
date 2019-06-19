@@ -181,7 +181,7 @@ Probably due to differing methodologies of both food waste rates and environment
 
 \newpage
 
-An alternative way to show the tradeoffs among impact categories resulting from where we reduce waste is shown in the following "radar charts." In these charts, points further from the center indicate greater *reduction* of impacts in that category. 
+An alternative way to show the tradeoffs among impact categories resulting from where we reduce waste is shown in the following "radar chart." In this chart, points further from the center indicate greater *reduction* of impacts in that category. 
 This chart shows impact reduction when waste is reduced by 50% in a single stage (Figure 6). It reiterates the point that food service waste reduction would have the greatest benefit for reducing energy use and GHG emissions, while 50% waste reduction in the household consumption and food processing sectors would decrease water use, land use, and eutrophication potential the most. The other three sectors have minimal effects regardless of impact category considered. 
 
 ![Effect of FLW reduction at a single stage, shown in radar chart](Q:/figures/sixstage_radar_singlestages.png){ width=55% }
@@ -238,13 +238,13 @@ We convert the expected diverted waste from a quantity in tons to a percentage w
 $$ W_1 = W_0(1 - \frac{D}{N})$$
 This gives us all the information shown in Figure 7.
 
-![Information from ReFED and FAO](Q:/figures/schematic1.png)
+![Information from ReFED and FAO](Q:/figures/makingcostcurve1.png)
 
 Since we know the value of $W$ at $C = 0$, one point on the curve $(C_1, W_1)$, and the lower asymptote $W_u$, we can find the value of $B$ and put a curve through the points as shown in Figure 8. We find $B$ by evaluating the equation for the cost curve, $W(C) = \frac{2(W_0 - W_u)}{e^{bC} + 1} + W_u$, at $(C_1, W_1)$ and solving for $B$:
 
 $$ B = \frac{1}{C_1} \log \bigg( 2\big( \frac{W_0 - W_u}{W_1 - W_u} \big) - 1 \bigg) $$
 
-![Fitting a curve through the points](Q:/figures/schematic2.png)
+![Fitting a curve through the points](Q:/figures/makingcostcurve2.png)
 
 It would be desirable to have more data points for each intervention to get a better fit and also to estimate parameter uncertainty stemming from the data.
 
