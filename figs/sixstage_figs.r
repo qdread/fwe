@@ -326,6 +326,8 @@ dat_for_curves_household <- imap_dfr(yvals_curves_final, ~ data.frame(sector = p
   select(sector, stage, x, y)
 dat_for_curves <- rbind(dat_for_curves, dat_for_curves_household)
 
+dat_for_curves$stage <- factor(dat_for_curves$stage, labels = stage_full_names)
+
 ggplot(dat_for_curves, aes(x = x, y = y, color = stage, group = sector)) +
   geom_line() +
   theme_bw() +
@@ -339,7 +341,7 @@ dat_for_curves %>%
   group_by(stage, x) %>%
   summarize(y = mean(y)) %>%
 ggplot(aes(x = x, y = y, color = stage)) +
-  geom_line() +
+  geom_line(size = 1) +
   theme_bw() +
   scale_color_brewer(type='qual', palette='Set2') +
   scale_x_continuous(name = 'Cost (million $)', expand = c(0,0), limits = c(0, 100)) +
