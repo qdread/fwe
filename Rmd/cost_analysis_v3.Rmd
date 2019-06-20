@@ -1,7 +1,7 @@
 ---
-title: 'FLW scenarios: methods and preliminary results (V3)'
+title: 'FLW scenarios: methods and preliminary results (V3.1)'
 author: "Quentin D. Read"
-date: "June 18, 2019"
+date: "June 20, 2019"
 header-includes:
   - \usepackage{caption}
 output: pdf_document
@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 * V1 created May 15, 2019
 * V2 created June 4, 2019
 * V3 created June 18, 2019 (including cost curve parameters from ReFED)
+  * V3.1 created June 20, 2019 (correct error in how total cost was divided up, which impacts final result)
 
 # Overarching question
 
@@ -204,7 +205,7 @@ Most of the numbers we need to create the curves are provided for each intervent
 * $N$: Net waste in the entire food supply chain stage targeted by the intervention, expressed as a quantity in millions of tons. **Source: ReFED.**
 * $A$: Addressable waste in the food supply chain stage, that could potentially be reduced if intervention is maximally effective, expressed as a quantity in millions of tons. **Source: ReFED.**
 * $D$: Diversion potential of the intervention, or waste averted if the intervention is as effective as expected. **Source: ReFED.**
-* $C_{1}$: Cost of reducing waste to the diversion potential level. **Source: ReFED.**
+* $C_{1}$: Cost of reducing waste to the diversion potential level. This cost value is the total for each stage, so for each sector, the cost value is multiplied by the proportion output within that stage represented by the sector. **Source: ReFED.**
 
 Table 4 shows the values derived from the report for net waste $N$, addressable waste $A$, diversion potential $D$, and cost of reducing waste to the diversion potential level $C_1$.
 
@@ -242,17 +243,17 @@ $$ B = \frac{1}{C_1} \log \bigg( 2\big( \frac{W_0 - W_u}{W_1 - W_u} \big) - 1 \b
 
 It would be desirable to have more data points for each intervention to get a better fit and also to estimate parameter uncertainty stemming from the data.
 
-Separate values for each parameter are calculated for each of the many sectors within each FSC stage. Figure 8 shows the average cost curve for each of the six stages, averaging together all of the sectors within each stage.
+Separate values for each parameter are calculated for each of the many sectors within each FSC stage. Figure 8 shows a representative cost curve for one sector from each food supply chain stage.
 
-![Average abatement cost curve for each supply chain stage](Q:/figures/sixstage_costcurve_refedcurvesbystage.png){ width=50% }
+![Representative abatement cost curve for each supply chain stage](Q:/figures/sixstage_costcurve_refedcurvesbystage_representative.png){ width=50% }
 
-Figure 8 shows that using this method of finding the parameters of the curves, the waste reduction rate flattens out relatively quickly and is relatively modest. As might be expected, this leads to low estimates of impact reduction given investment of food waste reduction (see below).
+Figure 8 shows that for some of the sectors,the waste rate is reduced after a small initial investment, but others do not see much reduction until a large amount of money has been invested in waste reduction. Clearly this has a significant influence on the result of the optimization (see below). In addition, waste reduction has a very different maximal effectiveness in the different sectors, which will also determine prioritization of funding.
 
 ## Optimization procedure
 
 I ran an optimization with an objective function representing the total environmental impact as a function of the vector $C = (C_1, C_2, C_3, C_4, C_5, C_6)$ where the six values are the amounts of money invested in FLW reduction at each of the supply chain stages. Each time the objective function is evaluated, the following happens: 
 
-1. The amount of money invested in each stage (6 stages) is divided evenly among the sectors making up each stage (around 10-30 sectors per stage). 
+1. The amount of money invested in each stage (6 stages) is divided proportionately by sector size among the sectors making up each stage (around 10-30 sectors per stage). 
 2. The waste rate at each stage is calculated using the cost curve.
 3. The final and intermediate demand changes associated with the reduced waste rates for each sector are calculated.
 4. The EEIO model is rebuilt with the new final and intermediate demands.
@@ -260,7 +261,7 @@ I ran an optimization with an objective function representing the total environm
 
 The optimization is subject to the constraint that $\sum\limits_{i=1}^6 C_i = C_{total}$, representing the total amount of money available for FLW reduction.
 
-I ran a separate optimization for four different values of $C_{total}$: 500, 1000, 2000, and 5000, which would be divided among the 6 FSC stages and then equally among the sectors making up each stage. I corrected for sectors that are only partially involved in the food supply chain (for example, the amusement park industry's expenses are about 12% to food system sectors. Making the simplifying assumption that this corresponds to 12% of its final demand being food purchases, the final demand modification for that industry only modifies that proportion of the final demand.) For each value of $C_{total}$, I optimized for minimizing GHG emissions, land use, water use, and energy use, for a total of 16 optimizations.
+I ran a separate optimization for four different values of $C_{total}$: 500, 1000, 2000, and 5000, which would be divided among the 6 FSC stages and then equally among the sectors making up each stage. I corrected for sectors that are only partially involved in the food supply chain (for example, food system sectors account for about 12% of inputs to the amusement park industry. Making the simplifying assumption that this corresponds to 12% of final demand for the amusement park industry being food purchases, the final demand modification for the industry only modifies 12% of its total final demand.) For each value of $C_{total}$, I optimized for minimizing GHG emissions, land use, water use, and energy use, for a total of 16 optimizations.
 
 ## Results of optimization
 
@@ -268,11 +269,11 @@ Taking GHG emissions as an example, the optimal waste rate across all sectors th
 
 ![Optimal allocations across total cost values and across impact categories](Q:/figures/sixstage_costcurve_allocations4impacts_lineplot.png)
 
-The optimal solution for different values of $C_{total}$ is different depending on what environmental impact category we aim to minimize. For example, if land use is what we want to minimize, and we have limited resources to invest, waste reduction should target the agricultural production sector. Otherwise, the foodservice and institutional foodservice sectors are better targets, according to this analysis.
+The optimal solution for different values of $C_{total}$ is different depending on what environmental impact category we aim to minimize, particularly at lower values of $C_{total}$. For example, if land use is what we want to minimize, and we have $500 million to invest, waste reduction should target the agricultural production sector. Otherwise, the foodservice and institutional foodservice sectors are better targets, according to this analysis.
 
 ### Low overall impact reduction values
 
-Unfortunately, the absolute amount of environmental impact reduction estimated for even quite high levels of investment in FLW reduction is extremely anemic, according to this analysis. This is a result of the fairly low maximum waste reduction rate that I estimated from ReFED's numbers, as well as the fairly high cost of getting to that level. Figure 10 shows the reduction in the impact category that is targeted for minimization, relative to the baseline. Most of the reduction is achieved after investing only $500 million, with minimal additional reduction after that. The environmental impacts of the food system are less than 1% smaller in magnitude. From this, we can either conclude that there is little realistic potential for reducing environmental impact of the food system by reducing food waste, or the weak result may be due mostly to overly pessimistic abatement cost curves. Increasing the realism of the cost curves will be a focus of work in the near future.
+Unfortunately, the absolute amount of environmental impact reduction estimated for even quite high levels of investment in FLW reduction is extremely anemic, according to this analysis. This is a result of the fairly low maximum waste reduction rate that I estimated from ReFED's numbers, as well as the fairly high cost of getting to that level. Figure 10 shows the reduction in the impact category that is targeted for minimization, relative to the baseline. Most of the reduction is achieved after investing only $500 million, with minimal additional reduction after that. The environmental impacts of the food system are less than 1% smaller in magnitude than the baseline. From this, we can either conclude that there is little realistic potential for reducing environmental impact of the food system by reducing food waste, or the weak result may be due mostly to overly pessimistic abatement cost curves. Increasing the realism of the cost curves will be a focus of work in the near future.
 
 ![Reductions in impacts relative to baseline](Q:/figures/sixstage_impactreduction_bytotalinvested.png){ width=50% }
 
