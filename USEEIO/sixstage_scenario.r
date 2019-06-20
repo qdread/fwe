@@ -2,6 +2,7 @@
 # Six possible parameters for reduction
 # QDR / FWE / 29 May 2019
 
+# Modified 20 June 2019: split up cost parameter by proportional size of the sectors.
 # Modified 17 June 2019: Use refed numbers for the cost curve part.
 
 # 6 reduction areas: agriculture, processing, retail, institutional consumption, food service consumption, household consumption
@@ -170,9 +171,20 @@ Wu_sectors_final <- baseline_waste_rate * refed_params$Wu[match(final_demand_sec
 W1_sectors <- baseline_waste_rate * refed_params$W1[match(sector_stage_codes, refed_params$stage_code)]
 W1_sectors_final <- baseline_waste_rate * refed_params$W1[match(sector_stage_codes, refed_params$stage_code)]
 
+# Find the proportion of waste reduction dollars allocated to each sector within each stage of the food supply chain
+# Use the baseline values for gross output from each sector to get the weights. (this is T008 in the make table)
+gross_outputs <- M[sector_short_names, 'T008']
+gross_outputs_by_stage <- tapply(gross_outputs, sector_stage_codes, sum)
+proportion_gross_outputs <- gross_outputs / gross_outputs_by_stage[sector_stage_codes]
+
+# Also do this proportion for the final ones.
+gross_outputs_by_stage_final <- tapply(gross_outputs, final_demand_sector_codes, sum)
+proportion_gross_outputs_final <- gross_outputs / gross_outputs_by_stage_final[final_demand_sector_codes]
+
 # C1: Cost to achieve W1
-C1_sectors <- refed_params$C1[match(sector_stage_codes, refed_params$stage_code)]
-C1_sectors_final <- refed_params$C1[match(final_demand_sector_codes, refed_params$stage_code)]
+# The C1 for each stage needs to be multiplied by the sector's proportion output of the stage it belongs to, to get the C1 for each sector.
+C1_sectors <- refed_params$C1[match(sector_stage_codes, refed_params$stage_code)] * proportion_gross_outputs
+C1_sectors_final <- refed_params$C1[match(final_demand_sector_codes, refed_params$stage_code)] * proportion_gross_outputs_final
 
 # B: Slope
 b <- function(W0, W1, Wu, C1) log(2 * (W0 - Wu)/(W1 - Wu)) / C1
@@ -202,15 +214,7 @@ nu_sectors_final <- rep(1, length(B_sectors_final))
 # B_sectors_final <- B_stages[final_demand_sector_codes]
 # nu_sectors_final <- nu_stages[final_demand_sector_codes]
 
-# Find the proportion of waste reduction dollars allocated to each sector within each stage of the food supply chain
-# Use the baseline values for gross output from each sector to get the weights. (this is T008 in the make table)
-gross_outputs <- M[sector_short_names, 'T008']
-gross_outputs_by_stage <- tapply(gross_outputs, sector_stage_codes, sum)
-proportion_gross_outputs <- gross_outputs / gross_outputs_by_stage[sector_stage_codes]
 
-# Also do this proportion for the final ones.
-gross_outputs_by_stage_final <- tapply(gross_outputs, final_demand_sector_codes, sum)
-proportion_gross_outputs_final <- gross_outputs / gross_outputs_by_stage_final[final_demand_sector_codes]
 
 # Write all the parameter values to a CSV for later plotting
 sectorpars <- data.frame(sector_code = naics_foodsystem$BEA_389_code,
@@ -242,6 +246,7 @@ water_name <- "resource use/watr/m3"
 energy_name <- "resource use/enrg/mj"
 
 # Test. (looks like the 6 parameters take longer to evaluate than the 3 situation)
+# With the newer cost values added on June 20, it appears to be even slower. Later this code may need to be parallelized.
 res_test <- solnp(pars = x0, fun = eval_f_eeio, eqfun = eval_eq_total, eqB = Ctotal, LB = lb, UB = ub, category = ghg_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = Ctotal)
 ### works.
 
