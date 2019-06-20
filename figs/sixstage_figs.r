@@ -7,6 +7,7 @@ fpfig <- file.path(fp, 'figures')
 fp_output <- file.path(fp, 'scenario_results')
 
 stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
+
 optimal_df_all <- read.csv(file.path(fp_output, 'sixstage_scenario_opt_results.csv'))
 grid_result <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE)
 
@@ -296,12 +297,13 @@ optimal_value_all <- optimal_value_all %>%
 
 ggplot(optimal_value_all, aes(x = total_cost, y = value, color = category)) + 
   geom_point() + geom_line() +
-  theme_bw() +
-  theme(panel.grid.minor = element_blank()) +
   scale_x_continuous(breaks = c(0,500,1000,2000,5000), name = 'Total invested (million $)') +
   scale_y_continuous(labels = scales::percent, name = 'Impact (percent of baseline)') +
   scale_color_brewer(name = 'Impact category', type = 'qual', palette = 'Set2') +
-  ggtitle('Impact reduction by total invested', 'optimizing for each impact category separately')
+  ggtitle('Impact reduction by total invested', 'optimizing for each impact category separately') +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+        legend.position = c(0.8, 0.8))
 
 ggsave(file.path(fpfig, 'sixstage_impactreduction_bytotalinvested.png'), height = 6, width = 6, dpi = 300)
 
@@ -346,5 +348,7 @@ ggplot(aes(x = x, y = y, color = stage)) +
   scale_color_brewer(type='qual', palette='Set2') +
   scale_x_continuous(name = 'Cost (million $)', expand = c(0,0), limits = c(0, 100)) +
   scale_y_continuous(name = 'Waste rate', expand = c(0,0), labels = scales::percent, limits = c(0, 0.15)) +
-  ggtitle('Cost curves for each FSC stage from ReFED data', 'Average curve over all sectors in each stage')
-ggsave('/nfs/qread-data/figures/sixstage_costcurve_refedcurvesbystage.png', height = 6, width = 6, dpi = 300)
+  ggtitle('Cost curves for each FSC stage from ReFED data', 'Average curve over all sectors in each stage') +
+  theme(legend.position = 'bottom')
+
+ggsave(file.path(fp, 'figures/sixstage_costcurve_refedcurvesbystage.png'), height = 7, width = 6, dpi = 300)
