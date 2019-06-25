@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 * V2 created June 4, 2019
 * V3 created June 18, 2019 (including cost curve parameters from ReFED)
   * V3.1 created June 20, 2019 (correct error in how total cost was divided up, which impacts final result)
+  * V3.2 created June 25, 2019 (include initial sensitivity analysis)
 
 # Overarching question
 
@@ -180,6 +181,17 @@ To show the magnitude of impact reduction you could get by completely eliminatin
 ![All environmental impacts reduction with 100% FLW reduction](Q:/figures/sixstage_grid_allcategoriesby100pct.png){ width=50% }
 
 Probably due to differing methodologies of both food waste rates and environmental impacts, these magnitudes might be somewhat different than other estimates. Our analysis shows that completely eliminating food waste from the USA food supply chain would decrease water use and energy use by the food system by roughly 20%. I believe this number is fairly realistic.
+
+## 5. Sensitivity analysis
+
+Unfortunately, there are no formal uncertainty numbers given for any of the data we are using, including the FAO waste rate data, or any of the data compiled by EPA for the USEEIO model. Yang et al. (2017) extensively assess the quality of the data they used to build the USEEIO model, but the data quality scores are essentially ranks on a reliability scale of 1-5. Those scores would be difficult to incorporate into a quantitative uncertainty analysis. Currently, I believe the best we can do is the following:
+
+* List all possible sources of data uncertainty.
+* Determine which ones we want to include in a sensitivity analysis, since it is not possible to include all of them.
+* Choose distributions for the uncertain data values, centered around the value we have.
+* Run a Monte Carlo sensitivity analysis, meaning to draw a sample from each of the distributions, run the model using the sampled values, and repeat many times.
+* Present the results of the sensitivity analysis with the two caveats that it only partially accounts for uncertainty and that the magnitudes of the uncertainty of the different outputs are only relative, not absolute, because we don't really know the true distributions for the underlying data.
+**continue to add to this**
 
 \newpage
 
