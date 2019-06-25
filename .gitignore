@@ -43,3 +43,6 @@ rsconnect/
 
 # Any directories created by Rslurm, and all files in them.
 _rslurm*/
+
+# Slurm output files that are produced on the cluster
+slurm*.out
