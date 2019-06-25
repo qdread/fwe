@@ -189,6 +189,59 @@ ggsave(file.path(fpfig, 'sixstage_grid_waterby50pct.png'), watrseqplot, height =
 ggsave(file.path(fpfig, 'sixstage_grid_energyby50pct.png'), enrgseqplot, height = 6, width = 6, dpi = 300)
 ggsave(file.path(fpfig, 'sixstage_grid_allcategoriesby100pct.png'), allseq100plot, height = 6, width = 6, dpi = 300)
 
+# 50% reduction including error bars from sensitivity analysis
+# ============================================================
+
+grid_sensitivity_CIs <- read.csv(file.path(fp_output, 'sensitivity_grid_CIs.csv'), stringsAsFactors = FALSE)
+grid_sensitivity_df <- read.csv(file.path(fp_output, 'sensitivity_grid_alldraws.csv'), stringsAsFactors = FALSE)
+
+stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
+
+# Wrap sequence creation and plot creation in a function.
+create_sequence <- function(dat, var_id, value_id, proportion) {
+  value_id <- enquo(value_id)
+  dat %>%
+    ungroup %>%
+    filter(grepl(var_id, impact_category)) %>%
+    mutate(nbypct = rowSums(.[,1:6] == proportion)) %>%
+    filter(rowSums(.[,1:6] > 0) == nbypct) %>%
+    group_by(nbypct) %>%
+    filter(!!value_id == min(!!value_id)) %>%
+    arrange(nbypct) %>%
+    ungroup %>%
+    mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
+}
+
+reduction_plot_with_errorbars <- function(sequence, plot_title) {
+  sequence %>%
+    mutate(norm = max(q50)) %>%
+    mutate_at(vars(starts_with('q')), ~ ./norm) %>%
+    mutate(stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
+    ggplot(aes(x = nbypct, y = q50, ymin = q025, ymax = q975)) +
+    geom_line(size = 1) +
+    geom_errorbar(width = 0.2, color = 'gray60') +
+    geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
+    geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
+    scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
+    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.03), expand = c(0,0)) +
+    ggtitle(plot_title, 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 50%') +
+    theme_bw() +
+    theme(panel.grid.minor.x = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          plot.subtitle = element_text(size = 10))
+  
+}
+
+co2sequence_sens <- create_sequence(grid_sensitivity_CIs, 'co2', q50, 0.5)
+landsequence_sens <- create_sequence(grid_sensitivity_CIs, 'land', q50, 0.5)
+energysequence_sens <- create_sequence(grid_sensitivity_CIs, 'enrg', q50, 0.5)
+watersequence_sens <- create_sequence(grid_sensitivity_CIs, 'watr', q50, 0.5)
+eutrsequence_sens <- create_sequence(grid_sensitivity_CIs, 'eutr', q50, 0.5)
+
+
+co2seqplot_sens <- reduction_plot_with_errorbars(co2sequence_sens, 'Impact of FLW reduction on GHG emissions')
+
+
 # Radar charts showing tradeoffs among scenarios
 # ==============================================
 
