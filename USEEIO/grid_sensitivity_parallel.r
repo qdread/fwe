@@ -75,13 +75,13 @@ get_eeio_result_sensitivity <- function(c_factor, r_factor, c_names, r_names, i 
 
 n_draws <- 100 # Number of rounds of sensitivity analysis
 uncertainty_factor <- 100 # The higher this number, the LOWER the uncertainty.
-set.seed(555)
+set.seed(333)
 
 # Only use 0% reduction (baseline) and 50% reduction for each stage
 # Then do 0 and 100% separately
 
 reduction_rate_grid <- rbind(expand.grid(replicate(6, c(0, 0.5), simplify = FALSE)),
-							 expand.grid(replicate(6, c(0, 1), simplify = FALSE)))
+							 expand.grid(replicate(6, c(0, 1), simplify = FALSE))[-1,])
 names(reduction_rate_grid) <- c('L1', 'L2', 'L3', 'L4a', 'L4b', 'L5')
 
 # Create list from grid
@@ -129,14 +129,14 @@ proportion_food_combos <- cross2(reduction_rate_grid_list, proportion_food_list)
 sensitivity_arguments <- list(reduction_rate = map(baseline_waste_rate_combos, 1),
                               baseline_waste_rate = map(baseline_waste_rate_combos, 2),
                               proportion_food = map(proportion_food_combos, 2),
-                              scenario_id = as.list(1:length(baseline_waste_rate_combos)))
+                              scenario_id = as.list(paste0('scenario', 1:length(baseline_waste_rate_combos))))
 
 eeio_result_grid_sensitivity <- with(sensitivity_arguments, mcmapply(get_reduction_from_list, reduction_rate, baseline_waste_rate, proportion_food, scenario_id, mc.cores = n_cores, SIMPLIFY = FALSE))
 
 
 # Match output with arguments to get CIs ----------------------------------
 
-grid_sensitivity_df <- map2_dfr(sensitivity_arguments, eeio_result_grid_sensitivity, ~ data.frame(.x$reduction_rate, .y))
+grid_sensitivity_df <- map2_dfr(sensitivity_arguments$reduction_rate, eeio_result_grid_sensitivity, ~ data.frame(t(.x), .y))
 
 grid_sensitivity_CIs <- grid_sensitivity_df %>%
   group_by(L1, L2, L3, L4a, L4b, L5, impact_category) %>%
