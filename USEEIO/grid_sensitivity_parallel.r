@@ -75,12 +75,14 @@ get_eeio_result_sensitivity <- function(c_factor, r_factor, c_names, r_names, i 
 
 n_draws <- 100 # Number of rounds of sensitivity analysis
 uncertainty_factor <- 100 # The higher this number, the LOWER the uncertainty.
-set.seed(111)
+set.seed(555)
 
 # Only use 0% reduction (baseline) and 50% reduction for each stage
+# Then do 0 and 100% separately
 
-rate_levels <- c(0, 0.5, 1)
-reduction_rate_grid <- expand.grid(L1 = rate_levels, L2 = rate_levels, L3 = rate_levels, L4a = rate_levels, L4b = rate_levels, L5 = rate_levels)
+reduction_rate_grid <- rbind(expand.grid(replicate(6, c(0, 0.5), simplify = FALSE)),
+							 expand.grid(replicate(6, c(0, 1), simplify = FALSE)))
+names(reduction_rate_grid) <- c('L1', 'L2', 'L3', 'L4a', 'L4b', 'L5')
 
 # Create list from grid
 reduction_rate_grid_list <- split(reduction_rate_grid, seq(nrow(reduction_rate_grid))) %>%
