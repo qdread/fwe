@@ -46,3 +46,6 @@ _rslurm*/
 
 # Slurm output files that are produced on the cluster
 slurm*.out
+
+# PDFs produced in Rmarkdown directory
+Rmd/*.pdf

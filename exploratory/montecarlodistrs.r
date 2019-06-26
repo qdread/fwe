@@ -33,4 +33,19 @@ rdirichlet(1, alpha = c(700, 200, 100)) # Similar to the beta distribution but t
 # p ~ beta(100*p,100*(1-p))
 # w1 ~ truncated beta (100*w1, 100*(1-w1)), max at whatever the current value of w0 is.
 # wu ~ truncated beta(100-wu, 100*(1-wu)), max at whatever the current value of w1 is.
-# c1 ~ 
+# c1 ~ triangular(0.5*c1, 1.5*c1, c1)
+
+
+# Plot beta distributions -------------------------------------------------
+
+library(ggplot2)
+cols <- RColorBrewer::brewer.pal(8, 'Set3')[-2]
+ps <- c(10,20,40,50,60,80,90)
+
+distplot <- ggplot(data.frame(x=c(0,1)), aes(x)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(limits=c(0,15), expand=c(0,0)) +
+  theme_bw()
+
+for (i in 1:length(ps)) distplot <- distplot + stat_function(fun = dbeta, args=list(shape1=ps[i], shape2=100-ps[i]), color = cols[i], size = 1)
+distplot

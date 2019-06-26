@@ -93,21 +93,6 @@ reduction_rate_grid_list <- setNames(split(reduction_rate_grid, seq(nrow(reducti
 # For each combination scenario, put together a vector of demand reduction factors for intermediate demand with values and names equal to the column names of the DRC matrix
 # Also put together a vector of demand reduction factors for final demand with values and names equal to the row names of the DRC matrix. This will modify the PCE column of final demand.
 
-
-
-# Run grid with furrr
-# plan(multiprocess(workers = 8))
-# 
-# eeio_result_grid <- future_imap_dfr(reduction_rate_grid_list, function(reduction_by_stage, scenario_id) {
-#   intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
-#   final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[final_demand_sector_codes], naics_foodsystem$proportion_food))
-#   get_eeio_result(c_factor = intermediate_demand_change_factors,
-#                   c_names = sector_long_names,
-#                   r_factor = final_demand_change_factors,
-#                   r_names = sector_short_names,
-#                   i = scenario_id)
-# }, .progress = TRUE)
-
 # Run in parallel with mcmapply
 get_reduction <- function(reduction_by_stage, scenario_id) {
   intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
@@ -120,25 +105,8 @@ get_reduction <- function(reduction_by_stage, scenario_id) {
 }
 
 library(parallel)
-#short_list <- reduction_rate_grid_list[1:40]
 eeio_result_grid <- mcmapply(get_reduction, reduction_by_stage = reduction_rate_grid_list, scenario_id = 1:length(reduction_rate_grid_list), mc.cores = 4, SIMPLIFY = FALSE)
 eeio_result_grid_df <- bind_rows(eeio_result_grid)
-
-# # Test: run serial
-# eeio_result_grid_list <- list()
-# for (i in 1:length(reduction_rate_grid_list)) {
-#   reduction_by_stage <- reduction_rate_grid_list[[i]]
-#   intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[sector_stage_codes], naics_foodsystem$proportion_food))
-#   final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_by_stage[final_demand_sector_codes], naics_foodsystem$proportion_food))
-#   eeio_result_grid_list[[i]] <- get_eeio_result(c_factor = intermediate_demand_change_factors,
-#                   c_names = sector_long_names,
-#                   r_factor = final_demand_change_factors,
-#                   r_names = sector_short_names,
-#                   i = names(reduction_rate_grid_list)[i])
-# }
-# 
-# eeio_result_grid_df <- cbind(reduction_rate_grid[rep(1:nrow(reduction_rate_grid), each = nrow(eeio_result_grid_list[[1]])), ], bind_rows(eeio_result_grid_list))
-
 
 # Put output into data frame and write to CSV.
 eeio_result_grid_df <- cbind(reduction_rate_grid[rep(1:nrow(reduction_rate_grid), each = 21), ], eeio_result_grid_df)
@@ -195,25 +163,6 @@ B_sectors_final <- b(W0 = baseline_waste_rate, W1 = W1_sectors_final, Wu = Wu_se
 # nu: Currently set to 1 for all.
 nu_sectors <- rep(1, length(B_sectors))
 nu_sectors_final <- rep(1, length(B_sectors_final))
-
-# For now, use fake abatement cost curves to test and make sure it works.
-# 
-# # Fake parameters to test if procedure works:
-# # fake unavoidable waste rate -- assume 25% of food waste is unavoidable
-# fake_unavoidable_waste_rate <- baseline_waste_rate * 0.25
-# 
-# # Parameters by stage
-# # Assume faster returns on investment for level 1 and level 2
-# # Assume higher startup costs for level 1, intermediate for level 2, none for level 3
-# B_stages <- c(L1 = 0.005, L2 = 0.005, L3 = 0.002, L4a = 0.003, L4b = 0.003, L5 = 0.007)
-# nu_stages <- c(L1 = 0.1, L2 = 0.2, L3 = 1, L4a = 0.9, L4b = 0.9, L5 = 0.05)
-# 
-# B_sectors <- B_stages[sector_stage_codes]
-# nu_sectors <- nu_stages[sector_stage_codes]
-# 
-# B_sectors_final <- B_stages[final_demand_sector_codes]
-# nu_sectors_final <- nu_stages[final_demand_sector_codes]
-
 
 
 # Write all the parameter values to a CSV for later plotting
