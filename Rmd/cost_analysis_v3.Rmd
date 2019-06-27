@@ -236,21 +236,23 @@ I ran a Monte Carlo sensitivity analysis for the portion of the results that ign
 
 In addition to showing how much the results vary in magnitude when varying the input values using the chosen distributions, I also calculated how often the priority ranking swapped orders among the replicates.
 
+\newpage
+
 Table 4 shows the results of the sensitivity analysis, showing the mean priority ranking of the stages for each impact category, and the percentage of draws where each stage did not change its position. A high percentage means that the relative priority is not very sensitive to variation in the parameters. The mean ranks are not far from 1-6 and the percentages are all high indicating that the outcome is not too sensitive to the level of uncertainty that we set *a priori*.
 
 ```{r echo = FALSE, message = FALSE}
-library(flextable)
-meanrank_allcats <- read.csv('Q:/scenario_results/sensitivity_grid_summarytable.csv', stringsAsFactors = FALSE)
-meanrank_ft <- meanrank_allcats %>%
-  mutate(proportion_not_swapped = paste0(proportion_not_swapped, '%')) %>%
-  flextable %>%
-  theme_vanilla %>%
-  merge_v(j = 'impact_category') %>%
-  set_header_labels(impact_category = 'category', stage_reduced = 'stage', mean_rank = 'mean rank', proportion_not_swapped = 'percent not swapped')
-meanrank_ft
+meanrank_allcats <- read.csv('Q:/scenario_results/sensitivity_grid_summarytable.csv')
+meanrank_allcats$proportion_not_swapped <- paste0(meanrank_allcats$proportion_not_swapped, '%')
+names(meanrank_allcats) <- c('Category', 'Stage', 'Mean Rank', 'Percent Not Swapped')
+
+kable(meanrank_allcats, escape = TRUE, caption = 'Sensitivity analysis of waste reduction scenarios') %>%
+  column_spec(4, width = '2cm')
+
 ```
 
-_**Here I will add sensitivity analysis for the optimization part of the study when it is done.**_
+
+_Here I will add sensitivity analysis for the optimization part of the study when it is done._
+
 
 **Important note**: All sensitivity results are presented with the limitation that the uncertainty distributions are unknown. Therefore the error bars only show how much the outcome would vary if the input parameters vary within a fairly plausible range, not a true uncertainty of the outcome.
 
@@ -282,7 +284,7 @@ Most of the numbers we need to create the curves are provided for each intervent
 
 Table 5 shows the values derived from the report for net waste $N$, addressable waste $A$, diversion potential $D$, and cost of reducing waste to the diversion potential level $C_1$.
 
-```{r echo = FALSE}
+```{r echo = FALSE, message = FALSE}
 suppressMessages(library(dplyr))
 refedtab <- read.csv('Q:/crossreference_tables/refed_testvalues.csv') 
 names(refedtab) <- c('Intervention', 'Stage', 'Net waste (MT)', 'Addressable waste (MT)', 'Diversion potential (MT)', 'Cost (million $)')
