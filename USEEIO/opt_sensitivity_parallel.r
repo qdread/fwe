@@ -101,13 +101,13 @@ eval_f_eeio <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_secto
                          c_names = sector_long_names,
                          r_factor = final_demand_change_factors,
                          r_names = sector_short_names,
-                         crosswalk = naics_foodsystem %>% mutate(proportion_food = !!proportion_food))
+                         crosswalk = naics_foodsystem %>% mutate(proportion_food = !!proportion_food_sectors))
   # Return the impact value to be minimized.
   res$value[res$impact_category == category]
 }
 
 # Another version of constraint function that just returns the sum of the x values. For Rsolnp package.
-eval_eq_total <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_sectors, p_sectors, W0_sectors_final, Wu_sectors_final, B_sectors_final, nu_sectors_final, p_sectors_final, sector_stage_codes, final_demand_sector_codes, Ctotal) {
+eval_eq_total <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_sectors, p_sectors, W0_sectors_final, Wu_sectors_final, B_sectors_final, nu_sectors_final, p_sectors_final, proportion_food_sectors, sector_stage_codes, final_demand_sector_codes, Ctotal) {
   return(sum(x))
 }
 
