@@ -251,9 +251,6 @@ kable(meanrank_allcats, escape = TRUE, caption = 'Sensitivity analysis of waste 
 ```
 
 
-_Here I will add sensitivity analysis for the optimization part of the study when it is done._
-
-
 **Important note**: All sensitivity results are presented with the limitation that the uncertainty distributions are unknown. Therefore the error bars only show how much the outcome would vary if the input parameters vary within a fairly plausible range, not a true uncertainty of the outcome.
 
 \newpage
@@ -354,13 +351,33 @@ Unfortunately, the absolute amount of environmental impact reduction estimated f
 
 \newpage 
 
+## Sensitivity analysis of optimization
+
+The results of the optimization analysis may be sensitive to uncertainty in all the parameter values mentioned in the first sensitivity analysis above, but also to uncertainty in the parameters of the cost curves. Therefore we need to add an additional layer to the sensitivity analysis of our optimization analysis.
+
+### Uncertainty in cost curve parameters
+
+In addition to the baseline waste rate parameter $W_0$ which is ultimately derived from FAO data, there are three other parameters currently derived from ReFED data that we are also incorporating into the sensitivity analysis. They are $W_u$, the unavoidable waste rate, $W_1$, the intermediate waste rate, and $C_1$, the cost to reduce waste to $W_1$. Since $W_u$ and $W_1$ are proportions we are using beta distributions for the sensitivity analysis. Since $C_1$ is a quantity we are using a triangular distribution with upper and lower bounds equal to $[\frac{1}{2}C_1, \frac{3}{2}C_1]$. 
+
+Because it is necessary that $W_0 > W_1 > W_u$, we used truncated beta distributions to ensure that the inequality holds for each sample draw.
+
+### Monte Carlo sensitivity analysis
+
+As we did for the cost-free reduction scenarios above, we took 100 draws from the distributions for baseline waste rate, food-nonfood proportion for each sector, and all the cost curve parameter values derived from ReFED. We ran the entire set of optimizations 100 times with each of the replicate parameter sets. The error bars on the optimization figures are the 2.5% and 97.5% quantiles from the replicated optimization results.
+
+### Results of sensitivity analysis
+
+*add content here when it is finished running*
+
+\newpage
+
 # Discussion and interpretation
 
 These are current ideas for the general take-home messages or stories from each part of the analysis.
 
 The first part of the analysis, in which we calculate the total impact of the food system on a variety of different environmental categories when food loss and waste decrease by 50% or 100% in one or more FSC stages has two main findings. First, it gives us an estimate of the maximum benefit we could possibly get if the U.S. relentlessly pursues FLW reduction as a policy goal. I believe that the result of approximately 20% reduction of all impact categories is fairly realistic. The second finding is that it identifies which sectors have the highest possible impact reductions, namely food processing industry, food service industry, and household consumption. The primary agricultural production, institutional food service, and retail sectors have little effect on total impact even when their waste is drastically reduced. This is a useful finding that can help target FLW reduction efforts. It emphasizes the major role of the food service industry. These results also somewhat provide a counterpoint to the consistent narrative that most food waste in developed nations occurs at the home. If our metric is environmental impact of waste, rather than sheer volume of waste, household food waste remains a big contributor but is rarely the worst offender. This could be used to send the message that hectoring individuals for their wasteful behavior is not necessarily the most effective means of reducing the food system's environmental burden. Finally, while the environmental benefit of FLW reduction could be high, it is bounded at ~20% of the food system's current impact. Clearly, FLW reduction is not a cure-all for the environmental ills inflicted by the food system in the United States. Other "harder" strategies, potentially including diet shifts or lifestyle changes, will need to accompany the "easy" fix of FLW reduction.
 
-The second part of the analysis is somewhat more questionable in terms of the absolute value of the result, since the cost data for the interventions may not be of great quality. However, if we assume that we are at least somewhere in the right order of magnitude for what waste reductions can be achieved by implementing a single FLW reduction intervention, our results show that the ceiling of effectiveness of a single intervention is not too high. This makes sense because even within a single stage of the FSC, food loss and waste has a multitude of causes. Each single intervention usually only addresses one cause, so it can only address the (often small) proportion of the waste that is due to that cause. Therefore our take-home message could be that since we get diminishing returns from each single intervention, it will be necessary to take a "many-pronged" approach both within and among sectors. If we can trust the prioritization shown in Figure 10, we can say more specifically that it is likely that investing in reduction in the agricultural production and food service sectors will give a reasonably good return on investment. Contrastingly, consumer-facing campaigns to reduce household waste are quite expensive relative to other interventions and therefore might not be the best investment. The waste rates at the processing and retail stages is low enough that investing in FLW reduction at those stages is not shown to be cost-effective.
+The second part of the analysis is somewhat more questionable in terms of the absolute value of the result, since the cost data for the interventions may not be of great quality. However, if we assume that we are at least somewhere in the right order of magnitude for what waste reductions can be achieved by implementing a single FLW reduction intervention, our results show that the ceiling of effectiveness of a single intervention is not too high. This makes sense because even within a single stage of the FSC, food loss and waste has a multitude of causes. Each single intervention usually only addresses one cause, so it can only address the (often small) proportion of the waste that is due to that cause. Therefore our take-home message could be that since we get diminishing returns from each single intervention, it will be necessary to take a "many-pronged" approach both within and among sectors. If we can trust the prioritization shown in Figure 10, we can say more specifically that it is likely that investing in reduction in the agricultural production and food service sectors will give a reasonably good return on investment. Contrastingly, consumer-facing campaigns to reduce household waste are quite expensive relative to other interventions and therefore might not be the best investment. The waste rates at the processing and retail stages is low enough that investing in FLW reduction at those stages does not promise to be cost-effective.
 
 \newpage
 
@@ -373,6 +390,8 @@ This is documentation of the scripts on the [FWE GitHub repository](https://gith
 * `load_scenario_data.r`: This script loads the baseline food waste rate data (currently sourced from FAO) and a table that contains the data for each of the BEA/NAICS sectors including which FSC stage they are classified in, proportion of food outputs for sectors that are only partially in the FSC, and what FAO categories each sector maps to. Later this should include which LAFA categories each sector maps to. This script also sources the R script to build the USEEIO model with modified intermediate and final demand, `USEEIO2012_buildfunction.R`, and the Python script that evaluates the model `eeio_lcia.py`, which is called from within R. It also loads the formatted make and use tables created in the previous script. Finally, it defines a function which accepts a vector of waste reduction values across all sectors as input, modifies the make and use tables accordingly, builds the USEEIO model, runs it also with modified final demand, and returns the LCIA impact values as output.
 * `sixstage_scenario.r`: This script runs the model for all 25% waste reduction increments, and it runs the nonlinear optimization using the R package `Rsolnp` using the fake cost curves shown above.
 * `grid_sensitivity_parallel.r`: This script runs the sensitivity analysis for the 50% and 100% waste reductions.
+* `opt_sensitivity_parallel.r`: This script runs the sensitivity analysis for the optimization. Because it takes so long to run, it is split among multiple tasks to run on the cluster.
+* `opt_sensitivity_processoutput.r`: This script pulls values from the optimization sensitivity analysis results and writes them to CSVs.
 * `sixstage_figs.r`, `sixstage_sens_figs.r`: These scripts include code to make all the figures shown here. The second script adds error bars from the sensitivity analysis.
 
 # Works cited
