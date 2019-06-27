@@ -1,6 +1,8 @@
 # Sensitivity analysis of optimization
 # QDR / FWE / 26 June 2019
 
+# Modified 27 June 2019: Create unique ID for each model build so that the parallel jobs do not conflict with each other.
+
 # Load data ---------------------------------------------------------------
 
 task <- as.numeric(Sys.getenv('SLURM_ARRAY_TASK_ID')) # Split into n tasks. Each will take 1 node with 8 cores so 8*n processes simultaneously run.
@@ -53,11 +55,11 @@ get_reduction_rates <- function(x, W0_sectors, Wu_sectors, B_sectors, nu_sectors
 }
 
 # Modified function to get EEIO result
-get_eeio_result <- function(c_factor, r_factor, c_names, r_names, i = 'no_name', crosswalk = naics_foodsystem) {
+get_eeio_result <- function(c_factor, r_factor, c_names, r_names, id = 'no_name', crosswalk = naics_foodsystem) {
   
   # Build USEEIO with specifications for modifying intermediate and final demand.
-  build_USEEIO(outputfolder = file.path(model_build_path, paste0('scenario_', i)),
-               model = paste0('scenario_', i),
+  build_USEEIO(outputfolder = file.path(model_build_path, paste0('scenario_', id)),
+               model = paste0('scenario_', id),
                usetablefile = file.path(fp_bea, 'use2012.csv'),
                maketablefile = file.path(fp_bea, 'make2012.csv'),
                code_path = fp_useeio,
@@ -69,17 +71,17 @@ get_eeio_result <- function(c_factor, r_factor, c_names, r_names, i = 'no_name',
   )
   # Extract demand vector for food system from scenario.
   # Join this with the food system proportions and with the correct demand codes (full description names)
-  all_final_demand <- read.csv(file.path(model_build_path, paste0('scenario_', i), paste0('scenario_', i, '_FinalDemand.csv')), stringsAsFactors = FALSE) %>%
+  all_final_demand <- read.csv(file.path(model_build_path, paste0('scenario_', id), paste0('scenario_', id, '_FinalDemand.csv')), stringsAsFactors = FALSE) %>%
     left_join(crosswalk, by = c('BEA_389_code', 'BEA_389_def')) %>% 
     filter(!is.na(proportion_food)) %>%
     left_join(all_codes, by = c('BEA_389_code' = 'sector_code_uppercase'))
   # Convert demand vector to separate list of codes and values
   final_demand_list <- with(all_final_demand, list(codes = as.list(sector_desc_drc), values = as.list(X2012_US_Consumption * proportion_food)))
   # Run the model!
-  eeio_result <- eeio_lcia(paste0('scenario_', i), final_demand_list$values, final_demand_list$codes) 
-  eeio_result <- data.frame(scenario = i, impact_category = rownames(eeio_result), value = eeio_result$Total, stringsAsFactors = FALSE)
+  eeio_result <- eeio_lcia(paste0('scenario_', id), final_demand_list$values, final_demand_list$codes) 
+  eeio_result <- data.frame(scenario = id, impact_category = rownames(eeio_result), value = eeio_result$Total, stringsAsFactors = FALSE)
   # Delete the intermediate files (entire model build folder) 
-  unlink(file.path(model_build_path, paste0('scenario_', i)), recursive = TRUE)
+  unlink(file.path(model_build_path, paste0('scenario_', id)), recursive = TRUE)
   
   return(eeio_result)
 }
@@ -87,7 +89,8 @@ get_eeio_result <- function(c_factor, r_factor, c_names, r_names, i = 'no_name',
 
 
 # Evaluation function used for optimization (takes in costs and returns environmental impacts given waste reduction scenario based on those costs)
-eval_f_eeio <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_sectors, p_sectors, W0_sectors_final, Wu_sectors_final, B_sectors_final, nu_sectors_final, p_sectors_final, proportion_food_sectors, sector_stage_codes, final_demand_sector_codes, Ctotal) {
+# Modified for the parallel sensitivity jobs to give unique text string IDs each time it is run.
+eval_f_eeio <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_sectors, p_sectors, W0_sectors_final, Wu_sectors_final, B_sectors_final, nu_sectors_final, p_sectors_final, proportion_food_sectors, sector_stage_codes, final_demand_sector_codes, Ctotal, draw_id) {
   # Find reduction rates given costs x
   # We need a different W0, Wu, B, and possibly nu value for each element in the waste rate vector.
   r_sectors <- get_reduction_rates(x = x, W0_sectors = W0_sectors, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = p_sectors, W0_sectors_final = W0_sectors_final, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = p_sectors_final, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes)
@@ -97,17 +100,19 @@ eval_f_eeio <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_secto
   final_demand_change_factors <- demand_change_fn(W0 = W0_sectors, r = r_sectors$final, p = p_sectors_final * proportion_food_sectors)
   
   # define the scenario values given x. 
+  
   res <- get_eeio_result(c_factor = intermediate_demand_change_factors,
                          c_names = sector_long_names,
                          r_factor = final_demand_change_factors,
                          r_names = sector_short_names,
+                         id = draw_id,
                          crosswalk = naics_foodsystem %>% mutate(proportion_food = !!proportion_food_sectors))
   # Return the impact value to be minimized.
   res$value[res$impact_category == category]
 }
 
 # Another version of constraint function that just returns the sum of the x values. For Rsolnp package.
-eval_eq_total <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_sectors, p_sectors, W0_sectors_final, Wu_sectors_final, B_sectors_final, nu_sectors_final, p_sectors_final, proportion_food_sectors, sector_stage_codes, final_demand_sector_codes, Ctotal) {
+eval_eq_total <- function(x, category, W0_sectors, Wu_sectors, B_sectors, nu_sectors, p_sectors, W0_sectors_final, Wu_sectors_final, B_sectors_final, nu_sectors_final, p_sectors_final, proportion_food_sectors, sector_stage_codes, final_demand_sector_codes, Ctotal, draw_id) {
   return(sum(x))
 }
 
@@ -234,15 +239,15 @@ optim_list <- foreach(i = idxmin:idxmax) %dopar% {
   B_sectors_final <- B_sectors_final_list[[i]]
   proportion_food_sectors <- proportion_food_list[[i]]
   
-  optim_ghg <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = ghg_name, W0_sectors = W0_sectors, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+  optim_ghg <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = ghg_name, W0_sectors = W0_sectors, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x, draw_id = paste('ghg',.x,i,sep='_')))
   
-  optim_land <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = land_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+  optim_land <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = land_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x, draw_id = paste('land',.x,i,sep='_')))
   
-  optim_water <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = water_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+  optim_water <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = water_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x, draw_id = paste('water',.x,i,sep='_')))
   
-  optim_energy <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = energy_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+  optim_energy <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = energy_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x, draw_id = paste('energy',.x,i,sep='_')))
   
-  optim_eutr <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = eutr_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x))
+  optim_eutr <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = eutr_name, W0_sectors = baseline_waste_rate, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x, draw_id = paste('eutr',.x,i,sep='_')))
   
   message('Iteration ', i, ' done')
   
