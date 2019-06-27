@@ -8,6 +8,8 @@ fp_output <- file.path(fp, 'scenario_results')
 
 stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
 
+stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
+
 optimal_df_all <- read.csv(file.path(fp_output, 'sixstage_scenario_opt_results.csv'))
 grid_result <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE)
 
@@ -18,191 +20,10 @@ grid_result <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_result
 # They are more or less independent so we can show the reductions in impacts when each one is reduced sequentially.
 
 # Sequential impact reduction of 50% waste reduction in each sector.
-co2sequence <- grid_result %>%
-  filter(grepl('co2', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 0.5)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-watrsequence <- grid_result %>%
-  filter(grepl('watr', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 0.5)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-landsequence <- grid_result %>%
-  filter(grepl('land', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 0.5)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-enrgsequence <- grid_result %>%
-  filter(grepl('enrg', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 0.5)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
-
-co2seqplot <- co2sequence %>%
-  mutate(value = value/max(value),
-         stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
-  ggplot(aes(x = nbypct, y = value)) +
-    geom_line(size = 1) +
-    geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
-    geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
-    scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
-    ggtitle('Impact of FLW reduction on GHG emissions', 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 50%') +
-    theme_bw() +
-    theme(panel.grid.minor.x = element_blank(),
-          panel.grid.minor.y = element_blank(),
-          plot.subtitle = element_text(size = 10)) 
-
-landseqplot <- landsequence %>%
-  mutate(value = value/max(value),
-         stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
-  ggplot(aes(x = nbypct, y = value)) +
-  geom_line(size = 1) +
-  geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
-  geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
-  scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
-  ggtitle('Impact of FLW reduction on land use', 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 50%') +
-  theme_bw() +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        plot.subtitle = element_text(size = 10)) 
-
-watrseqplot <- watrsequence %>%
-  mutate(value = value/max(value),
-         stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
-  ggplot(aes(x = nbypct, y = value)) +
-  geom_line(size = 1) +
-  geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
-  geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
-  scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
-  ggtitle('Impact of FLW reduction on water use', 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 50%') +
-  theme_bw() +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        plot.subtitle = element_text(size = 10)) 
-
-enrgseqplot <- enrgsequence %>%
-  mutate(value = value/max(value),
-         stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
-  ggplot(aes(x = nbypct, y = value)) +
-  geom_line(size = 1) +
-  geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
-  geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
-  scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
-  ggtitle('Impact of FLW reduction on energy use', 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 50%') +
-  theme_bw() +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        plot.subtitle = element_text(size = 10)) 
-
-# Also do by 100% just to see.
-co2sequence100 <- grid_result %>%
-  filter(grepl('co2', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 1)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-watrsequence100 <- grid_result %>%
-  filter(grepl('watr', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 1)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-landsequence100 <- grid_result %>%
-  filter(grepl('land', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 1)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-enrgsequence100 <- grid_result %>%
-  filter(grepl('enrg', impact_category)) %>%
-  mutate(nbypct = rowSums(.[,1:6] == 1)) %>%
-  filter(rowSums(.[,1:6] > 0) == nbypct) %>%
-  group_by(nbypct) %>%
-  filter(value == min(value)) %>%
-  arrange(nbypct) %>%
-  ungroup %>%
-  mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
-
-# Show all 100 plots on the same plot.
-allseq100plot <- rbind(co2sequence100, watrsequence100, landsequence100, enrgsequence100) %>%
-  mutate(stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
-  group_by(impact_category) %>%
-  mutate(value = value / max(value)) %>%
-  ungroup %>%
-  mutate(impact_category = rep(c('GHG', 'water', 'land', 'energy'), each = 7)) %>%
-  ggplot(aes(x = nbypct, y = value, group = impact_category)) +
-    geom_line(aes(color = impact_category), size = 1) +
-    geom_point(aes(color = impact_category), size = 3) +
-    #geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
-    scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
-    scale_color_brewer(name = 'Impact category', type = 'qual', palette = 'Set2') +
-    ggtitle('Impact of FLW reduction on environmental metrics', 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 100%') +
-    theme_bw() +
-    theme(panel.grid.minor.x = element_blank(),
-          panel.grid.minor.y = element_blank(),
-          plot.subtitle = element_text(size = 10),
-          legend.position = c(0.8, 0.8)) 
-
-fpfig <- file.path(fp, 'figures')    
-ggsave(file.path(fpfig, 'sixstage_grid_co2by50pct.png'), co2seqplot, height = 6, width = 6, dpi = 300)
-ggsave(file.path(fpfig, 'sixstage_grid_landby50pct.png'), landseqplot, height = 6, width = 6, dpi = 300)
-ggsave(file.path(fpfig, 'sixstage_grid_waterby50pct.png'), watrseqplot, height = 6, width = 6, dpi = 300)
-ggsave(file.path(fpfig, 'sixstage_grid_energyby50pct.png'), enrgseqplot, height = 6, width = 6, dpi = 300)
-ggsave(file.path(fpfig, 'sixstage_grid_allcategoriesby100pct.png'), allseq100plot, height = 6, width = 6, dpi = 300)
-
-# 50% reduction including error bars from sensitivity analysis
-# ============================================================
-
-grid_sensitivity_CIs <- read.csv(file.path(fp_output, 'sensitivity_grid_CIs.csv'), stringsAsFactors = FALSE)
-grid_sensitivity_df <- read.csv(file.path(fp_output, 'sensitivity_grid_alldraws.csv'), stringsAsFactors = FALSE)
-
-stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
-
-# Wrap sequence creation and plot creation in a function.
-create_sequence <- function(dat, var_id, value_id, proportion) {
+create_sequence <- function(dat, value_id, proportion) {
   value_id <- enquo(value_id)
   dat %>%
     ungroup %>%
-    filter(grepl(var_id, impact_category)) %>%
     mutate(nbypct = rowSums(.[,1:6] == proportion)) %>%
     filter(rowSums(.[,1:6] > 0) == nbypct) %>%
     group_by(nbypct) %>%
@@ -212,35 +33,72 @@ create_sequence <- function(dat, var_id, value_id, proportion) {
     mutate(stage_reduced = c('none', names(sort(apply(.[,1:6],2,function(x) which(diff(x) > 0))))))
 }
 
-reduction_plot_with_errorbars <- function(sequence, plot_title) {
-  sequence %>%
-    mutate(norm = max(q50)) %>%
-    mutate_at(vars(starts_with('q')), ~ ./norm) %>%
-    mutate(stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
-    ggplot(aes(x = nbypct, y = q50, ymin = q025, ymax = q975)) +
+reduction_plot <- function(dat, value_id, plot_title) {
+  value_id <- enquo(value_id)
+  dat %>%
+    mutate(!!value_id := !!value_id/max(!!value_id),
+           stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
+    ggplot(aes(x = nbypct, y = !!value_id)) +
     geom_line(size = 1) +
-    geom_errorbar(width = 0.2, color = 'gray60') +
     geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
     geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
     scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.03), expand = c(0,0)) +
+    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
     ggtitle(plot_title, 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 50%') +
     theme_bw() +
     theme(panel.grid.minor.x = element_blank(),
           panel.grid.minor.y = element_blank(),
-          plot.subtitle = element_text(size = 10))
-  
+          plot.subtitle = element_text(size = 10)) 
 }
 
-co2sequence_sens <- create_sequence(grid_sensitivity_CIs, 'co2', q50, 0.5)
-landsequence_sens <- create_sequence(grid_sensitivity_CIs, 'land', q50, 0.5)
-energysequence_sens <- create_sequence(grid_sensitivity_CIs, 'enrg', q50, 0.5)
-watersequence_sens <- create_sequence(grid_sensitivity_CIs, 'watr', q50, 0.5)
-eutrsequence_sens <- create_sequence(grid_sensitivity_CIs, 'eutr', q50, 0.5)
+# 50% reductions
+co2sequence <- grid_result %>% filter(grepl('co2', impact_category)) %>% create_sequence(value, 0.5)
+watrsequence <- grid_result %>% filter(grepl('watr', impact_category)) %>% create_sequence(value, 0.5)
+landsequence <- grid_result %>% filter(grepl('land', impact_category)) %>% create_sequence(value, 0.5)
+enrgsequence <- grid_result %>% filter(grepl('enrg', impact_category)) %>% create_sequence(value, 0.5)
+eutrsequence <- grid_result %>% filter(grepl('eutr', impact_category)) %>% create_sequence(value, 0.5)
+
+co2seqplot <- co2sequence %>% reduction_plot(value, 'Impact of FLW reduction on GHG emissions')
+watrseqplot <- watrsequence %>% reduction_plot(value, 'Impact of FLW reduction on water use')
+landseqplot <- landsequence %>% reduction_plot(value, 'Impact of FLW reduction on land use')
+enrgseqplot <- enrgsequence %>% reduction_plot(value, 'Impact of FLW reduction on energy use')
+eutrseqplot <- eutrsequence %>% reduction_plot(value, 'Impact of FLW reduction on eutrophication potential')
 
 
-co2seqplot_sens <- reduction_plot_with_errorbars(co2sequence_sens, 'Impact of FLW reduction on GHG emissions')
+# Also do by 100%
+allseq100 <- grid_result %>%
+  filter(grepl('co2|watr|land|enrg|eutr', impact_category)) %>%
+  group_by(impact_category) %>%
+  do(create_sequence(., value, 1.0))
 
+# Show all 100 plots on the same plot.
+allseq100plot <- allseq100 %>%
+  mutate(stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
+  group_by(impact_category) %>%
+  mutate(value = value / max(value)) %>%
+  ungroup %>%
+  mutate(impact_category = rep(c('eutrophication', 'GHG', 'water', 'land', 'energy'), each = 7)) %>%
+  ggplot(aes(x = nbypct, y = value, group = impact_category)) +
+  geom_line(aes(color = impact_category), size = 1) +
+  geom_point(aes(color = impact_category), size = 3) +
+  #geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
+  scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
+  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1)) +
+  scale_color_brewer(name = 'Impact category', type = 'qual', palette = 'Set2') +
+  ggtitle('Impact of FLW reduction on environmental metrics', 'done by sequentially reducing waste in the FSC stage \nwith greatest impact by 100%') +
+  theme_bw() +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        plot.subtitle = element_text(size = 10),
+        legend.position = c(0.8, 0.8)) 
+
+fpfig <- file.path(fp, 'figures')    
+ggsave(file.path(fpfig, 'sixstage_grid_co2by50pct.png'), co2seqplot, height = 6, width = 6, dpi = 300)
+ggsave(file.path(fpfig, 'sixstage_grid_landby50pct.png'), landseqplot, height = 6, width = 6, dpi = 300)
+ggsave(file.path(fpfig, 'sixstage_grid_waterby50pct.png'), watrseqplot, height = 6, width = 6, dpi = 300)
+ggsave(file.path(fpfig, 'sixstage_grid_energyby50pct.png'), enrgseqplot, height = 6, width = 6, dpi = 300)
+ggsave(file.path(fpfig, 'sixstage_grid_eutrby50pct.png'), enrgseqplot, height = 6, width = 6, dpi = 300)
+ggsave(file.path(fpfig, 'sixstage_grid_allcategoriesby100pct.png'), allseq100plot, height = 6, width = 6, dpi = 300)
 
 # Radar charts showing tradeoffs among scenarios
 # ==============================================
@@ -340,8 +198,8 @@ baseline <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_results.c
   filter(rowSums(.[,1:6]) == 0)
 
 baseline <- baseline %>% 
-  filter(grepl('gcc|land|watr|enrg', impact_category)) %>%
-  mutate(category = c('energy', 'GHG', 'land', 'water'), total_cost = 0)
+  filter(grepl('gcc|land|watr|enrg|eutr', impact_category)) %>%
+  mutate(category = c('energy', 'eutrophication', 'GHG', 'land', 'water'), total_cost = 0)
 
 optimal_value_all <- optimal_value_all %>%
   rbind(baseline[,c('category','total_cost','value')]) %>%
