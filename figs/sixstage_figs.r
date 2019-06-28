@@ -240,7 +240,7 @@ dat_for_curves_household <- imap_dfr(yvals_curves_final, ~ data.frame(sector = p
   select(sector, stage, x, y)
 dat_for_curves <- rbind(dat_for_curves, dat_for_curves_household)
 
-dat_for_curves$stage <- factor(dat_for_curves$stage, labels = stage_full_names)
+dat_for_curves$stage <- factor(dat_for_curves$stage, levels = c('agriculture', 'processing', 'retail', 'foodservice', 'institutional', 'household'), labels = stage_full_names)
 
 ggplot(dat_for_curves, aes(x = x, y = y, color = stage, group = sector)) +
   geom_line() +
