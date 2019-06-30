@@ -171,3 +171,61 @@ allseq100plot <- trueseq100_withcis %>%
         legend.position = c(0.8, 0.8)) 
 
 ggsave(file.path(fpfig, 'sixstage_gridwithci_allcategoriesby100pct.png'), allseq100plot, height = 6, width = 6, dpi = 300)
+
+
+# Optimization sensitivity errorbars --------------------------------------
+
+# Parameters
+optimal_df_all <- read.csv(file.path(fp_output, 'sixstage_scenario_opt_results.csv'), stringsAsFactors = FALSE)
+optim_pars_sens <- read.csv(file.path(fp_output, 'opt_sensitivity_pars.csv'), stringsAsFactors = FALSE)
+
+optim_pars_sens_ci <- optim_pars_sens %>%
+  group_by(category, total_cost, stage) %>%
+  summarize(cost_q025 = round(quantile(cost, 0.025)), cost_q975 = round(quantile(cost, 0.975)))
+
+optim_pars_withci <- left_join(optimal_df_all, optim_pars_sens_ci)
+
+pd <- position_dodge(width = 50)
+
+ggplot(optim_pars_withci, aes(x = total_cost, y = cost, ymin = cost_q025, ymax = cost_q975, color = stage, group = stage)) +
+  facet_wrap(~ category) +
+  geom_errorbar(color = 'gray50', width = 100, position = pd) +
+  geom_point(size = 2, position = pd) + 
+  geom_line(position = pd) +
+  scale_x_continuous(name = 'Total invested in FLW reduction (million USD)', breaks = c(0, 500, 1000, 2000)) +
+  scale_y_continuous(name = 'Amount invested in each stage (million USD)') +
+  scale_color_brewer(type='qual', palette='Set2') +
+  ggtitle('Optimal allocation of FLW reduction funds to minimize environmental impact', 'for a number of possible total investments') +
+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(), 
+        panel.grid.minor.x = element_blank(),
+        strip.background = element_blank(),
+        legend.position = 'bottom')
+
+
+# Values
+# Compare optimization results to the baseline.
+optimal_value_all <- read.csv(file.path(fp_output, 'sixstage_scenario_opt_values.csv'), stringsAsFactors = FALSE)
+
+# Add baseline values.
+baseline <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE) %>%
+  filter(rowSums(.[,1:6]) == 0)
+
+baseline <- baseline %>% 
+  filter(grepl('gcc|land|watr|enrg|eutr', impact_category)) %>%
+  mutate(category = c('energy', 'eutrophication', 'GHG', 'land', 'water'), total_cost = 0)
+
+optimal_value_all <- optimal_value_all %>%
+  rbind(baseline[,c('category','total_cost','value')]) %>%
+  group_by(category) %>%
+  mutate(value = value/max(value))
+
+ggplot(optimal_value_all, aes(x = total_cost, y = value, color = category)) + 
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks = c(0,500,1000,2000,5000), name = 'Total invested (million $)') +
+  scale_y_continuous(labels = scales::percent, name = 'Impact (percent of baseline)') +
+  scale_color_brewer(name = 'Impact category', type = 'qual', palette = 'Set2') +
+  ggtitle('Impact reduction by total invested', 'optimizing for each impact category separately') +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+        legend.position = c(0.8, 0.8))

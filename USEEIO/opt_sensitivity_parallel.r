@@ -1,6 +1,7 @@
 # Sensitivity analysis of optimization
 # QDR / FWE / 26 June 2019
 
+# Modified 30 June 2019: Use triangular distributions on the underlying quantities from ReFed, then calc the parameters from those.
 # Modified 27 June 2019: Create unique ID for each model build so that the parallel jobs do not conflict with each other.
 
 # Load data ---------------------------------------------------------------
@@ -11,7 +12,7 @@ n_tasks <- 4
 library(foreach)
 library(doParallel)
 library(Rsolnp)
-library(triangle)
+library(EnvStats)
 library(truncdist)
 n_cores <- 8
 
@@ -123,7 +124,9 @@ beta_draw <- function(p, f = 100) rbeta(n = length(p), shape1 = f * p, shape2 = 
 trunc_beta_draw <- function(p, upper, f = 100) sapply(1:length(p), function(i) rtrunc(n = 1, 'beta', a = 0, b = upper[i], shape1 = f * p[i], shape2 = f * (1 - p[i])))
 
 # Function to draw from triangular distribution and create a new vector
-triangle_draw <- function(x, f = 0.5) sapply(x, function(z) rtriangle(n = 1, a = f * z, b = (1 + f) * z, c = z))
+triangle_draw <- function(x, f = 0.5) rtri(n = length(x), min = f * x, max = (1 + f) * x, mode = x)
+
+trunc_triangle_draw <- function(x, upper, f = 0.5) sapply(1:length(x), function(i) rtrunc(n = 1, 'tri', a = 0, b = upper[i], min = f * x[i], max = (1 + f) * x[i], mode = x[i]))
 
 # Function to generate a sampling draw for the baseline waste rates.
 baseline_rate_table_draw <- function(w, f = 100) {
@@ -145,17 +148,18 @@ triangle_width <- 0.5 # Relative to the original value
 set.seed(666)
 
 # Get parameters for abatement curves from Refed data.
-refed_params <- read.csv(file.path(fp_crosswalks, 'refed_testvalues.csv'), stringsAsFactors = FALSE) %>%
-  mutate(Wu = 1 - addressable/net,
-         W1 = 1 - diversion.potential/net,
-         C1 = cost,
-         stage_code = c('L1', 'L2', 'L3', 'L4a', 'L4b', 'L5'))
+refed_params <- read.csv(file.path(fp_crosswalks, 'refed_testvalues.csv'), stringsAsFactors = FALSE)
 
 # Draw n_draws sets of refed params. Wu and W1 are all relative to baseline waste rate.
 refed_params_list <- replicate(n_draws, refed_params %>%
-                                 mutate(W1 = beta_draw(W1, uncertainty_factor),
-                                        Wu = trunc_beta_draw(Wu, W1, uncertainty_factor),
-                                        C1 = triangle_draw(C1, triangle_width)),
+                                 mutate(net = triangle_draw(net, triangle_width),
+                                        addressable = trunc_triangle_draw(addressable, net, triangle_width),
+                                        diversion.potential = trunc_triangle_draw(diversion.potential, addressable, triangle_width),
+                                        cost = triangle_draw(cost, triangle_width),
+                                        Wu = 1 - addressable/net,
+                                        W1 = 1 - diversion.potential/net,
+                                        C1 = cost,
+                                        stage_code = c('L1', 'L2', 'L3', 'L4a', 'L4b', 'L5')),
                                simplify = FALSE)
 
 # Draw n_draws sets of baseline waste rate params.

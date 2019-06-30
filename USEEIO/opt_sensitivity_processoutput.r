@@ -16,6 +16,7 @@ optim_list_all <- do.call(c, optim_list_all) # Concatenate the 25 length lists i
 
 # Extract data from the list.
 
+Ctotal_vec <- c(500, 1000, 2000, 5000)
 stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
 makeoptimdf <- function(o) map2_dfr(o, Ctotal_vec, ~ data.frame(total_cost = .y, stage = factor(stage_full_names, levels = stage_full_names), cost = .x$pars))
 makeoptimvaldf <- function(o) map2_dfr(o, Ctotal_vec, ~ data.frame(total_cost = .y, value = .x$values[length(.x$values)]))

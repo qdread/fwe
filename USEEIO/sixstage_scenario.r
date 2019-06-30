@@ -180,10 +180,6 @@ sectorpars <- data.frame(sector_code = naics_foodsystem$BEA_389_code,
                          B_final = B_sectors_final)
 write.csv(sectorpars, file.path(fp_output, 'sector_parameters.csv'), row.names = FALSE)
 
-# Constraint: total cost - pulled out of thin air.
-Ctotal <- 1000 # in units of million USD
-
-
 # Optimization
 # Initial values: 1/6 of money spent on each FSC stage, and lower and upper bounds are just there to keep everything >= 0.
 
