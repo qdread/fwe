@@ -7,7 +7,7 @@
 # Load data ---------------------------------------------------------------
 
 task <- as.numeric(Sys.getenv('SLURM_ARRAY_TASK_ID')) # Split into n tasks. Each will take 1 node with 8 cores so 8*n processes simultaneously run.
-n_tasks <- 4
+n_tasks <- 5
 
 library(foreach)
 library(doParallel)
