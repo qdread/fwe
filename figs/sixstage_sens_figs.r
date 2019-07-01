@@ -184,6 +184,7 @@ optim_pars_sens_ci <- optim_pars_sens %>%
   summarize(cost_q025 = round(quantile(cost, 0.025)), cost_q975 = round(quantile(cost, 0.975)))
 
 optim_pars_withci <- left_join(optimal_df_all, optim_pars_sens_ci)
+optim_pars_withci %>% group_by(total_cost) %>% summarize(n = sum(cost > cost_q975 | cost < cost_q025))
 
 pd <- position_dodge(width = 50)
 

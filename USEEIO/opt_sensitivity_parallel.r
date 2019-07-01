@@ -137,15 +137,15 @@ baseline_rate_table_draw <- function(w, f = 100) {
 
 # Random draws of parameters ----------------------------------------------
 
-n_draws <- 100
+n_draws <- 50
 
 # Determine minimum and maximum index to do in this task
 idxmin <- seq(1,n_draws,by=n_draws/n_tasks)[task]
 idxmax <- seq(n_draws/n_tasks,n_draws,by=n_draws/n_tasks)[task]
 
 uncertainty_factor <- 100
-triangle_width <- 0.5 # Relative to the original value
-set.seed(666)
+triangle_width <- 0.2 # Relative to the original value (edited 1 July - narrower so the result makes more sense)
+set.seed(777)
 
 # Get parameters for abatement curves from Refed data.
 refed_params <- read.csv(file.path(fp_crosswalks, 'refed_testvalues.csv'), stringsAsFactors = FALSE)

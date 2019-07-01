@@ -3,7 +3,7 @@
 
 library(tidyverse)
 fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
-n_tasks <- 4
+n_tasks <- 5
 
 optim_list_all <- map(1:n_tasks, function(task) {
   load(file.path(fp_output, paste0('optim_sens_list_', task, '.RData')))
