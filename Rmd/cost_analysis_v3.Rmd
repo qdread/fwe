@@ -357,9 +357,11 @@ The results of the optimization analysis may be sensitive to uncertainty in all 
 
 ### Uncertainty in cost curve parameters
 
-In addition to the baseline waste rate parameter $W_0$ which is ultimately derived from FAO data, there are three other parameters currently derived from ReFED data that we are also incorporating into the sensitivity analysis. They are $W_u$, the unavoidable waste rate, $W_1$, the intermediate waste rate, and $C_1$, the cost to reduce waste to $W_1$. Since $W_u$ and $W_1$ are proportions we are using beta distributions for the sensitivity analysis. Since $C_1$ is a quantity we are using a triangular distribution with upper and lower bounds equal to $[\frac{1}{2}C_1, \frac{3}{2}C_1]$. 
+In addition to the baseline waste rate parameter $W_0$ which is ultimately derived from FAO data, there are four other values currently derived from ReFED data that we are also incorporating into the sensitivity analysis. They are the three total waste quantity values for each intervention: net waste $N$, addressable waste $A$, diversion potential waste $D$, and $C_1$, the cost of reducing waste by the diversion potential amount.
+All four are given triangular distributions with upper and lower bounds equal to $[\frac{1}{2}x, \frac{3}{2}x]$.
+With each iteration, the parameters are used to calculate $W_u$, the unavoidable waste rate, $W_1$, the intermediate waste rate, and $B$, the cost curve slope parameter.
 
-Because it is necessary that $W_0 > W_1 > W_u$, we used truncated beta distributions to ensure that the inequality holds for each sample draw.
+Because it is necessary that $N > A > D$ so that $W_0 > W_1 > W_u$, we used truncated triangular distributions to ensure that the inequality holds for each sample draw.
 
 ### Monte Carlo sensitivity analysis
 
