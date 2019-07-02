@@ -124,9 +124,9 @@ beta_draw <- function(p, f = 100) rbeta(n = length(p), shape1 = f * p, shape2 = 
 trunc_beta_draw <- function(p, upper, f = 100) sapply(1:length(p), function(i) rtrunc(n = 1, 'beta', a = 0, b = upper[i], shape1 = f * p[i], shape2 = f * (1 - p[i])))
 
 # Function to draw from triangular distribution and create a new vector
-triangle_draw <- function(x, f = 0.5) rtri(n = length(x), min = f * x, max = (1 + f) * x, mode = x)
+triangle_draw <- function(x, f = 0.5) rtri(n = length(x), min = (1 - f) * x, max = (1 + f) * x, mode = x)
 
-trunc_triangle_draw <- function(x, upper, f = 0.5) sapply(1:length(x), function(i) rtrunc(n = 1, 'tri', a = 0, b = upper[i], min = f * x[i], max = (1 + f) * x[i], mode = x[i]))
+trunc_triangle_draw <- function(x, upper, f = 0.5) sapply(1:length(x), function(i) rtrunc(n = 1, 'tri', a = 0, b = upper[i], min = (1 - f) * x[i], max = (1 + f) * x[i], mode = x[i]))
 
 # Function to generate a sampling draw for the baseline waste rates.
 baseline_rate_table_draw <- function(w, f = 100) {
