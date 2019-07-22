@@ -47,12 +47,12 @@ As in the previous set of figures, the lighter shaded area represents the impact
 
 The figures show that meat consumes the vast bulk of land (Fig. 7), as we might expect. Cereal crops (a huge agricultural industry) and fruit and vegetable crops use a lot of water (Fig. 8), although I would have expected meat to be just as high so perhaps this represents poor allocation of water use. Eutrophication potential via N fertilizer is concentrated in cereals (Fig. 9). Meat and cereals together represent the majority of GHG impacts (Fig. 10). Finally, crop plants consume a large amount of energy but meat and dairy industries are also fairly intense energy users (Fig. 11).
 
-![Land use by food supply chain stage](Q:/figures/contributionplots/food_types_impact_land.png){ width=50% }
+![Land use by food type](Q:/figures/contributionplots/food_types_impact_land.png){ width=50% }
 
-![Water use by food supply chain stage](Q:/figures/contributionplots/food_types_impact_water.png){ width=50% }
+![Water use by food type](Q:/figures/contributionplots/food_types_impact_water.png){ width=50% }
 
-![Eutrophication potential by food supply chain stage](Q:/figures/contributionplots/food_types_impact_eutrophication.png){ width=50% }
+![Eutrophication potential by food type](Q:/figures/contributionplots/food_types_impact_eutrophication.png){ width=50% }
 
-![Greenhouse gas emissions by food supply chain stage](Q:/figures/contributionplots/food_types_impact_ghg.png){ width=50% }
+![Greenhouse gas emissions by food type](Q:/figures/contributionplots/food_types_impact_ghg.png){ width=50% }
 
-![Energy use by food supply chain stage](Q:/figures/contributionplots/food_types_impact_energy.png){ width=50% }
+![Energy use by food type](Q:/figures/contributionplots/food_types_impact_energy.png){ width=50% }
