@@ -3,15 +3,14 @@
 
 # Load everything ---------------------------------------------------------
 
-
-
-source('~/fwe/USEEIO/load_scenario_data.r')
-source('~/fwe/figs/categorylabels.r')
-library(tidyverse)
-
 fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data')
 fpfig <- file.path(fp, 'figures') 
 fp_output <- file.path(fp, 'scenario_results')
+fp_github <- ifelse(dir.exists('~/Documents/GitHub/'), '~/Documents/GitHub/fwe', '~/fwe')
+
+source(file.path(fp_github, 'USEEIO/load_scenario_data.r'))
+source(file.path(fp_github, 'figs/categorylabels.r'))
+library(tidyverse)
 
 stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
 
@@ -119,9 +118,17 @@ diff_plots$p[[3]] <- energy_plot
 walk2(diff_plots$p, c('eutrophication', 'ghg', 'energy', 'land', 'water'),
      ~ ggsave(file.path(fpfig, 'contributionplots', paste0('waste_impact_', .y, '.png')), .x, height = 5.5, width = 5.5, dpi = 300))
 
+# Include another theme for presentation
+source(file.path(fp_github, 'figs/theme_black.R'))
+
+theme2 <- theme_black() + theme(panel.grid.major.x = element_blank(),
+                                panel.grid.minor.x = element_blank(),
+                                panel.grid.minor.y = element_blank())
+
+walk2(diff_plots$p, c('eutrophication', 'ghg', 'energy', 'land', 'water'),
+      ~ ggsave(file.path(fpfig, 'ussee', paste0('bw_waste_impact_', .y, '.png')), .x + theme2, height = 5.5, width = 5.5, dpi = 300))
+
 # Plot dividing waste impacts by stage ------------------------------------
-
-
 
 # Only show waste impacts
 # Percentage of direct waste impacts that come from each stage
@@ -172,7 +179,7 @@ total_impacts_long <- total_impacts_byfoodtype %>%
   mutate(waste_impact = baseline - zerowaste)
   
 # Plot  
-source('~/fwe/figs/categorylabels.r')
+source(file.path(fp_github, 'figs/categorylabels.r'))
 label_data <- tibble(impact_category = unique(lcia_contr_diffs$impact_category),
                      category_label = category_labels,
                      category_label_character = category_labels_character,
@@ -260,6 +267,18 @@ impact_plots <- total_impacts_long %>%
 walk2(impact_plots$p, c('eutrophication', 'ghg', 'energy', 'land', 'water'),
       ~ ggsave(file.path(fpfig, 'contributionplots', paste0('food_types_impact_', .y, '.png')), .x, height = 5.5, width = 6.5, dpi = 300))
 
+# Black and white theme for USSEE presentation
+theme3 <- theme2 + theme(legend.position = 'none')
+impact_plots$p[[1]] + theme3
+
+walk2(impact_plots$p, c('eutrophication', 'ghg', 'energy', 'land', 'water'),
+      ~ ggsave(file.path(fpfig, 'ussee', paste0('bw_food_types_impact_', .y, '.png')), .x + theme3, height = 5.5, width = 7.5, dpi = 300))
+
+# Plots with no text labels on x axis, and large labels on y axis
+theme4 <- theme3 + theme(axis.text.x = element_blank(), axis.title.x = element_blank(), axis.ticks.x = element_blank())
+
+walk2(impact_plots$p, c('eutrophication', 'ghg', 'energy', 'land', 'water'),
+      ~ ggsave(file.path(fpfig, 'ussee', paste0('bwnoxaxis_food_types_impact_', .y, '.png')), .x + theme4, height = 3.5, width = 3.9, dpi = 300))
 
 # Plot impacts per dollar of final demand ---------------------------------
 
@@ -349,3 +368,10 @@ impact_plots_bygrossoutput <- total_impacts_byfoodtype %>%
                       theme_bw() +
                       theme(legend.position = 'none'),
                     ypos = max(.$impact_per_output * 1.05)))
+
+
+# Determine largest contributors to energy use ----------------------------
+
+baseline_energy_sorted <- lcia_contr_long %>%
+  filter(grepl('enrg', impact_category), stage_reduced %in% 'baseline') %>%
+  arrange(-value)

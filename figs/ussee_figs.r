@@ -164,9 +164,37 @@ energy_seqplot_ci <- trueseq_withcis %>%
   filter(grepl('enrg', impact_category)) %>% 
   reduction_plot_with_errorbars(value, q025, q975) +
   scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.05), expand = c(0,0))
+eutr_seqplot_ci <- trueseq_withcis %>% 
+  filter(grepl('eutr', impact_category)) %>% 
+  reduction_plot_with_errorbars(value, q025, q975)
 
 # Save the plots
+
 ggsave(file.path(fpfig, 'ussee/sixstage_gridwithci_co2by50pct.png'), co2_seqplot_ci, height = 5, width = 5.6, dpi = 300)
 ggsave(file.path(fpfig, 'ussee/sixstage_gridwithci_landby50pct.png'), land_seqplot_ci, height = 5, width = 5.6, dpi = 300)
 ggsave(file.path(fpfig, 'ussee/sixstage_gridwithci_waterby50pct.png'), water_seqplot_ci, height = 5, width = 5.6, dpi = 300)
 ggsave(file.path(fpfig, 'ussee/sixstage_gridwithci_energyby50pct.png'), energy_seqplot_ci, height = 5, width = 5.6, dpi = 300)
+ggsave(file.path(fpfig, 'ussee/sixstage_gridwithci_eutrophicationby50pct.png'), eutr_seqplot_ci, height = 5, width = 5.6, dpi = 300)
+
+# Create blank plot so that I can build the slides
+blank_seqplot <- ggplot(data = data.frame(nbypct = c(0,6), y = c(0.75,1)), aes(x = nbypct, y = y)) +
+  scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
+  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.03), expand = c(0,0)) +
+  theme_black() +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+
+ggsave(file.path(fpfig, 'ussee/sixstage_blankgrid.png'), blank_seqplot, height = 5, width = 5.6, dpi = 300)
+
+
+# Create table of ranks ---------------------------------------------------
+tab <- read.csv(file.path(fp_output, 'sensitivity_grid_summarytable.csv'))
+
+tab %>%
+  mutate(stage_reduced = factor(stage_reduced, levels = stage_full_names),
+         mean_rank = round(mean_rank)) %>%
+  select(-proportion_not_swapped) %>%
+  spread(impact_category, mean_rank)
+
+
