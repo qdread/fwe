@@ -143,7 +143,8 @@ W1_sectors_final <- baseline_waste_rate * refed_params$W1[match(sector_stage_cod
 
 # Find the proportion of waste reduction dollars allocated to each sector within each stage of the food supply chain
 # Use the baseline values for gross output from each sector to get the weights. (this is T008 in the make table)
-gross_outputs <- M[sector_short_names, 'T008']
+# Modification 22 July 2019: individually multiply the gross outputs by the proportion food for each industry.
+gross_outputs <- M[sector_short_names, 'T008'] * naics_foodsystem$proportion_food
 gross_outputs_by_stage <- tapply(gross_outputs, sector_stage_codes, sum)
 proportion_gross_outputs <- gross_outputs / gross_outputs_by_stage[sector_stage_codes]
 

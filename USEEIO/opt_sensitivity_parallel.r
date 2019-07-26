@@ -195,18 +195,20 @@ W1_sectors_final_list <- map2(refed_params_list, W0_sectors_list, ~ .y * .x$W1[m
 
 # Find the proportion of waste reduction dollars allocated to each sector within each stage of the food supply chain
 # Use the baseline values for gross output from each sector to get the weights. (this is T008 in the make table)
-# Sensitivity analysis is not done here.
+# Modification 22 July 2019: Use proportion food for each one.
 gross_outputs <- M[sector_short_names, 'T008']
-gross_outputs_by_stage <- tapply(gross_outputs, sector_stage_codes, sum)
-proportion_gross_outputs <- gross_outputs / gross_outputs_by_stage[sector_stage_codes]
+gross_outputs_list <- map(proportion_food_list, ~ .x * gross_outputs)
+gross_outputs_by_stage_list <- map(gross_outputs_list, ~ tapply(.x, sector_stage_codes, sum))
+proportion_gross_outputs_list <- map2(gross_outputs_list, gross_outputs_by_stage_list, ~ .x / .y[sector_stage_codes])
 
 # Also do this proportion for the final ones.
-gross_outputs_by_stage_final <- tapply(gross_outputs, final_demand_sector_codes, sum)
-proportion_gross_outputs_final <- gross_outputs / gross_outputs_by_stage_final[final_demand_sector_codes]
+gross_outputs_by_stage_final_list <- map(gross_outputs_list, ~ tapply(.x, final_demand_sector_codes, sum))
+proportion_gross_outputs_final_list <- map2(gross_outputs_list, gross_outputs_by_stage_final_list, ~ .x / .y[final_demand_sector_codes])
+
 
 # C1: Cost to achieve W1
-C1_sectors_list <- map(refed_params_list, ~ .x$C1[match(sector_stage_codes, .x$stage_code)] * proportion_gross_outputs)
-C1_sectors_final_list <- map(refed_params_list, ~ .x$C1[match(sector_stage_codes, .x$stage_code)] * proportion_gross_outputs_final)
+C1_sectors_list <- map2(refed_params_list, proportion_gross_outputs_list, ~ .x$C1[match(sector_stage_codes, .x$stage_code)] * .y)
+C1_sectors_final_list <- map2(refed_params_list, proportion_gross_outputs_final_list, ~ .x$C1[match(sector_stage_codes, .x$stage_code)] * .y)
 
 # B: Slope
 b <- function(W0, W1, Wu, C1) log(2 * (W0 - Wu)/(W1 - Wu)) / C1
@@ -242,6 +244,8 @@ optim_list <- foreach(i = idxmin:idxmax) %dopar% {
   Wu_sectors_final <- Wu_sectors_final_list[[i]]
   B_sectors_final <- B_sectors_final_list[[i]]
   proportion_food_sectors <- proportion_food_list[[i]]
+  proportion_gross_outputs <- proportion_gross_outputs_list[[i]]
+  proportion_gross_outputs_final <- proportion_gross_outputs_final_list[[i]]
   
   optim_ghg <- map(Ctotal_vec, ~ solnp(pars = rep(.x/6, 6), fun = eval_f_eeio, eqfun = eval_eq_total, eqB = .x, LB = rep(0, 6), UB = rep(.x, 6), category = ghg_name, W0_sectors = W0_sectors, Wu_sectors = Wu_sectors, B_sectors = B_sectors, nu_sectors = nu_sectors, p_sectors = proportion_gross_outputs, W0_sectors_final = baseline_waste_rate, Wu_sectors_final = Wu_sectors_final, B_sectors_final = B_sectors_final, nu_sectors_final = nu_sectors_final, p_sectors_final = proportion_gross_outputs_final, proportion_food_sectors = proportion_food_sectors, sector_stage_codes = sector_stage_codes, final_demand_sector_codes = final_demand_sector_codes, Ctotal = .x, draw_id = paste('ghg',.x,i,sep='_')))
   
