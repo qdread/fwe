@@ -159,3 +159,19 @@ ggplot(cfsmap_fort, aes(x = long, y = lat, group = group, fill = net)) +
   theme(axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank()) +
   ggtitle('Domestic food-related commodity flows', 'source: Freight Analysis Framework v4')
 ggsave('/nfs/qread-data/figures/faf_net_trade.png', height = 6, width = 10, dpi = 300)
+
+
+# Black map ---------------------------------------------------------------
+
+black_map_outbound <- ggplot(cfsmap_fort, aes(x = long, y = lat, group = group, fill = export)) +
+  geom_polygon() +
+  scale_fill_viridis_c(trans = 'log', breaks = 10^c(3, 4, 5), name = 'Domestic food\noutbound flow', labels=c('$1B','$10B','$100B')) +
+  coord_map(projection = 'albers', lat0=23, lat1=29.5, xlim = c(-127,-65), ylim = c(25,50)) +
+  theme_bw() +
+  theme(axis.text = element_blank(), axis.title = element_blank(), axis.ticks = element_blank(), 
+        legend.position = 'none', panel.grid = element_blank(), panel.background = element_rect(color = 'black', fill = 'black')) 
+ggsave('/nfs/qread-data/figures/ussee/faf_outgoing_trade_blackmap.png', black_map_outbound, height = 6, width = 10, dpi = 300)
+
+# Include a legend on the black map
+black_map_outbound + theme(legend.position = c(0.2, 0.15), legend.text = element_text(color = 'white'), legend.title = element_text(color = 'white'), legend.background = element_blank(), legend.direction = 'horizontal')
+ggsave('/nfs/qread-data/figures/ussee/faf_outgoing_trade_blackmapwithlegend.png', black_map_outbound + theme(legend.position = c(0.2, 0.15), legend.text = element_text(color = 'white'), legend.title = element_text(color = 'white'), legend.background = element_blank(), legend.direction = 'horizontal'), height = 6, width = 10, dpi = 300)
