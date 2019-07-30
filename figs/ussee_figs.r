@@ -30,31 +30,60 @@ sectorpars_final <- with(sectorpars, data.frame(W0 = W0, Wu = Wu_final, B = B_fi
 xmax <- 10
 incr <- 0.01 # Increase to improve resolution
 
-yvals_curves <- pmap(sectorpars, w, x = seq(0, xmax, incr))
-yvals_curves_final <- pmap(sectorpars_final, w, x = seq(0, xmax, incr))
-dat_for_curves <- imap_dfr(yvals_curves, ~ data.frame(sector = sectorpars$sector_name[.y], stage = sectorpars$stage[.y], x = seq(0, xmax, incr), y = .x))
-dat_for_curves_household <- imap_dfr(yvals_curves_final, ~ data.frame(sector = paste(sectorpars$sector_name[.y], 'final'), code = sectorpars$stage_code_final[.y], x = seq(0, xmax, incr), y = .x)) %>%
-  filter(code %in% 'L5') %>%
-  mutate(stage = 'household') %>%
-  select(sector, stage, x, y)
-dat_for_curves <- rbind(dat_for_curves, dat_for_curves_household)
+# yvals_curves <- pmap(sectorpars, w, x = seq(0, xmax, incr))
+# yvals_curves_final <- pmap(sectorpars_final, w, x = seq(0, xmax, incr))
+# dat_for_curves <- imap_dfr(yvals_curves, ~ data.frame(sector = sectorpars$sector_name[.y], stage = sectorpars$stage[.y], x = seq(0, xmax, incr), y = .x))
+# dat_for_curves_household <- imap_dfr(yvals_curves_final, ~ data.frame(sector = paste(sectorpars$sector_name[.y], 'final'), code = sectorpars$stage_code_final[.y], x = seq(0, xmax, incr), y = .x)) %>%
+#   filter(code %in% 'L5') %>%
+#   mutate(stage = 'household') %>%
+#   select(sector, stage, x, y)
+# dat_for_curves <- rbind(dat_for_curves, dat_for_curves_household)
+# 
+# dat_for_curves$stage <- factor(dat_for_curves$stage, levels = c('agriculture', 'processing', 'retail', 'foodservice', 'institutional', 'household'), labels = stage_full_names)
+# 
+# # Show averages over all the sectors
+# # Plot each one on a separate file.
+# 
+# # mean
+# plotdat <- dat_for_curves %>%
+#   group_by(stage, x) %>%
+#   summarize(y = mean(y)) %>%
+#   group_by(stage) %>%
+#   mutate(xlimmax = 1 + min(x[y - last(y) <= 0.005])) %>%
+#   filter(x <= xlimmax)
+# 
+# # first
+# plotdat <- dat_for_curves %>%
+#   group_by(stage) %>%
+#   filter(sector %in% first(sector)) %>%
+#   mutate(xlimmax = 1 + min(x[y - last(y) <= 0.002])) %>%
+#   filter(x <= xlimmax)
 
+# the one where W0 and Wu have a median difference
+# start with sectorpars again
+sectorpars_mediandifference <- sectorpars %>%
+  mutate(diff = W0 - Wu) %>%
+  group_by(stage) %>%
+  filter(abs(diff - median(diff)) == min(abs(diff - median(diff)))) %>%
+  filter(sector_name %in% first(sector_name)) %>%
+  ungroup
+sectorpars_final_mediandifference <- sectorpars %>%
+  filter(stage_code_final %in% 'L5') %>%
+  mutate(diff = W0 - Wu_final) %>%
+  filter(abs(diff - median(diff)) == min(abs(diff - median(diff)))) %>%
+  filter(sector_name %in% first(sector_name)) %>%
+  mutate(Wu = Wu_final, B = B_final, stage = 'household', stage_code ='L5')
+sectorpars_median <- rbind(sectorpars_mediandifference, sectorpars_final_mediandifference)
+
+yvals_curves <- pmap(sectorpars_median, w, x = seq(0, xmax, incr))
+dat_for_curves <- imap_dfr(yvals_curves, ~ data.frame(sector = sectorpars_median$sector_name[.y], stage = sectorpars_median$stage[.y], x = seq(0, xmax, incr), y = .x))
 dat_for_curves$stage <- factor(dat_for_curves$stage, levels = c('agriculture', 'processing', 'retail', 'foodservice', 'institutional', 'household'), labels = stage_full_names)
 
-# Show averages over all the sectors
-# Plot each one on a separate file.
-plotdat <- dat_for_curves %>%
-  group_by(stage, x) %>%
-  summarize(y = mean(y)) %>%
-  group_by(stage) %>%
-  mutate(xlimmax = 1 + min(x[y - last(y) <= 0.005])) %>%
-  filter(x <= xlimmax)
-
 plotdat <- dat_for_curves %>%
   group_by(stage) %>%
-  filter(sector %in% first(sector)) %>%
   mutate(xlimmax = 1 + min(x[y - last(y) <= 0.002])) %>%
   filter(x <= xlimmax)
+
 
 cols <- RColorBrewer::brewer.pal(6, 'Set2')
 plotdat$linecol <- cols[as.numeric(plotdat$stage)]
@@ -84,7 +113,7 @@ grid.arrange(grobs = bwcurveplots$p, nrows=2)
 # Save each one as a fig.
 prefixes <- c('stage1_production', 'stage2_processing', 'stage3_retail', 'stage4_foodservice', 'stage5_institutional', 'stage6_household')
 
-walk2(bwcurveplots$p, prefixes, ~ ggsave(file.path(fpfig, 'ussee', paste0(.y, 'costcurve.png')), .x, height = 3, width = 3.5, dpi = 300))
+walk2(bwcurveplots$p, prefixes, ~ ggsave(file.path(fpfig, 'ussee', paste0(.y, 'costcurve.png')), .x, height = 2, width = 2.3, dpi = 300))
 
 # 50% reduction plots with error bars
 # ===================================
