@@ -50,8 +50,11 @@ category_labels_expression <- list("Eutrophication potential (kg N eq.)",
                                    expression(paste("Land used (", m^2, ")")),
                                    expression(paste("Water used ", (m^3))))
 
+# Get rid of Hall et al number
+waste_impacts <- waste_impacts[-13,]
+
 plotargs <- tibble(impact_category = unique(waste_impacts$impact_category),
-                       maxy = c(3, 600, 10, 2000, 400),
+                       maxy = c(3, 600, 10, 2000, 80),
                        labelexpr = category_labels_expression)
 
 waste_plots <- waste_impacts %>%
@@ -67,6 +70,9 @@ waste_plots <- waste_impacts %>%
        scale_fill_manual(values = c('black', 'red')) +
        theme_classic() +
        theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), axis.title.x = element_blank(), axis.line.x = element_blank(), legend.position = 'none'))
+
+# Change ticks on plot 1
+waste_plots$p[[1]] <- waste_plots$p[[1]] + scale_y_continuous(limits=c(0, 10), expand=c(0,0), name = 'Energy use (GJ)', breaks = c(0,5,10))
 
 library(gridExtra)
 
