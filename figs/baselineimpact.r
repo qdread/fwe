@@ -24,9 +24,9 @@ waste_impacts <- base_and_nowaste %>%
 pop <- 314e6
 
 waste_impacts <- mutate(waste_impacts, percapita_waste_impact = waste_impact / pop)
+write.csv(waste_impacts, file = file.path(fp_output, 'baseline_impacts.csv'), row.names = FALSE)
 
 # 71000 L water, 1790 m2 land, 5.5 GJ energy
 # 539 kg CO2 eq, 1.7 kg N eq
 # 17% of water used by food system is "wasted", as is 16% of land and 16% of energy.
-# Create a table.
 
