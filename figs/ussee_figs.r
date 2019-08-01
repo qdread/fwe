@@ -169,8 +169,9 @@ reduction_plot_with_errorbars <- function(sequence, yval, yminval, ymaxval) {
     geom_errorbar(width = 0.2, color = 'gray60') +
     geom_point(size = 3, color = 'black', fill = 'white', shape = 21, stroke = 2) +
     geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25, color = 'white') +
-    scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.03), expand = c(0,0)) +
+    scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
+    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent_format(accuracy=1)) +
+    coord_cartesian(ylim = c(0.77, 1.02), expand = TRUE) +
     theme_black() +
     theme(panel.grid.minor.x = element_blank(),
           panel.grid.major.x = element_blank(),
@@ -191,8 +192,7 @@ water_seqplot_ci <- trueseq_withcis %>%
   reduction_plot_with_errorbars(value, q025, q975)
 energy_seqplot_ci <- trueseq_withcis %>% 
   filter(grepl('enrg', impact_category)) %>% 
-  reduction_plot_with_errorbars(value, q025, q975) +
-  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.05), expand = c(0,0))
+  reduction_plot_with_errorbars(value, q025, q975) 
 eutr_seqplot_ci <- trueseq_withcis %>% 
   filter(grepl('eutr', impact_category)) %>% 
   reduction_plot_with_errorbars(value, q025, q975)
@@ -207,8 +207,9 @@ ggsave(file.path(fpfig, 'ussee/sixstage_gridwithci_eutrophicationby50pct.png'), 
 
 # Create blank plot so that I can build the slides
 blank_seqplot <- ggplot(data = data.frame(nbypct = c(0,6), y = c(0.75,1)), aes(x = nbypct, y = y)) +
-  scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.03), expand = c(0,0)) +
+  scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
+  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent_format(accuracy=1)) +
+  coord_cartesian(ylim = c(0.77, 1.02), expand = TRUE) +
   theme_black() +
   theme(panel.grid.minor.x = element_blank(),
         panel.grid.major.x = element_blank(),

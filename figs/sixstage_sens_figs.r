@@ -63,12 +63,14 @@ reduction_plot_with_errorbars <- function(sequence, yval, yminval, ymaxval, plot
     geom_errorbar(width = 0.2, color = 'gray60') +
     geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
     geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25) +
-    scale_x_continuous(name = 'Number of sectors where waste is reduced', breaks = 0:6) +
-    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.03), expand = c(0,0)) +
+    scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
+    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent_format(accuracy=1)) +
+    coord_cartesian(ylim = c(0.77, 1.02), expand = TRUE) +
     ggtitle(plot_title, plot_subtitle) +
     theme_bw() +
     theme(panel.grid.minor.x = element_blank(),
           panel.grid.minor.y = element_blank(),
+          panel.grid.major.x = element_blank(),
           plot.subtitle = element_text(size = 10))
   
 }
@@ -87,8 +89,7 @@ water_seqplot_ci <- trueseq_withcis %>%
   reduction_plot_with_errorbars(value, q025, q975, 'Impact of FLW reduction on water use', subtitle)
 energy_seqplot_ci <- trueseq_withcis %>% 
   filter(grepl('enrg', impact_category)) %>% 
-  reduction_plot_with_errorbars(value, q025, q975, 'Impact of FLW reduction on energy use', subtitle) +
-  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent, limits = c(0.75, 1.05), expand = c(0,0))
+  reduction_plot_with_errorbars(value, q025, q975, 'Impact of FLW reduction on energy use', subtitle) 
 eutr_seqplot_ci <- trueseq_withcis %>% 
   filter(grepl('eutr', impact_category)) %>% 
   reduction_plot_with_errorbars(value, q025, q975, 'Impact of FLW reduction on eutrophication', subtitle)
@@ -99,6 +100,49 @@ ggsave(file.path(fpfig, 'sixstage_gridwithci_landby50pct.png'), land_seqplot_ci,
 ggsave(file.path(fpfig, 'sixstage_gridwithci_waterby50pct.png'), water_seqplot_ci, height = 6, width = 6, dpi = 300)
 ggsave(file.path(fpfig, 'sixstage_gridwithci_energyby50pct.png'), energy_seqplot_ci, height = 6, width = 6, dpi = 300)
 ggsave(file.path(fpfig, 'sixstage_gridwithci_eutrby50pct.png'), eutr_seqplot_ci, height = 6, width = 6, dpi = 300)
+
+# Save the plots with no titles.
+nt <- theme(plot.title = element_blank(), plot.subtitle = element_blank())
+# Include a letter on each plot, and create a grid.
+plot_list <- list(co2_seqplot_ci+nt+geom_text(x = 0, y = 0.78, label = 'a', size = 20),
+                  land_seqplot_ci+nt+geom_text(x = 0, y = 0.78, label = 'b', size = 20),
+                  water_seqplot_ci+nt+geom_text(x = 0, y = 0.78, label = 'c', size = 20),
+                  energy_seqplot_ci+nt+geom_text(x = 0, y = 0.78, label = 'd', size = 20),
+                  eutr_seqplot_ci+nt+geom_text(x = 0, y = 0.78, label = 'e', size = 20)
+)
+
+gridExtra::grid.arrange(grobs = plot_list, nrow = 2)
+
+# Do this as a facet wrap plot
+
+facetplotdat <- trueseq_withcis %>%
+  filter(grepl('co2|eutr|land|watr|enrg', impact_category)) %>%
+  group_by(impact_category) %>%
+  mutate(value_norm = value/max(value),
+         q025_norm = q025/max(value),
+         q975_norm = q975/max(value)) %>%
+  ungroup %>%
+  mutate(stage_reduced = stage_full_names_lookup[stage_reduced],
+         impact_category = factor(impact_category, labels = c('eutrophication potential', 'greenhouse warming potential', 'energy use', 'land use', 'water use'))) 
+
+facetplot <- ggplot(facetplotdat %>% mutate(letter = letters[1:5][impact_category]), aes(x = nbypct, y = value_norm, ymin = q025_norm, ymax = q975_norm)) +
+  geom_line(size = 1) +
+  geom_errorbar(width = 0.2, color = 'gray60') +
+  geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
+  geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25, size = 3) +
+  geom_text(aes(label = letter), x = 0, y = 0.78, size = 12) +
+  scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
+  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent_format(accuracy = 1L)) +
+  facet_wrap(~ impact_category) +
+  coord_cartesian(ylim = c(0.77, 1.02), expand = TRUE) +
+  theme_bw() +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        plot.subtitle = element_text(size = 10),
+        strip.background = element_blank())
+
+ggsave(file.path(fpfig, 'sixstage_facetplot.png'), facetplot, height = 8.5, width = 11.5, dpi = 300)
 
 # Create a table showing mean rank or number of times things swap orders
 allseq_allcats %>%
@@ -125,6 +169,22 @@ meanrank_ft <- meanrank_allcats %>%
   theme_vanilla %>%
   merge_v(j = 'impact_category') %>%
   set_header_labels(impact_category = 'category', stage_reduced = 'stage', mean_rank = 'mean rank', proportion_not_swapped = 'percent not swapped')
+
+# Make a figure with the prioritization ranks. The uncertainty should be included.
+meanrank_allcats %>%
+  mutate(stage_reduced = factor(stage_reduced, levels = rev(stage_full_names))) %>%
+ggplot(aes(x = impact_category, y = stage_reduced, label = round(mean_rank), fill = proportion_not_swapped/100)) +
+  geom_tile() +
+  geom_text(aes(size = 7-round(mean_rank))) +
+  scale_fill_viridis_c(alpha = 0.3, begin = 0.5, end = 1, name = 'Confidence', labels = scales::percent_format(accuracy = 1)) +
+  scale_x_discrete(expand=c(0,0), name = 'Impact category') +
+  scale_y_discrete(expand=c(0,0), name = 'Food supply chain stage') +
+  scale_radius(range = c(6,12), guide = FALSE) +
+  theme(panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position = 'bottom')
+
+ggsave(file.path(fpfig, 'prioritization_table.png'), height = 6, width = 7, dpi = 300)
 
 # Do the 100% sequences and create plot -----------------------------------
 
