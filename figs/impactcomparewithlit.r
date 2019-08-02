@@ -79,3 +79,55 @@ library(gridExtra)
 png(file.path(fpfig, 'impact_comparison_withlit.png'), height = 4, width = 8, res = 300, units = 'in')
 grid.arrange(grobs = waste_plots$p, nrow = 1)
 dev.off()
+
+
+
+# Make white on black version of plot -------------------------------------
+
+source('~/fwe/figs/theme_black.R')
+
+bw_waste_plots <- waste_impacts %>%
+  left_join(plotargs) %>%
+  group_by(impact_category) %>%
+  do(p = ggplot(., aes(x = 1, y = percapita_waste_impact, fill = source, size = source)) +
+       geom_point(pch = 21) +
+       geom_hline(yintercept = 0, color = 'black') +
+       scale_x_continuous(limits=c(0.95,1.05), expand=c(0,0)) +
+       scale_y_continuous(limits=c(0,.$maxy[1]), expand=c(0,0), name = .$labelexpr[[1]]) +
+       scale_size_manual(values = c(3, 5)) +
+       scale_fill_manual(values = c('#a6cee3', '#33a02c')) +
+       theme_classic_black() +
+       theme(axis.ticks.x = element_blank(), 
+             axis.text.x = element_blank(), 
+             axis.title.x = element_blank(), 
+             axis.line.x = element_blank(), 
+             legend.position = 'none'))
+
+# Change ticks on plot 1
+bw_waste_plots$p[[1]] <- bw_waste_plots$p[[1]] + scale_y_continuous(limits=c(0, 10), expand=c(0,0), name = 'Energy use (GJ)', breaks = c(0,5,10))
+
+# Without lit
+bw_waste_plots_nolit <- waste_impacts %>%
+  left_join(plotargs) %>%
+  filter(source == 'this study') %>%
+  group_by(impact_category) %>%
+  do(p = ggplot(., aes(x = 1, y = percapita_waste_impact)) +
+       geom_point(pch = 21, size = 5, fill = '#33a02c') +
+       geom_hline(yintercept = 0, color = 'black') +
+       scale_x_continuous(limits=c(0.95,1.05), expand=c(0,0)) +
+       scale_y_continuous(limits=c(0,.$maxy[1]), expand=c(0,0), name = .$labelexpr[[1]]) +
+       theme_classic_black() +
+       theme(axis.ticks.x = element_blank(), 
+             axis.text.x = element_blank(), 
+             axis.title.x = element_blank(), 
+             axis.line.x = element_blank(), 
+             legend.position = 'none'))
+
+bw_waste_plots_nolit$p[[1]] <- bw_waste_plots_nolit$p[[1]] + scale_y_continuous(limits=c(0, 10), expand=c(0,0), name = 'Energy use (GJ)', breaks = c(0,5,10))
+
+png(file.path(fpfig, 'ussee/bw_impact_withlit.png'), height = 4, width = 8, res = 300, units = 'in')
+grid.arrange(grobs = bw_waste_plots$p, nrow = 1)
+dev.off()
+png(file.path(fpfig, 'ussee/bw_impact_nolit.png'), height = 4, width = 8, res = 300, units = 'in')
+grid.arrange(grobs = bw_waste_plots_nolit$p, nrow = 1)
+dev.off()
