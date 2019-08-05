@@ -12,9 +12,9 @@ source(file.path(fp_github, 'USEEIO/load_scenario_data.r'))
 source(file.path(fp_github, 'figs/categorylabels.r'))
 library(tidyverse)
 
-stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
+stage_full_names <- c('production', 'processing', 'retail', 'consumption: foodservice', 'consumption: institutional', 'consumption: household')
 
-stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
+stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfoodservice', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
 
 lcia_contr <- read.csv(file.path(fp_output, 'lcia_contributions.csv'), stringsAsFactors = FALSE, check.names = FALSE)
 
@@ -279,6 +279,9 @@ theme4 <- theme3 + theme(axis.text.x = element_blank(), axis.title.x = element_b
 
 walk2(impact_plots$p, c('eutrophication', 'ghg', 'energy', 'land', 'water'),
       ~ ggsave(file.path(fpfig, 'ussee', paste0('bwnoxaxis_food_types_impact_', .y, '.png')), .x + theme4, height = 3.5, width = 3.9, dpi = 300))
+
+# Plot one with the legend so it can be clipped.
+ggsave(file.path(fpfig, 'ussee', 'impactplotwithlegend.png'), impact_plots$p[[1]] + theme_black() + theme(legend.position = 'left', legend.key = element_blank()), height = 3.5, width = 5, dpi = 300)
 
 # Plot impacts per dollar of final demand ---------------------------------
 

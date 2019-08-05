@@ -6,14 +6,14 @@ fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data')
 fpfig <- file.path(fp, 'figures') 
 fp_output <- file.path(fp, 'scenario_results')
 
-stage_full_names <- c('production', 'processing', 'retail', 'consumption: food service', 'consumption: institutional', 'consumption: household')
+stage_full_names <- c('production', 'processing', 'retail', 'consumption: foodservice', 'consumption: institutional', 'consumption: household')
 
 optimal_df_all <- read.csv(file.path(fp_output, 'sixstage_scenario_opt_results.csv'))
 grid_result <- read.csv(file.path(fp_output, 'sixstage_scenario_grid_lcia_results.csv'), stringsAsFactors = FALSE)
 grid_sensitivity_df <- read.csv(file.path(fp_output, 'sensitivity_grid_alldraws.csv'), stringsAsFactors = FALSE)
 grid_sensitivity_CIs <- read.csv(file.path(fp_output, 'sensitivity_grid_CIs.csv'), stringsAsFactors = FALSE)
 
-stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
+stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfoodservice', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
 
 # Calculate sequences for each draw ---------------------------------------
 

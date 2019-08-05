@@ -285,6 +285,50 @@ emojiplot_black <- ggplot(faoplotdat, aes(x = x, y = weight, group = category)) 
 ggsave('Q:/figures/FAO_FLW_emojis_jitterplot_BW.png', emojiplot_black, height = 5, width = 5.5, dpi = 400)
 
 
+# Separate legend key for black and white plot.
+emojikey <- ggplot(keydat %>% mutate(x = 1, y = 13:1), aes(x,y)) +
+  geom_text(aes(label = category), hjust = 0, color = 'white') +
+  theme_void() +
+  theme(panel.background = element_rect(fill = 'black'),
+        plot.background = element_rect(fill = 'black')) +
+  geom_emoji(emoji = '1f35e', x = 0.9, y = 13) +
+  geom_emoji(emoji = '1f954', x = 0.9, y = 12) +
+  geom_emoji(emoji = '1f35f', x = 0.9, y = 11) +
+  geom_emoji(emoji = '1f331', x = 0.9, y = 10) +
+  geom_emoji(emoji = '1f351', x = 0.9, y = 9) +
+  geom_emoji(emoji = '1f96b', x = 0.9, y = 8) +
+  geom_emoji(emoji = '1f357', x = 0.9, y = 7) +
+  geom_emoji(emoji = '1f41f', x = 0.9, y = 6) +
+  geom_emoji(emoji = '1f363', x = 0.9, y = 5) +
+  geom_emoji(emoji = '1f9c0', x = 0.9, y = 4) +
+  geom_emoji(emoji = '1f95a', x = 0.9, y = 3) +
+  geom_emoji(emoji = '1f36d', x = 0.9, y = 2) +
+  geom_emoji(emoji = '1f37a', x = 0.9, y = 1) +
+  scale_x_continuous(limits=c(0,2))
+ggsave('Q:/figures/FAO_FLW_emojis_key_BW_13categories.png', emojikey, height = 5, width = 5, dpi = 400)
+
+# Without "processed" category
+emojikey <- ggplot(keydat %>% filter(!grepl('processed', category)) %>% mutate(category=gsub(', fresh','',category)) %>% mutate(x=1,y=10:1), aes(x,y)) +
+  geom_text(aes(label = category), hjust = 0, color = 'white') +
+  theme_void() +
+  theme(panel.background = element_rect(fill = 'black'),
+        plot.background = element_rect(fill = 'black')) +
+  geom_emoji(emoji = '1f35e', x = 0.9, y = 10) +
+  geom_emoji(emoji = '1f954', x = 0.9, y = 9) +
+  #geom_emoji(emoji = '1f35f', x = 0.9, y = 11) +
+  geom_emoji(emoji = '1f331', x = 0.9, y = 8) +
+  geom_emoji(emoji = '1f351', x = 0.9, y = 7) +
+  #geom_emoji(emoji = '1f96b', x = 0.9, y = 8) +
+  geom_emoji(emoji = '1f357', x = 0.9, y = 6) +
+  geom_emoji(emoji = '1f41f', x = 0.9, y = 5) +
+  #geom_emoji(emoji = '1f363', x = 0.9, y = 5) +
+  geom_emoji(emoji = '1f9c0', x = 0.9, y = 4) +
+  geom_emoji(emoji = '1f95a', x = 0.9, y = 3) +
+  geom_emoji(emoji = '1f36d', x = 0.9, y = 2) +
+  geom_emoji(emoji = '1f37a', x = 0.9, y = 1) +
+  scale_x_continuous(limits=c(0,2))
+ggsave('Q:/figures/FAO_FLW_emojis_key_BW_10categories.png', emojikey, height = 5, width = 5, dpi = 400)
+
 # Reduced number of symbols for USSEE pptx --------------------------------
 
 
