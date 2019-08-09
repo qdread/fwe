@@ -47,6 +47,12 @@ trueseq <- grid_result %>%
 # Match the true sequence values with the error bar values.
 trueseq_withcis <- trueseq %>% left_join(grid_sensitivity_CIs)
 
+# Percentages
+trueseq %>%
+  group_by(impact_category) %>%
+  mutate(pct = value/max(value)) %>%
+  print(n = nrow(.))
+
 # Function to create reduction plot with error bars
 reduction_plot_with_errorbars <- function(sequence, yval, yminval, ymaxval, plot_title, plot_subtitle) {
   yval <- enquo(yval)
