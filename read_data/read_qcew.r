@@ -31,5 +31,5 @@ qcew_us_greenhouse <- qcew_us %>%
   filter(grepl('^1114', industry_code))
 
 # 11141 is food, 11142 is not food.
-(682+200+481)/8440
-# 16.1% of this is food crops.
+681/8440
+# 8.07% of this is food crops.
