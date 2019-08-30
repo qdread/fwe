@@ -1,0 +1,4 @@
+BISON download 28 Aug 2019 (bison.usgs.gov)
+
+Query 1: observation, all providers, all locations, mammals
+Query 2: observation, all providers, all locations, insects
