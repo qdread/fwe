@@ -99,8 +99,13 @@ intensity_summary_household <- intensity_joined %>%
   filter(stage_code %in% c('L1','L2','L3')) %>%
   summarize(volume = sum(demand_FSC),
             waste_rate = weighted.mean(waste_rate, demand_FSC), 
-            waste_total = waste_rate * volume)
+            waste_total = waste_rate * volume) %>%
+  mutate(stage = 'household')
 
 # Create a basic figure with these parameters.
 intensity_summary <- intensity_summary %>%
   mutate(GHG_total = GHG_intensity * volume, waste_total = waste_rate * volume)
+
+bind_rows(intensity_summary, intensity_summary_household) %>%
+  filter(!is.na(stage)) %>%
+  write.csv('~/Dropbox/projects/foodwaste/FoodPolicy_MS/graphicalabstract/avgs.csv', row.names = FALSE)
