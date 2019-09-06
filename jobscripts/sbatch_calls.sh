@@ -4,3 +4,14 @@ cd ~/fwe/jobscripts
 sbatch --export=vector_file=/nfs/fwe-data/landuse/ecoregions/bcr_usa_combined.shp,raster_file=/nfs/fwe-data/landuse/NLCD/nlcd2016landcover.vrt,output_file=/nfs/fwe-data/landuse/NLCD/NLCD_2016_BCR.csv countpixels.sh
 sbatch --export=vector_file=/nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/faf_aea.shp,raster_file=/nfs/fwe-data/landuse/NLCD/nlcd2016landcover.vrt,output_file=/nfs/fwe-data/landuse/NLCD/NLCD_2016_FAF.csv countpixels.sh
 sbatch --export=vector_file=/nfs/fwe-data/landuse/ecoregions/tnc_usa_aea.shp,raster_file=/nfs/fwe-data/landuse/NLCD/nlcd2016landcover.vrt,output_file=/nfs/fwe-data/landuse/NLCD/NLCD_2016_TNC.csv countpixels.sh
+
+# Use the historic 1700 raster.
+sbatch --export=vector_file=/nfs/fwe-data/landuse/ecoregions/bcr_usa_combined.shp,raster_file=/nfs/fwe-data/landuse/historic/historic_landcover_hdeg/aea_historic_landcover_hd_1700.tif,output_file=/nfs/fwe-data/landuse/historic/BCR1700.csv countpixels.sh
+sbatch --export=vector_file=/nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/faf_aea.shp,raster_file=/nfs/fwe-data/landuse/historic/historic_landcover_hdeg/aea_historic_landcover_hd_1700.tif,output_file=/nfs/fwe-data/landuse/historic/FAF1700.csv countpixels.sh
+sbatch --export=vector_file=/nfs/fwe-data/landuse/ecoregions/tnc_usa_aea.shp,raster_file=/nfs/fwe-data/landuse/historic/historic_landcover_hdeg/aea_historic_landcover_hd_1700.tif,output_file=/nfs/fwe-data/landuse/historic/TNC1700.csv countpixels.sh
+
+# Extract USDA Cropland Data Layer 2018 for BCR, FAF, and TNC
+cdlraster=""
+sbatch --export=vector_file=/nfs/fwe-data/landuse/ecoregions/bcr_usa_combined.shp,raster_file=${cdlraster},output_file=/nfs/fwe-data/landuse/NLCD/NLCD_2016_BCR.csv countpixels.sh
+sbatch --export=vector_file=/nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/faf_aea.shp,raster_file=${cdlraster},output_file=/nfs/fwe-data/landuse/NLCD/NLCD_2016_FAF.csv countpixels.sh
+sbatch --export=vector_file=/nfs/fwe-data/landuse/ecoregions/tnc_usa_aea.shp,raster_file=${cdlraster},output_file=/nfs/fwe-data/landuse/NLCD/NLCD_2016_TNC.csv countpixels.sh
