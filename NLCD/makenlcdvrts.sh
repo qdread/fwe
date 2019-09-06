@@ -12,3 +12,6 @@ gdalbuildvrt /nfs/qread-data/NLCD/nlcd20062011change.vrt /nfs/public-data/NLCD/n
 
 # Edit: 2016 VRT
 gdalbuildvrt /nfs/fwe-data/landuse/NLCD/nlcd2016landcover.vrt /nfs/fwe-data/landuse/NLCD/NLCD_2016_Land_Cover_L48_20190424.img
+
+# Also create VRT for USDA cropland data layer
+gdalbuildvrt /nfs/fwe-data/landuse/USDAcropland/CDL/cdl2018.vrt /nfs/fwe-data/landuse/USDAcropland/CDL/2018_30m_cdls.img 
