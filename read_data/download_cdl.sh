@@ -5,5 +5,5 @@ cd /nfs/fwe-data/landuse/USDAcropland/CDL
 
 for ((y=2009; y <= 2018 ; y++))
 do
-   wget ftp://ftp.nass.usda.gov/download/res/${y}_30m_cdls.zip
+   wget ftp://ftp.nass.usda.gov/download/res/${y}_30m_cdls.zip &
  done
