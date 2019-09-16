@@ -34,3 +34,15 @@ sbatch -J countbystate --export=vector_file=/nfs/fwe-data/landuse/USA/USA_adm1_a
 	raster_file=${tncraster},\
 	output_file=${outdir}/TNCcount_by_state.csv ${EXEC}
 
+# Extract the rasterized BCR by CFS and by US states
+bcrraster="/nfs/fwe-data/landuse/ecoregions/bcr_usa_aea_gridded.tif"
+sbatch --export=vector_file=/nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/faf_aea.shp,\
+	raster_file=${bcrraster},\
+	output_file=${outdir}/BCRcount_by_CFS.csv ${EXEC}
+
+sbatch -J countbystate --export=vector_file=/nfs/fwe-data/landuse/USA/USA_adm1_aea.shp,\
+	raster_file=${bcrraster},\
+	output_file=${outdir}/BCRcount_by_state.csv ${EXEC}
+
+# Extract cropland data layer for all years (2018 already done)
+sbatch --array=1-9 countcdlbyyear.sh
