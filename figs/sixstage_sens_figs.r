@@ -47,6 +47,9 @@ trueseq <- grid_result %>%
 # Match the true sequence values with the error bar values.
 trueseq_withcis <- trueseq %>% left_join(grid_sensitivity_CIs)
 
+# Export for use in further analysis
+#write.csv(trueseq_withcis, file.path(fp_output, 'bestsequences.csv'), row.names = FALSE)
+
 # Percentages
 trueseq %>%
   group_by(impact_category) %>%

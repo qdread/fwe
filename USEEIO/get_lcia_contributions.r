@@ -1,6 +1,7 @@
 # Script to get the DIRECT impacts of each sector from EEIO
 # Baseline and one with waste 100% reduced at each of the stages.
 
+# Modified 17 Sept 2019: Also do this for each of the 50% cases that are the "best" so we can see how much each food contributed to the reduction.
 # Modified 18 July 2019: include a way to return the final demand from each of the runs, because we want to get contributions per dollar of demand.
 
 # Load data ---------------------------------------------------------------
@@ -113,3 +114,37 @@ eeio_demand_list <- map2_dfr(eeio_result_allcontributions, c('baseline','L1','L2
                                           final_demand = do.call(c, .x$demand$values)))
 
 write.csv(eeio_demand_list, file.path(fp_output, 'lcia_contributions_finaldemand.csv'), row.names = FALSE)
+
+
+# Get direct impacts from the best 50% scenarios --------------------------
+
+# Load the results showing which are best.
+# should recreate trueseq_withcis from sixstage_sens_figs.r (or save that and load it.)
+
+trueseq <- read.csv(file.path(fp_output, 'bestsequences.csv'), stringsAsFactors = FALSE)
+reduction_best <- trueseq %>% filter(rowSums(.[,1:6]) > 0)
+
+# Only need to do the best trajectories once each
+reduction_best <- reduction_best[match(unique(reduction_best$scenario), reduction_best$scenario), ]
+
+reduction_best_rates <- reduction_best[,1:6]
+
+# Save scenario parameters so we can join them again
+write.csv(rbind(reduction_best[,1:7], cbind(reduction_all1, scenario = c('baseline','L1','L2','L3','L4a','L4b','L5','zerowaste'))), file.path(fp_output, 'scenario_parameters_best50.csv'), row.names = FALSE)
+
+# Create list from grid
+reduction_rate_grid_list <- setNames(split(reduction_best_rates, seq(nrow(reduction_best_rates))), rownames(reduction_best_rates))
+
+eeio_result_allcontributions <- mapply(get_reduction, reduction_by_stage = reduction_rate_grid_list, scenario_id = 1:length(reduction_rate_grid_list), SIMPLIFY = FALSE)
+
+eeio_result_allcontributions_df <- map_dfr(eeio_result_allcontributions, 'lcia_contr')
+eeio_result_allcontributions_df$scenario <-  rep(reduction_best$scenario, each = 21)
+
+write.csv(eeio_result_allcontributions_df, file.path(fp_output, 'lcia_contributions_best50.csv'), row.names = FALSE)
+
+eeio_demand_list <- map2_dfr(eeio_result_allcontributions, reduction_best$scenario,
+                             ~ data.frame(scenario = .y, 
+                                          BEA_389_code = do.call(c, .x$demand$codes),
+                                          final_demand = do.call(c, .x$demand$values)))
+
+write.csv(eeio_demand_list, file.path(fp_output, 'lcia_contributions_best50_finaldemand.csv'), row.names = FALSE)
