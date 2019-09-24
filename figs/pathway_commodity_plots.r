@@ -185,23 +185,23 @@ plot_impactaverted <- function(dat, the_category, unit_name, n = 5) {
     scale_y_continuous(name = parse(text = paste('Per~capita~impact~averted:', unit_name, sep = '~')), 
                        limits = c(0, max(dat$impact_averted) * 1.05), expand = c(0, 0),
                        sec.axis = sec_axis(trans = ~ ./dat$baseline_impact[1], name = 'relative to baseline', labels = scales::percent)) +
-    scale_color_manual(values = alltop5_colormap) +
+    scale_color_manual(values = alltop5_colormap, guide = guide_legend(nrow = 2)) +
     theme_bw() +
     theme(panel.grid.minor.x = element_blank(),
           panel.grid.minor.y = element_blank(),
           panel.grid.major.x = element_blank(),
-          plot.subtitle = element_text(size = 10))
+          legend.position = 'bottom')
 }
 
-p_ghg <- plot_impactaverted(percapita_results, 'GHG', 'GHG~(kg~CO^2~eq.~y^-1)')
-p_land <- plot_impactaverted(percapita_results, 'land', 'land~(m^2~y^-1)')
-p_water <- plot_impactaverted(percapita_results, 'water', 'water~(m^3~y^-1)')
-p_energy <- plot_impactaverted(percapita_results, 'energy', 'energy~(MJ~y^-1)')
-p_eutr <- plot_impactaverted(percapita_results, 'eutrophication', 'eutrophication~potential~(kg~N~eq.~y^-1)')
+p_ghg <- plot_impactaverted(percapita_results, 'GHG', 'GHG~(kg~CO^2~eq.~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='GHG')
+p_land <- plot_impactaverted(percapita_results, 'land', 'land~(m^2~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='land')
+p_water <- plot_impactaverted(percapita_results, 'water', 'water~(m^3~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='water')
+p_energy <- plot_impactaverted(percapita_results, 'energy', 'energy~(MJ~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='energy')
+p_eutr <- plot_impactaverted(percapita_results, 'eutrophication', 'eutrophication~potential~(kg~N~eq.~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='eutrophication')
 
 # Draw plots to pngs
-ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_ghg.png'), p_ghg, height = 5, width = 7, dpi = 300)  
-ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_land.png'), p_land, height = 5, width = 7, dpi = 300)  
-ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_water.png'), p_water, height = 5, width = 7, dpi = 300)  
-ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_energy.png'), p_energy, height = 5, width = 7, dpi = 300)  
-ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_eutrophication.png'), p_eutr, height = 5, width = 7, dpi = 300)  
+ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_ghg.png'), p_ghg, height = 6, width = 7, dpi = 300)  
+ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_land.png'), p_land, height = 6, width = 7, dpi = 300)  
+ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_water.png'), p_water, height = 6, width = 7, dpi = 300)  
+ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_energy.png'), p_energy, height = 6, width = 7, dpi = 300)  
+ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_eutrophication.png'), p_eutr, height = 6, width = 7, dpi = 300)  
