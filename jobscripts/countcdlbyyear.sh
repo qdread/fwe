@@ -4,7 +4,6 @@
 #SBATCH --job-name=cdl_byyear
 
 # Job script to get USDA cropland tallies by region for all years that we have CDL
-EXEC="countpixels.sh"
 outdir="/nfs/fwe-data/landuse/output_csvs"
 
 # Get year beginning with 2009 from task ID

@@ -50,3 +50,26 @@ category_labels_character <- c('paste("Hazardous air pollutants released (kT)")'
                                'paste("Renewable energy used (PJ)")',
                                'paste("Water used ", (km^3))'
 )
+
+# Include the raw category names so that we can map one to another.
+category_names_raw <- c('chemical releases/haps/kg', 
+						'chemical releases/metl/kg',  
+						'chemical releases/pest/kg',  
+						'economic & social/jobs/jobs',
+						'economic & social/vadd/$',
+						'impact potential/acid/kg so2 eq', 
+						'impact potential/etox/ctue',  
+						'impact potential/eutr/kg n eq',
+						'impact potential/gcc/kg co2 eq',
+						'impact potential/hc/ctuh', 
+						'impact potential/hnc/ctuh', 
+						'impact potential/hrsp/kg pm2.5 eq',
+						'impact potential/htox/ctuh',
+						'impact potential/ozon/kg cfc11 eq', 
+						'impact potential/smog/kg o3 eq', 
+						'resource use/enrg/mj',
+						'resource use/land/m2*yr',
+						'resource use/mine/kg',
+						'resource use/nren/mj',
+						'resource use/ren/mj',
+						'resource use/watr/m3')
