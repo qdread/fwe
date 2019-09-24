@@ -1,0 +1,40 @@
+---
+title: "50% reductions by commodity"
+author: "Quentin D. Read"
+date: "September 24, 2019"
+output: pdf_document
+---
+
+## Motivation
+
+The editor that rejected the manuscript from *Food Policy* had two main objections. The first one was that we ignored price changes that would result from 50% reduction. Incorporating those is probably outside the scope of this paper but would be interesting for future work. I believe we can reframe the paper to still convey our results without having necessarily to add the equilibrium models. The second one was that we should disaggregate the results by commodity. That one was more feasible to at least try.
+
+I've now run our analysis separately for each of the 13 commodity groups. Results are below. I would appreciate feedback on whether people think this is worth incorporating into the next version of the MS and if so, what particular things should we focus on?
+
+## Quick summary of methods
+
+I repeated the following methods for each of the 13 commodity groups:
+
+* Multiply the commodity proportion weights for each food supply chain industry by the waste rate for the supply chain stage it belongs to, and the proportion of that industry's output that is food. *Example*: 49.9% of the ice cream industry by value is in the milk category, and that industry is classified in the processing stage. Milk has 1.7% loss in the processing stage. 100% of the ice cream industry's output is food. So the waste rate for milk only in the ice cream industry is $0.499 \times 0.017 \times 1$, or 0.8%. 
+* Repeat the following for each environmental impact category: 
+  * Assume 50% waste reductions for only the commodity group in question in each supply chain stage, and calculate changes in intermediate and final demand resulting from that reduction.
+  * Evaluate the I-O model for each stage separately.
+  * Select the stage reduction that minimizes the environmental impact category in question.
+  * Continue adding stages that minimize the environmental impact until all stages have been reduced. (Note that a few commodities do not have a separate agricultural production stage, for example beverages would still be classified as cereals and/or fruits at that stage.)
+
+![Energy-minimizing pathways by commodity for 50% waste reduction](Q:/figures/impact_by_commodity/top5commodities_energy.png){ width=90% }  
+![Land-minimizing pathways by commodity for 50% waste reduction](Q:/figures/impact_by_commodity/top5commodities_land.png){ width=90% }  
+![Water-minimizing pathways by commodity for 50% waste reduction](Q:/figures/impact_by_commodity/top5commodities_water.png){ width=90% }  
+![GHG-minimizing pathways by commodity for 50% waste reduction](Q:/figures/impact_by_commodity/top5commodities_ghg.png){ width=90% }  
+![Eutrophication-minimizing pathways by commodity for 50% waste reduction](Q:/figures/impact_by_commodity/top5commodities_eutrophication.png){ width=90% }  
+  
+## Results
+
+For all the results here, I'm only showing the top 5 commodities for each environmental category. The remaining commodities were very minor in terms of their impacts. Also, I made the graphs in the opposite y-axis direction from the ones I have made in the past: the y-axis shows the per capita impact averted as a result of reducing waste by 50% at each successive stage. The stage with the greatest impact reduction is at lower left, with successively less important ones adding on toward the upper right corner. I included an additional y-axis just to show the percentage impact reduction compared to the baseline of the entire food system impact (so for example cutting meat waste by 50% at each stage would reduce the water use of the entire food system by 1.5%).
+
+Meat and cereal grains are the two commodities that generally are the highest contributors to waste impacts, which makes sense because meat has such high impacts per unit produced, and cereal grain production is done on such a massive scale. This is the case basically across the board. Beverages have a relatively big contribution, especially for GHG and energy inputs. This is probably a result of the high carbon footprint and high consumption rate of alcoholic beverages especially at foodservice establishments, even if the waste rate is not that high. Water withdrawal is an exception to the general pattern: fresh fruits and vegetables have an outsized water footprint relative to their impacts in other categories. They also have an extremely high waste rate in households, so reducing household fruit and vegetable waste by 50% has a very big impact on water use. Sugar and sweeteners appear in the top 5 for land, water, and energy use. Fresh and processed fruits and vegetables appear in the top 5 for eutrophication impacts and water impacts. Surprisingly dairy is only in the top 5 for greenhouse gas emissions. Fresh seafood has a high energy and greenhouse gas footprint.
+
+Splitting the analysis by commodity does not really change our overall stage prioritization. Food processing, household consumption, and consumption at foodservice establishments are usually the biggest contributors regardless of commodity or environmental category. Those three stages are always the top 2 candidates for reduction regardless of commodity and environmental category. 
+
+
+In summary this analysis does not change the message regarding stage prioritization, but it does show some differences among commodities where the rank order of impacts by commodity group depends on what environmental impact category we are considering.
