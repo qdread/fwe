@@ -296,11 +296,21 @@ p_bycategory <- lapply(unique(percapita_results$category), function(categ) {
 })
 
 # Layout the 5 plots on a page
-library(ggpubr)
-library(gridExtra)
+# library(ggpubr)
+# library(gridExtra)
+# leg <- get_legend(p_bycategory[[1]])
+# g1 <- map(p_bycategory[1:5], ~ .x + theme(legend.position = 'none'))
+# g1[[6]] <- leg
+# png(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts_bycategory.png'), height = 6, width = 9, res = 300, units = 'in')
+#   grid.arrange(grobs = g1, nrow = 2)
+# dev.off()
+
+# Do with cowplot
+library(cowplot)
 leg <- get_legend(p_bycategory[[1]])
 g1 <- map(p_bycategory[1:5], ~ .x + theme(legend.position = 'none'))
 g1[[6]] <- leg
-png(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts_bycategory.png'), height = 6, width = 9, res = 300, units = 'in')
-  grid.arrange(grobs = g1, nrow = 2)
-dev.off()
+title_gg <- ggplot() + ggtitle('Averted impacts of 50% reduction by category and food group', 'food groups arranged in descending order by average impact within each category') + theme_minimal()
+the_plots <- plot_grid(plotlist = g1, nrow = 2)
+titled_plots <- plot_grid(title_gg, the_plots, nrow = 2, rel_heights = c(0.1, 0.9))
+ggsave(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts_bycategory.png'), titled_plots, height = 6, width = 9, dpi = 300)
