@@ -205,3 +205,102 @@ ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_land.png'), p_land
 ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_water.png'), p_water, height = 6, width = 7, dpi = 300)  
 ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_energy.png'), p_energy, height = 6, width = 7, dpi = 300)  
 ggsave(file.path(fp_fig, 'impact_by_commodity/top5commodities_eutrophication.png'), p_eutr, height = 6, width = 7, dpi = 300)  
+
+
+# Separate figure for each commodity --------------------------------------
+
+# Stacked bar plot.
+# Calculate marginal percent impact averted for each stage.
+percapita_results <- percapita_results %>% 
+  group_by(category, commodity) %>%
+  mutate(marginal_impact_norm = -diff(c(1, impact_norm))) %>%
+  ungroup
+
+p_stacked <- ggplot(percapita_results %>% filter(!category %in% 'all') %>% mutate(stage_reduced = factor(stage_reduced, levels = stage_full_names_lookup[-1])), aes(x = category, y = marginal_impact_norm, fill = stage_reduced)) +
+  geom_bar(stat = 'identity', position = 'stack') +
+  facet_wrap(~ commodity) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1), expand = c(0, 0), limits = c(0, 0.05), name = 'Impact averted (relative to entire FSC)') +
+  scale_fill_brewer(type = 'qual', palette = 'Dark2') +
+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 6, angle = 45, hjust = 1))
+
+ggsave(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts.png'), p_stacked, height = 6, width = 9, dpi = 300)  
+
+# Stacked bar plot with different axes.
+# Sort by highest total impact, not weighting among categories
+percapita_totals <- percapita_results %>%
+  filter(!category %in% 'all') %>%
+  group_by(category, commodity) %>% 
+  summarize(i = sum(marginal_impact_norm)) %>%
+  group_by(commodity) %>%
+  summarize(avg_impact = mean(i)) %>%
+  arrange(-avg_impact)
+
+p_stacked_free <- ggplot(percapita_results %>% 
+                           filter(!category %in% 'all') %>%
+                           mutate(stage_reduced = factor(stage_reduced, levels = stage_full_names_lookup[-1]),
+                                  commodity = factor(commodity, levels = percapita_totals$commodity)), 
+                         aes(x = category, y = marginal_impact_norm, fill = stage_reduced)) +
+  geom_bar(stat = 'identity', position = 'stack') +
+  facet_wrap(~ commodity, scales = 'free_y') +
+  scale_y_continuous(labels = scales::percent, expand = expand_scale(mult = c(0, 0.05)), name = 'Impact averted (relative to entire FSC)') +
+  scale_fill_brewer(name = 'Stage reduced', type = 'qual', palette = 'Dark2', guide = guide_legend(nrow = 2, byrow = TRUE)) +
+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
+        legend.position = c(0.5, 0.05)) +
+  ggtitle('Averted impacts of 50% reduction by food group and category', 'food groups arranged in descending order by average impact across categories')
+
+ggsave(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts_freeaxis.png'), p_stacked_free, height = 6, width = 9, dpi = 300)
+
+
+# Do one for each commodity so we can see the relative differences among the categories for each commodity
+
+cols <- setNames(RColorBrewer::brewer.pal(6,'Dark2'), stage_full_names_lookup[-1])
+
+p_stacked_list <- lapply(unique(percapita_results$commodity), function(comm) { 
+  dat <- percapita_results %>% mutate(stage_reduced = factor(stage_reduced, levels = stage_full_names_lookup[-1])) %>% filter(!category %in% 'all', commodity %in% comm) 
+  max_y <- dat %>% group_by(category) %>% summarize(i = sum(marginal_impact_norm)) %>% ungroup %>% pull(i) %>% max
+  
+  ggplot(dat, aes(x = category, y = marginal_impact_norm, fill = stage_reduced)) +
+    geom_bar(stat = 'identity', position = 'stack') +
+    scale_y_continuous(labels = scales::percent, expand = c(0, 0), limits = c(0, round(max_y*1000)/1000), name = 'Impact averted (relative to entire FSC)') +
+    scale_fill_manual(values = cols) +
+    theme_bw() +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor.y = element_blank()) +
+    ggtitle(comm)
+})
+  
+# Also do one for each category so we can see the relative differences for all 13 commodities
+# In this case sort in descending order
+p_bycategory <- lapply(unique(percapita_results$category), function(categ) {
+  dat <- percapita_results %>% mutate(stage_reduced = factor(stage_reduced, levels = stage_full_names_lookup[-1])) %>% filter(category %in% categ)
+  max_order <- dat %>% group_by(commodity) %>% summarize(i = sum(marginal_impact_norm)) %>% ungroup %>% arrange(-i)
+  ggplot(dat %>% mutate(commodity = factor(commodity, levels = max_order$commodity)), aes(x = commodity, y = marginal_impact_norm, fill = stage_reduced)) +
+    geom_bar(stat = 'identity', position = 'stack') +
+    scale_y_continuous(labels = scales::percent, expand = expand_scale(mult = c(0, 0.05)), name = 'Impact averted (relative to entire FSC)') +
+    scale_fill_manual(values = cols) +
+    theme_bw() +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1, size = 4.5),
+          axis.title.y = element_text(size = 8)) +
+    ggtitle(categ)
+  
+})
+
+# Layout the 5 plots on a page
+library(ggpubr)
+library(gridExtra)
+leg <- get_legend(p_bycategory[[1]])
+g1 <- map(p_bycategory[1:5], ~ .x + theme(legend.position = 'none'))
+g1[[6]] <- leg
+png(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts_bycategory.png'), height = 6, width = 9, res = 300, units = 'in')
+  grid.arrange(grobs = g1, nrow = 2)
+dev.off()
