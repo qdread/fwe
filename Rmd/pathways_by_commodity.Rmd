@@ -2,6 +2,10 @@
 title: "50% reductions by commodity"
 author: "Quentin D. Read"
 date: "September 24, 2019"
+header-includes:
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
 output: pdf_document
 ---
 
@@ -38,3 +42,16 @@ Splitting the analysis by commodity does not really change our overall stage pri
 
 
 In summary this analysis does not change the message regarding stage prioritization, but it does show some differences among commodities where the rank order of impacts by commodity group depends on what environmental impact category we are considering.
+
+## Additional figures added 27 Sep.
+
+Below are two additional figures that show the same data, but with all commodities shown. The axes are different in the plots split by commodity so that differences within commodity can be shown. The plots of the different categories are sorted differently for each plot to show the highest commodity first.
+
+\newpage
+
+\blandscape
+
+![All impacts separated by food group then by category](Q:/figures/impact_by_commodity/allcommodityimpacts_freeaxis.png)
+![All impacts separated by category then by food group](Q:/figures/impact_by_commodity/allcommodityimpacts_bycategory.png)
+
+\elandscape
