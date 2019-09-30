@@ -1,4 +1,4 @@
-# Extract projection from NLCD raster to prj file, then use it to transform the FAF shapefile to that projection
+# Extract projection from NLCD raster to prj file, then use it to transform the FAF shapefile to that projection (and the combined CFS shapefile too)
 # Also transform the TNC USA shapefile
 # Also transform the USA state level shapefile to albers
 
@@ -8,6 +8,7 @@
 nlcdproj=`gdalsrsinfo /nfs/fwe-data/landuse/NLCD/nlcd2016landcover.vrt -o proj4 | xargs`
 
 ogr2ogr -f "ESRI Shapefile" -t_srs "${nlcdproj}" -s_srs EPSG:4326 /nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/faf_aea.shp /nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/Freight_Analysis_Framework_Regions.shp
+ogr2ogr -f "ESRI Shapefile" -t_srs "${nlcdproj}" -s_srs EPSG:4326 /nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/cfs_aea.shp /nfs/fwe-data/commodity_flows/FAF/Freight_Analysis_Framework_Regions/cfs12.shp
 
 # Transform TNC to AEA projection
 tncproj=`gdalsrsinfo /nfs/fwe-data/landuse/ecoregions/tnc_usa.prj -o proj4 | xargs`
