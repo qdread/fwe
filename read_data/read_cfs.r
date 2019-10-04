@@ -61,13 +61,16 @@ chordDiagram(value_mat)
 
 # FAF data ----------------------------------------------------------------
 
-library(dplyr)
-library(tidyr)
+library(tidyverse)
+
+fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp_cfs <- file.path(fp, 'commodity_flows/CFS')
+fp_faf <- file.path(fp, 'commodity_flows/FAF')
 
 # This is based on the CFS data but has some modeled values in it.
 # Also already corrects for the weighting factors, etc
 
-faf <- read.csv(file.path(fp_faf, 'FAF4.4.1.csv'), colClasses = c(rep('factor', 9), rep('numeric', 31-9)))
+faf <- read_csv(file.path(fp_faf, 'FAF4.4.1.csv'), col_types = paste(c(rep('f', 9), rep('n', 31-9)), collapse = ''))
 
 # There are foreign and domestic origins.
 
