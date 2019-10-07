@@ -15,16 +15,23 @@ concordance <- concordance[1:lastrow,]
 
 # Get proportions for the 3 with multiple SCTG ----------------------------
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
-cs <- c('factor','numeric','character')
-susb12 <- read.csv(file.path(fp, 'Census/SUSB/us_state_6digitnaics_2012.txt'), colClasses = cs[c(1,1,1,2,2,2,1,1,2,1,2,1,3,3,3)]) 
-susb12US <- susb12 %>% filter(STATEDSCR == 'United States', ENTRSIZEDSCR == 'Total')
+# fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+# cs <- c('factor','numeric','character')
+# susb12 <- read.csv(file.path(fp, 'Census/SUSB/us_state_6digitnaics_2012.txt'), colClasses = cs[c(1,1,1,2,2,2,1,1,2,1,2,1,3,3,3)]) 
+# susb12US <- susb12 %>% filter(STATEDSCR == 'United States', ENTRSIZEDSCR == 'Total')
+# 
+# susb12US %>% filter(grepl('^2123', NAICS)) # mining industries.
+# susb12US %>% filter(grepl('^32411', NAICS)) # petroleum refineries -- cannot be disaggregated.
 
-susb12US %>% filter(grepl('^2123', NAICS)) # mining industries.
-susb12US %>% filter(grepl('^32411', NAICS)) # petroleum refineries -- cannot be disaggregated.
+# This is actually a one-to-many mapping where those 3 BEA codes actually refer to multiple SCTG codes each.
+# *** add code here to deal with this manually
 
-# at this point probably OK to use the one provided in the concordance.
+# Dual codes are 11+13, 10+12, and 17+18.
+extra_codes <- concordance %>% filter(grepl('^SCTG',Misc.Notes))
+extra_codes$SCTG.Code <- c(13, 12, 18)
 
+# Bind the replaced SCTG codes back with concordance
+concordance <- rbind(concordance, extra_codes)
 
 # Tidy up concordance -----------------------------------------------------
 
