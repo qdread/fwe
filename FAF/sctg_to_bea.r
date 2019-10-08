@@ -104,19 +104,21 @@ which_missing <- employees_BEA_x_state %>%
 
 # Just write the by industry one because it has more detail
 names(employees_industry_x_state)[1:2] <- c('SCTG_Code', 'BEA_Code')
-write_csv(employees_industry_x_state, file.path(fp_out, 'employees_bea_x_state.csv'))
+#write_csv(employees_industry_x_state, file.path(fp_out, 'employees_bea_x_state.csv'))
 
 
 # Split SCTG values into BEA ----------------------------------------------
 
-faf_sums <- faf %>% 
-  group_by(dms_orig, dms_dest, sctg2) %>%
-  summarize(value = sum(value_2012))
-
-faf_sums <- faf_sums %>%
+# FAF has data on transportation modes that we maybe don't care about? But probably a good idea to keep them distinct.
+# For now keep all separate, but consider only monetary value in 2012. (keep tons also)
+# That way we can look at the carbon footprint of miles traveled by different means.
+# Also, get rid of code 99 which is unknown.
+faf <- faf %>% 
+  filter(!sctg2 %in% '99') %>%
+  select(fr_orig:tons_2012, value_2012, tmiles_2012, wgt_dist) %>%
   left_join(faf_lookup %>% rename(FAF_Region = `FAF Region`) %>% select(Code, FAF_Region, State), by = c('dms_orig'='Code'))
 
-employees_industry_x_state <- read_csv(file.path(fp_out, 'employees_bea_x_state.csv'))
+#employees_industry_x_state <- read_csv(file.path(fp_out, 'employees_bea_x_state.csv'))
 
 # Sum up employees by state and BEA code
 employees_industry_x_state_sums <- employees_industry_x_state %>%
@@ -134,22 +136,60 @@ employees_long <- employees_industry_x_state_sums %>%
 employees_state_x_industry <- employees_long %>%
   spread(BEA_Code, n_employees, fill = 0)
 
-# Join FAF and employee weights
-faf_sums_join_empl <- faf_sums %>%
-  mutate(State = paste('US', State, sep = '_')) %>%
-  rename(state = State, SCTG_Code = sctg2) %>%
-  left_join(employees_state_x_industry)
-
-# Replace all rows with zero for every BEA code with the US total value (as loop)
+# Replace all rows with zero for every BEA code with the US total value 
 US_total_emps <- employees_state_x_industry %>% filter(state %in% 'US_total')
 
-col_idx <- which(names(faf_sums_join_empl) == 'state') + 1 # 7
+all_zero_rows <- apply(employees_state_x_industry[,-(1:2)], 1, sum) == 0
 
-pb <- txtProgressBar(0, nrow(faf_sums_join_empl), style = 3)
-for (i in 1:nrow(faf_sums_join_empl)) {
-  setTxtProgressBar(pb, i)
-  if (sum(faf_sums_join_empl[i, col_idx:ncol(faf_sums_join_empl)], na.rm = TRUE) == 0) {
-    faf_sums_join_empl[i, col_idx:ncol(faf_sums_join_empl)] <- US_total_emps[which(US_total_emps$SCTG_Code == faf_sums_join_empl$SCTG_Code[i]), 3:ncol(US_total_emps)]
+for (i in 1:nrow(employees_state_x_industry)) {
+  if (all_zero_rows[i]) {
+    employees_state_x_industry[i, -(1:2)] <- US_total_emps[which(US_total_emps$SCTG_Code == employees_state_x_industry$SCTG_Code[i]), -(1:2)]
   }
 }
-close(pb)
+
+table(apply(employees_state_x_industry[,-(1:2)], 1, sum) == 0) # all have at least one nonzero entry now.
+
+# Make a column to note whether the weightings are nationwide values or specific to the state.
+employees_state_x_industry <- employees_state_x_industry %>%
+  mutate(weighting_source = if_else(all_zero_rows, 'US','state'))
+
+# Now that the missing values have been replaced, reshape the df back to a long form.
+employees_long_fixed <- employees_state_x_industry %>%
+  gather(BEA_code, n_employees, -SCTG_Code, -state, -weighting_source) %>%
+  filter(n_employees > 0)
+
+# Normalize to 1 within state and SCTG code
+employees_long_fixed <- employees_long_fixed %>%
+  group_by(SCTG_Code, state) %>%
+  mutate(empl_weight = n_employees / sum(n_employees)) %>%
+  ungroup
+
+# Join FAF and employee weights 
+faf_join_empl <- faf %>%
+  mutate(State = paste('US', State, sep = '_')) %>%
+  rename(state = State, SCTG_Code = sctg2) %>%
+  left_join(employees_long_fixed) %>%
+  mutate_at(c('tons_2012', 'value_2012', 'tmiles_2012', 'wgt_dist'), ~ .x * empl_weight)
+
+# To save space, create a smaller tibble with only the relevant columns that can be joined back with the other info later, database style
+# This result still has 13 million rows and 15 columns :-O
+# The table to join it with is the faf_region_lookup table, to be joined by dms_orig column.
+# We can get rid of the employee numbers and weights columns because that info is in other datasets
+# Convert weighting source to 1 for state, 2 for US
+faf_by_bea <- faf_join_empl %>%
+  select(fr_orig:trade_type, BEA_code, tons_2012:wgt_dist, weighting_source) %>%
+  mutate(weighting_source = if_else(weighting_source == 'state', 1, 2))
+
+# Create a smaller summary table with all modes summed up so that we can make maps
+faf_by_bea_allmodes <- faf_by_bea %>%
+  group_by(fr_orig, dms_orig, dms_dest, fr_dest, BEA_code) %>%
+  summarize(tons_2012 = sum(tons_2012), value_2012 = sum(value_2012), tmiles_2012 = sum(tmiles_2012))
+
+# Write output ------------------------------------------------------------
+
+# Write final, correct version of the number of employees by state so that we have that for later
+write_csv(employees_long_fixed, file.path(fp_out, 'employees_bea_x_state_long_final.csv'))
+
+# Write FAF by BEA as .RData so we have that for later and to save space compared to CSV
+save(faf_by_bea, file = file.path(fp_out, 'faf_by_bea.RData'))
+save(faf_by_bea_allmodes, file = file.path(fp_out, 'faf_by_bea_allmodes.RData'))
