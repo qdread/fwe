@@ -29,3 +29,16 @@ for file in `ls *.zip`
 do
 	unzip $file
 done
+
+# Added 24 Oct 2019: get by size of firm as well
+# https://data.bls.gov/cew/data/files/2012/csv/2012_q1_by_size.zip
+
+for y in $(seq 2012 2019)
+do
+	wget "${baseurl}/${y}/csv/${y}_q1_by_size.zip"
+done
+
+for file in `ls *.zip`
+do
+	unzip $file
+done
