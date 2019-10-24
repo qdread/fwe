@@ -124,7 +124,7 @@ ak_map <- ggplot(cfsmap_imports[ak_idx, ]) +
 # Define function to make map with US, AK, and HI for a single variable
 # ---------------------------------------------------------------------
 
-draw_cfsmap_with_insets <- function(map_data, variable, title) {
+draw_cfsmap_with_insets <- function(map_data, variable, title, scale_name = 'Value\n(million $)') {
   linewidth <- 0.25 # hardcode to 1/2 the default
   # Calculate scale range
   variable <- enquo(variable)
@@ -133,7 +133,7 @@ draw_cfsmap_with_insets <- function(map_data, variable, title) {
   # Draw the three maps
   us_map <- ggplot(map_data %>% filter(!grepl('Alaska|Hawaii|Honolulu', FAF_Region))) +
     geom_sf(aes(fill = !!variable), size = linewidth) +
-    scale_fill_viridis_c(na.value = 'gray75', name = 'Value\n(million $)', limits = scale_range, guide = guide_colorbar(direction = 'horizontal')) +
+    scale_fill_viridis_c(na.value = 'gray75', name = scale_name, limits = scale_range, guide = guide_colorbar(direction = 'horizontal')) +
     theme_void() +
     theme(legend.position = 'bottom') +
     ggtitle(title)
@@ -201,3 +201,57 @@ pwalk(food_industries, function(BEA.Code.and.Title, BEA_def, shortname, ...) {
   ggsave(file.path(fp_out, 'maps', paste0(BEA.Code.and.Title, '_', shortname, '.png')), maps, height = 8, width = 10, dpi = 300)
 })
 
+
+# Display proportion of each good shipped locally -------------------------
+
+# We might want to know how much of each good is shipped locally, and how much is shipped outside
+
+# For all agricultural goods shipments originating in a CFS region, what % are shipped within that region, what % are shipped to other regions in the US, and what % foreign
+# Exclude things that originate in foreign countries since they were not produced with US land
+
+# Really we want to know the ratio of locally shipped ag goods to incoming ag goods
+
+faf_trade_type_sums <- faf_by_bea %>%
+  filter(!trade_type %in% '3') %>% # Exclude foreign exports (just shows this region is where that good left the country)
+  mutate(origin_class = case_when(
+    trade_type == '1' & dms_orig == dms_dest ~ 'local',
+    trade_type == '1' & dms_orig != dms_dest ~ 'domestic',
+    trade_type == '2' ~ 'foreign'
+  )) %>%
+  group_by(dms_dest, origin_class, SCTG_Code, BEA_code) %>%
+  summarize(value = sum(value_2012))
+
+# Food goods only
+faf_trade_type_region_food <- faf_trade_type_sums %>%
+  filter(SCTG_Code %in% paste0('0', 1:8)) %>%
+  group_by(dms_dest, origin_class) %>%
+  summarize(value = sum(value))
+
+# For each region, look at the proportion of food by value that is shipped locally
+faf_trade_type_region_food <- faf_trade_type_region_food %>%
+  spread(origin_class, value) %>%
+  mutate_at(vars(domestic:local), list(prop = ~ .x / (domestic+foreign+local)))
+
+# Create a map of this
+
+draw_cfsmap_with_insets(cfsmap %>% left_join(faf_trade_type_region_food, by = c('Code' = 'dms_dest')), variable = local_prop, title = 'Proportion agriculture shipments by value originating in same region, 2012', scale_name = 'proportion')
+
+# Each food BEA code separately
+faf_trade_prop_food <- faf_trade_type_sums %>%
+  filter(BEA_code %in% food_industries$BEA.Code.and.Title) %>%
+  group_by(dms_dest, origin_class, BEA_code) %>%
+  summarize(value = sum(value)) %>%
+  spread(origin_class, value) %>%
+  mutate_at(vars(domestic:local), list(prop = ~ .x / (domestic+foreign+local)))
+
+# Get only the local prop
+faf_local_prop_food <- faf_trade_prop_food %>%
+  select(dms_dest, BEA_code, local_prop) %>%
+  spread(BEA_code, local_prop)
+
+cfsmap_localprop <- cfsmap %>% left_join(faf_local_prop_food, by = c('Code' = 'dms_dest'))
+
+draw_cfsmap_with_insets(cfsmap_localprop, variable = `111200`, title = 'Proportion vegetable shipments by value originating in same region, 2012', scale_name = 'proportion')
+draw_cfsmap_with_insets(cfsmap_localprop, variable = `111300`, title = 'Proportion fruit shipments by value originating in same region, 2012', scale_name = 'proportion')
+draw_cfsmap_with_insets(cfsmap_localprop, variable = `312120`, title = 'Proportion beer shipments by value originating in same region, 2012', scale_name = 'proportion')
+draw_cfsmap_with_insets(cfsmap_localprop, variable = `312130`, title = 'Proportion wine shipments by value originating in same region, 2012', scale_name = 'proportion')

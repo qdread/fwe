@@ -49,3 +49,8 @@ slurm*.out
 
 # PDFs produced in Rmarkdown directory
 Rmd/*.pdf
+
+# Symlinks
+fwe-data
+qread-data
+

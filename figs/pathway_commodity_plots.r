@@ -1,6 +1,7 @@
 # Figures for "best" reduction pathway by commodity
 # QDR / FWE / 23 Sep 2019
 
+# Edited 16 Oct 2019: use better text labels
 
 # Load data ---------------------------------------------------------------
 
@@ -9,6 +10,7 @@ fp_github <- file.path(ifelse(dir.exists('~/fwe'), '~/fwe', '~/Documents/GitHub/
 fp_fig <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'figures')
 
 library(tidyverse)
+library(ggrepel)
 
 # Load results by commodity
 load(file.path(fp_output, 'pathways_by_commodity_output.RData'))
@@ -40,14 +42,20 @@ write.csv(results_by_commodity_df, file.path(fp_output, 'bestpathway_bycommodity
 
 results_by_commodity_df <- read.csv(file.path(fp_output, 'bestpathway_bycommodity.csv'), stringsAsFactors = FALSE)
 
-# Map stage and category labels to more descriptive labels
+# Map stage, category, and food commodity group labels to more descriptive labels
 stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
 categories <- c("impact potential/gcc/kg co2 eq", "resource use/land/m2*yr", "resource use/watr/m3", "resource use/enrg/mj", "impact potential/eutr/kg n eq")
 category_short <- c('GHG', 'land', 'water', 'energy', 'eutrophication')
+food_categories <- c("cereals", "roots_tubers_fresh", "roots_tubers_processed", 
+                     "oilseeds_pulses", "fruit_veg_fresh", "fruit_veg_processed", 
+                     "meat", "fish_fresh", "fish_processed", "milk", "eggs", "sugar", 
+                     "beverages")
+food_categories_labels <- c('cereals', 'roots and tubers (fresh)', 'roots and tubers (processed)', 'oilseeds and pulses', 'fruits and vegetables (fresh)', 'fruits and vegetables (processed)', 'meat', 'fish (fresh)', 'fish (processed)', 'milk', 'eggs', 'sugar', 'beverages')
 
 results_by_commodity_df <- results_by_commodity_df %>%
   mutate(category = category_short[match(category, categories)],
-         stage_reduced = stage_full_names_lookup[stage_reduced]) 
+         stage_reduced = stage_full_names_lookup[stage_reduced],
+         commodity = food_categories_labels[match(commodity, food_categories)]) 
 
 # Add baseline case for plotting
 baseline_df <- data.frame(category = 'all', commodity = unique(results_by_commodity_df$commodity), n_stages_reduced = 0, stage_reduced = 'none', impact = 1, baseline_impact = 1, impact_norm = 1, stringsAsFactors = FALSE)
@@ -170,7 +178,7 @@ percapita_results <- results_by_commodity_df %>%
 # source(file.path(fp_github, 'figs/categorylabels.r'))
 
 # Get all top 5 names to assign colors to them
-alltop5 <- reduce(map(category_short, ~ get_top_n(results_by_commodity_df, .x, 5)), c) %>% unique
+alltop5 <- map(category_short, ~ get_top_n(results_by_commodity_df, .x, 5)) %>% reduce(c) %>% unique
 alltop5_colormap <- setNames(RColorBrewer::brewer.pal(length(alltop5), 'Dark2'), alltop5)
 
 plot_impactaverted <- function(dat, the_category, unit_name, n = 5) {
@@ -185,7 +193,7 @@ plot_impactaverted <- function(dat, the_category, unit_name, n = 5) {
     scale_y_continuous(name = parse(text = paste('Per~capita~impact~averted:', unit_name, sep = '~')), 
                        limits = c(0, max(dat$impact_averted) * 1.05), expand = c(0, 0),
                        sec.axis = sec_axis(trans = ~ ./dat$baseline_impact[1], name = 'relative to baseline', labels = scales::percent)) +
-    scale_color_manual(values = alltop5_colormap, guide = guide_legend(nrow = 2)) +
+    scale_color_manual(name = 'Food group', values = alltop5_colormap, guide = guide_legend(nrow = 2)) +
     theme_bw() +
     theme(panel.grid.minor.x = element_blank(),
           panel.grid.minor.y = element_blank(),
@@ -253,10 +261,11 @@ p_stacked_free <- ggplot(percapita_results %>%
         panel.grid.minor.y = element_blank(),
         strip.background = element_blank(),
         axis.text.x = element_text(size = 6, angle = 45, hjust = 1),
+        axis.title.x = element_blank(),
         legend.position = c(0.5, 0.05)) +
   ggtitle('Averted impacts of 50% reduction by food group and category', 'food groups arranged in descending order by average impact across categories')
 
-ggsave(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts_freeaxis.png'), p_stacked_free, height = 6, width = 9, dpi = 300)
+ggsave(file.path(fp_fig, 'impact_by_commodity/allcommodityimpacts_freeaxis.png'), p_stacked_free, height = 6, width = 10, dpi = 300)
 
 
 # Do one for each commodity so we can see the relative differences among the categories for each commodity
@@ -285,11 +294,12 @@ p_bycategory <- lapply(unique(percapita_results$category), function(categ) {
   ggplot(dat %>% mutate(commodity = factor(commodity, levels = max_order$commodity)), aes(x = commodity, y = marginal_impact_norm, fill = stage_reduced)) +
     geom_bar(stat = 'identity', position = 'stack') +
     scale_y_continuous(labels = scales::percent, expand = expand_scale(mult = c(0, 0.05)), name = 'Impact averted (relative to entire FSC)') +
-    scale_fill_manual(values = cols) +
+    scale_fill_manual(name = 'Stage reduced', values = cols) +
     theme_bw() +
     theme(panel.grid.major.x = element_blank(),
           panel.grid.minor.y = element_blank(),
           axis.text.x = element_text(angle = 45, hjust = 1, size = 4.5),
+          axis.title.x = element_blank(),
           axis.title.y = element_text(size = 8)) +
     ggtitle(categ)
   
