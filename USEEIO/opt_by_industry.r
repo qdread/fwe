@@ -10,7 +10,16 @@
 # In general, try to avoid using functions that access variables in the global environment (bad practice) other than maybe the Python reticulate object.
 
 
-# Function to calculate the demand reduction rates for all sectors (intermediate and final) given a reduction across any number of sectors and any number of food types
+# Function to calculate the demand reduction rates for all industries (intermediate and final) given a reduction across any number of industries and any number of food types
+# mandatory arguments to supply are which industries to reduce intermediate and final demand, and which food types, and the proportion reduction
+calc_all_reduction_rates <- function(industries_reduce_intermediate, industries_reduce_final, foods_reduce_intermediate, foods_reduce_final, proportion_reduction
+                                     ) {
+  # For each industry, find the proportion of its output belonging to the foods to be reduced
+  
+  # Multiply the proportion reduction by the eligible food proportion to get the proportion reduction relative to full industry output
+}
+
+
 get_reduction_rates <- function(x, W0_sectors, Wu_sectors, B_sectors, nu_sectors, p_sectors, W0_sectors_final, Wu_sectors_final, B_sectors_final, nu_sectors_final, p_sectors_final, sector_stage_codes, final_demand_sector_codes) {
   names(x) <- c('L1', 'L2', 'L3', 'L4a', 'L4b', 'L5')
   # Intermediate reduction rates
