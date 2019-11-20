@@ -5,6 +5,8 @@
 
 library(tidyverse)
 library(reticulate)
+library(foreach)
+library(doParallel)
 
 is_local <- dir.exists('Z:/')
 
@@ -59,17 +61,10 @@ faf_vectors <- faf_by_bea %>%
 
 # Run USEEIO for each vector, in parallel ---------------------------------
 
-# Divide up parallel jobs
-n_rows <- nrow(faf_vectors)
-n_tasks <- as.numeric(Sys.getenv("n_tasks"))
-i <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-x <- ceiling(seq(1, n_rows, length.out = n_tasks + 1))
-faf_vectors <- faf_vectors[x[i]:(x[i+1]-1), ]
+impacts <- foreach(i = 1:nrow(faf_vectors)) %dopar% {
+  eeio_lcia('USEEIO2012', as.list(faf_vectors$data[[i]]$value), as.list(faf_vectors$data[[i]]$BEA_code_full))
+}
 
-# This will take a long time to run not in parallel. rslurm cannot handle the reticulate object copying over into the env.
-faf_vectors <- faf_vectors %>%
-  mutate(impact = map(data, ~ eeio_lcia('USEEIO2012', as.list(.$value), as.list(.$BEA_code_full))))
-
-save(faf_vectors, file = file.path('/nfs/qread-data/cfs_io_analysis', paste0('faf_eeio_', i, '.csv')))
+save(impacts, file ='/nfs/qread-data/cfs_io_analysis/faf_eeio_output.RData')
 
 
