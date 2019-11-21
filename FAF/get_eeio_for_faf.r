@@ -8,6 +8,8 @@ library(reticulate)
 library(foreach)
 library(doParallel)
 
+registerDoParallel(cores = 8)
+
 is_local <- dir.exists('Z:/')
 
 fp <- ifelse(is_local, 'Z:', '/nfs/fwe-data')

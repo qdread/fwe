@@ -12,11 +12,28 @@
 
 # Function to calculate the demand reduction rates for all industries (intermediate and final) given a reduction across any number of industries and any number of food types
 # mandatory arguments to supply are which industries to reduce intermediate and final demand, and which food types, and the proportion reduction
-calc_all_reduction_rates <- function(industries_reduce_intermediate, industries_reduce_final, foods_reduce_intermediate, foods_reduce_final, proportion_reduction
-                                     ) {
+calc_all_reduction_rates <- function(W0_intermediate, W0_final, r, industries_reduce_intermediate, industries_reduce_final, foods_reduce_intermediate, foods_reduce_final, crosswalk = naics_foodsystem) {
   # For each industry, find the proportion of its output belonging to the foods to be reduced
-  
   # Multiply the proportion reduction by the eligible food proportion to get the proportion reduction relative to full industry output
+  table_intermediate <- crosswalk %>% 
+    filter(BEA_389_code %in% industries_reduce_intermediate) %>%
+    select(BEA_389_code, proportion_food, foods_reduce_intermediate)
+  table_final <- crosswalk %>% 
+    filter(BEA_389_code %in% industries_reduce_final) %>%
+    select(BEA_389_code, proportion_food, foods_reduce_intermediate)
+  
+  proportion_intermediate <- table_intermediate$proportion_food * apply(table_intermediate[,foods_reduce_intermediate], 1, sum)
+  proportion_final <- table_final$proportion_food * apply(table_final[,foods_reduce_final], 1, sum)
+  
+  # Now we have the eligible proportion for each industry, calculate the demand reduction rate needed to achieve given % waste reduction
+  demand_change_fn <- function(W0, r, p) p * ((1 - W0) / (1 - (1 - r) * W0) - 1) + 1
+  
+  demand_reduction_intermediate <- demand_change_fn(W0_intermediate, r, proportion_intermediate)
+  demand_reduction_final <- demand_change_fn(W0_final, r, proportion_final)
+  
+  return(list(intermediate = demand_reduction_intermediate,
+              final = demand_reduction_final))
+  
 }
 
 
@@ -68,4 +85,24 @@ get_eeio_result <- function(c_factor, r_factor, c_names, r_names, i = 'no_name',
   unlink(file.path(model_build_path, paste0('scenario_', i)), recursive = TRUE)
   
   return(eeio_result)
+}
+
+# Evaluation function used for optimization (takes in costs and returns environmental impacts given waste reduction scenario based on those costs)
+eval_f_eeio <- function(x, category, W0, Wu, B, nu, p, W0_final, Wu_final, B_final, nu_final, p_final, p_food, Ctotal) {
+  # Find reduction rates given costs x
+  # We need a different W0, Wu, B, and possibly nu value for each element in the waste rate vector.
+  r <- get_reduction_rates(x = x, W0 = W0, Wu = Wu, B = B, nu = nu, p = p, W0_final = W0_final, Wu_final = Wu_final, B_final = B_final, nu_final = nu_final, p_final = p_final)
+  
+  # Factors by which to multiply intermediate and final demand given the waste reductions calculated from costs x
+  # Also multiply this by the proportion food for each of the sectors.
+  intermediate_demand_change_factors <- demand_change_fn(W0 = W0, r = r$intermediate, p = p * p_food)
+  final_demand_change_factors <- demand_change_fn(W0 = W0, r = r$final, p = p_final * p_food)
+  
+  # define the scenario values given x. 
+  res <- get_eeio_result(c_factor = intermediate_demand_change_factors,
+                         c_names = sector_long_names,
+                         r_factor = final_demand_change_factors,
+                         r_names = sector_short_names)
+  # Return the impact value to be minimized.
+  res$value[res$impact_category == category]
 }
