@@ -208,3 +208,28 @@ write_csv(susb_allvars_byfood, file.path(fp_out, 'SUSB_by_food_type.csv'))
 # write_csv(susb_n_employees, file.path(fp_out, 'SUSB_n_employees_NAICS_by_size.csv'))
 # write_csv(susb_n_payroll, file.path(fp_out, 'SUSB_payroll_NAICS_by_size.csv'))
 # write_csv(susb_n_rcpts, file.path(fp_out, 'SUSB_receipts_NAICS_by_size.csv'))
+
+
+# New summary, NAICS only SUSB --------------------------------------------
+
+susb_summ <- susb12_us %>%
+  filter(NAICS %in% susb_naics_notredundant) %>%
+  mutate(ENTRSIZE = factor(ENTRSIZE, levels = levels(ENTRSIZE)[c(2,3,4,5,1)])) %>%
+  arrange(NAICS, ENTRSIZE) %>%
+  setNames(c('NAICS', 'NAICS description', 'Size class', 'No. firms', 'No. establishments', 'No. employees', 'Total payroll', 'Total receipts'))
+
+# Remove the non-food codes
+food_naics2012 <- unique(bea_naics$related_2012_NAICS_6digit[bea_naics$BEA_Code %in% food_crosswalk$BEA_code])
+# Better source of food-only naics codes for the wholesale ones
+naics2012classified <- read_csv(file.path(fp_crosswalks, '2012naics_foodclassified.csv'))
+food_naics2012_wholesale <- naics2012classified$NAICS12[!is.na(naics2012classified$is_food)]
+
+wholesale_notfood <- grep('^42|^44|^45|^49', food_naics2012, value = TRUE)
+wholesale_notfood <- wholesale_notfood[!wholesale_notfood %in% food_naics2012_wholesale]
+  
+susb_summ <- susb_summ %>%
+  filter(NAICS %in% food_naics2012, !NAICS %in% wholesale_notfood)
+
+write_csv(susb_summ, file.path(fp_out, 'SUSB_NAICS_allvariables.csv'))
+
+# Format the summary as the table should appear as excel file (if needed)

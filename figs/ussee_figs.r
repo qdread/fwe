@@ -218,6 +218,72 @@ blank_seqplot <- ggplot(data = data.frame(nbypct = c(0,6), y = c(0.75,1)), aes(x
 ggsave(file.path(fpfig, 'ussee/sixstage_blankgrid.png'), blank_seqplot, height = 5, width = 5.6, dpi = 300)
 
 
+
+# Save figs with larger legends -------------------------------------------
+
+# Function to create reduction plot with error bars
+reduction_plot_with_errorbars_v2 <- function(sequence, yval, yminval, ymaxval) {
+  yval <- enquo(yval)
+  yminval <- enquo(yminval)
+  ymaxval <- enquo(ymaxval)
+  sequence %>%
+    mutate(norm = max(!!yval)) %>%
+    mutate(!!yval := !!yval/norm, 
+           !!yminval := !!yminval/norm,
+           !!ymaxval := !!ymaxval/norm) %>%
+    mutate(stage_reduced = stage_full_names_lookup[stage_reduced]) %>%
+    ggplot(aes(x = nbypct, y = !!yval, ymin = !!yminval, ymax = !!ymaxval)) +
+    geom_line(size = 1, color = 'white') +
+    geom_errorbar(width = 0.2, color = 'gray60') +
+    geom_point(size = 3, color = 'black', fill = 'white', shape = 21, stroke = 2) +
+    geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25, color = 'white', size = 6) +
+    scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
+    scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent_format(accuracy=1)) +
+    coord_cartesian(ylim = c(0.77, 1.02), expand = TRUE) +
+    theme_black() +
+    theme(panel.grid.minor.x = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          axis.text.x = element_text(size = 21),
+          axis.title.x = element_text(size = 21),
+          axis.text.y = element_text(size = 21),
+          axis.title.y = element_text(size = 21))
+  
+}
+
+co2_seqplot_ci <- trueseq_withcis %>% 
+  filter(grepl('co2', impact_category)) %>% 
+  reduction_plot_with_errorbars_v2(value, q025, q975)
+land_seqplot_ci <- trueseq_withcis %>% 
+  filter(grepl('land', impact_category)) %>% 
+  reduction_plot_with_errorbars_v2(value, q025, q975)
+water_seqplot_ci <- trueseq_withcis %>% 
+  filter(grepl('watr', impact_category)) %>% 
+  reduction_plot_with_errorbars_v2(value, q025, q975)
+energy_seqplot_ci <- trueseq_withcis %>% 
+  filter(grepl('enrg', impact_category)) %>% 
+  reduction_plot_with_errorbars_v2(value, q025, q975) 
+
+blank_seqplot <- ggplot(data = data.frame(nbypct = c(0,6), y = c(0.75,1)), aes(x = nbypct, y = y)) +
+  scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
+  scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent_format(accuracy=1)) +
+  coord_cartesian(ylim = c(0.77, 1.02), expand = TRUE) +
+  theme_black() +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.x = element_text(size = 21),
+        axis.title.x = element_text(size = 21),
+        axis.text.y = element_text(size = 21),
+        axis.title.y = element_text(size = 21))
+
+ggsave(file.path(fpfig, 'secondyeartalk/sixstage_gridwithci_co2by50pct.png'), co2_seqplot_ci, height = 7.75, width = 5.6*7.75/5, dpi = 300)
+ggsave(file.path(fpfig, 'secondyeartalk/sixstage_gridwithci_landby50pct.png'), land_seqplot_ci, height = 7.75, width = 5.6*7.75/5, dpi = 300)
+ggsave(file.path(fpfig, 'secondyeartalk/sixstage_gridwithci_waterby50pct.png'), water_seqplot_ci, height = 7.75, width = 5.6*7.75/5, dpi = 300)
+ggsave(file.path(fpfig, 'secondyeartalk/sixstage_gridwithci_energyby50pct.png'), energy_seqplot_ci, height = 7.75, width = 5.6*7.75/5, dpi = 300)
+ggsave(file.path(fpfig, 'secondyeartalk/sixstage_blankgrid.png'), blank_seqplot, height = 7.75, width = 5.6*7.75/5, dpi = 300)
+
+
 # Create table of ranks ---------------------------------------------------
 tab <- read.csv(file.path(fp_output, 'sensitivity_grid_summarytable.csv'))
 

@@ -143,14 +143,14 @@ draw_cfsmap_with_insets <- function(map_data, variable, title, scale_name = 'Val
   hi_map <- ggplot(map_data %>% filter(grepl('Hawaii|Honolulu', FAF_Region))) +
     geom_sf(aes(fill = !!variable), size = linewidth) +
     coord_sf(crs = st_crs(4135), xlim = c(-161, -154), ylim = c(18, 23), expand = FALSE, datum = NA) +
-    scale_fill_viridis_c(na.value = 'gray90', limits = scale_range) +
+    scale_fill_viridis_c(na.value = 'gray75', limits = scale_range) +
     theme_void() + 
     theme(legend.position = 'none')
   
   ak_map <- ggplot(map_data %>% filter(grepl('Alaska', FAF_Region))) +
     geom_sf(aes(fill = !!variable), size = linewidth) +
     coord_sf(crs = st_crs(3467), xlim = c(-2400000, 1600000), ylim = c(200000, 2500000), expand = FALSE, datum = NA) +
-    scale_fill_viridis_c(na.value = 'gray90', limits = scale_range) +
+    scale_fill_viridis_c(na.value = 'gray75', limits = scale_range) +
     theme_void() +
     theme(legend.position = 'none')
   
