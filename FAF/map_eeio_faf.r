@@ -151,7 +151,7 @@ draw_cfsmap_divergent <- function(map_data, variable, title, scale_name, scale_b
   ratio_hi <- 0.71
   size_ak <- 0.32
   size_hi <- 0.2
-  three_maps <- ggdraw(us_map) +
+  three_maps <- ggdraw(us_map + add_theme) +
     draw_plot(ak_map, width = size_ak, height = size_ak * ratio_ak, x = 0.01, y = 0.15, vjust = 0) +
     draw_plot(hi_map, width = size_hi, height = size_hi * ratio_hi, x = 0.26, y = 0.15, vjust = 0)
   return(three_maps)
@@ -162,24 +162,30 @@ dark_theme <-  theme_void() +
         plot.background = element_rect(color = "black", fill = "black"),
         legend.text = element_text(color = 'white'),
         legend.title = element_text(color = 'white'),
-        plot.title = element_text(color = 'white'))
+        plot.title = element_text(color = 'white'),
+        legend.position = 'bottom')
 
 p_ghgmap <- draw_cfsmap_divergent(map_impact_net %>% mutate(impact_potential_gcc_kg_co2_eq = impact_potential_gcc_kg_co2_eq/1e9), 
                       variable = impact_potential_gcc_kg_co2_eq, 
                       title = 'Net domestic virtual GHG emissions transfers',
                       scale_name = parse(text = 'MT~CO[2]~eq.'),
-                      scale_breaks = c(-50, -10, 0, 10, 50))
+                      scale_breaks = c(-50, -10, 0, 10, 50),
+                      add_theme = dark_theme)
 
 p_landmap <- draw_cfsmap_divergent(map_impact_net %>% mutate(resource_use_land_m2_yr = resource_use_land_m2_yr/1e6), 
                       variable = resource_use_land_m2_yr, 
                       title = 'Net domestic virtual land transfers',
                       scale_name = parse(text = 'km^2~land'),
-                      scale_breaks = c(-250000, 0, 250000))
+                      scale_breaks = c(-250000, 0, 250000),
+                      add_theme = dark_theme)
 
 p_watermap <- draw_cfsmap_divergent(map_impact_net %>% mutate(resource_use_watr_m3 = resource_use_watr_m3/1e9), 
                       variable = resource_use_watr_m3, 
                       title = 'Net domestic virtual water transfers',
                       scale_name = parse(text = 'km^3~water'),
-                      scale_breaks = c(-5, -2, 0, 2, 5))
+                      scale_breaks = c(-5, -2, 0, 2, 5),
+                      add_theme = dark_theme)
 
-
+ggsave(file.path(fp_out, 'maps/nettransfer_prelim_ghg.png'), p_ghgmap, height = 6, width = 9, dpi = 300)
+ggsave(file.path(fp_out, 'maps/nettransfer_prelim_land.png'), p_landmap, height = 6, width = 9, dpi = 300)
+ggsave(file.path(fp_out, 'maps/nettransfer_prelim_water.png'), p_watermap, height = 6, width = 9, dpi = 300)
