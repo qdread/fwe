@@ -241,6 +241,15 @@ p_abs <- ggplot(flwdat, aes(x = Source, y = Weight, fill = Source)) +
         axis.line = element_line(color = bluegray), axis.ticks.y = element_line(color = bluegray))
 ggsave('~/google_drive/SESYNC Food Waste/Synthesis_MS/imgs for abstract/barchart_forabstract_green.png', p_abs, height = 3, width = 4, dpi = 300)
 
+# With a black background
+source('~/Documents/GitHub/fwe/figs/theme_black.r')
+p_abs + theme_black() + 
+  theme(panel.grid = element_blank(),
+        legend.position = 'none',
+        axis.text.x = element_blank(), axis.title.x = element_blank(), axis.ticks.x = element_blank(),
+        axis.text.y = element_text(size = 12), axis.title.y = element_text(size = 15))
+ggsave('~/Dropbox/sesync/secondyear_talk/barchart_black.png', height = 3, width = 4.5, dpi = 300)
+
 
 # Disposal to landfill.
 disposaldat <- data.frame(destination = c('compost', 'bioenergy', 'landfill'), weight = c(2.1, 7.4, 30.3))
