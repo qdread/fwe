@@ -48,7 +48,14 @@ v_retail <- eeio_wholesale_retail[[2]]["impact potential/gcc/kg co2 eq", "Total"
 
 interv_cost <- readxl::read_xlsx(file.path(fp_crosswalk, 'intervention_withcosts.xlsx'))
 
-costs <- interv_cost$`annual cost including 1/10 of one-time cost`[1:15]
+# Improve annualized cost. (implement annuity function as in excel, here f and t are both zero)
+pmt <- function(p, r, n, f, t) (p * r * (1+r)^n  - f) / (((1+r)^n - 1) * (1 + r * t))
+
+# Correctly annualize one time cost with 7% interest rate over ten years
+
+annualized_onetimecost <- pmt(p = interv_cost$`One time cost`, r = 0.07, n = 10, f = 0, t = 0)
+
+costs <- (annualized_onetimecost + interv_cost$`Annual cost`)[1:15]
 avoided_values <- interv_cost$`Avoided waste value`[1:15]
 wh_ret <- interv_cost$`value class`[1:15]
 
@@ -95,3 +102,14 @@ ggplot(cost_long, aes(x = type, y = value)) +
         panel.grid = element_blank())
 
 ggsave('/nfs/qread-data/figures/secondyeartalk/netcost.png', height = 5, width = 5, dpi = 300)
+
+
+# Export cost table
+cost_table %>% 
+  rename(net_savings_per_ton_co2_avoided = net_cost_per_ton,
+         cost_per_ton_co2_avoided = cost_per_ton,
+         value_of_avoided_food_waste = avoided_value,
+         price_used_for_avoided_food = class,
+         net_savings = net_cost) %>%
+  arrange(cost_per_ton_co2_avoided) %>%
+  write_csv('/nfs/qread-data/csv_exports/quick_and_dirty_cost_per_ton_co2.csv')
