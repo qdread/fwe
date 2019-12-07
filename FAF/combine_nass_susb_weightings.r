@@ -136,10 +136,63 @@ setdiff(bea_naics$related_2012_NAICS_6digit, nass_naics_notredundant)
 map_int(nass_naics_notredundant, ~ length(unique(bea_naics$BEA_Code[grepl(paste0('^', .), bea_naics$related_2012_NAICS_6digit)])))
 # None are a problem except that oilseeds and grains are lumped into a single NASS NAICS code.
 
-# We will use NASS to find ratios of oilseed and grain production within each state to disaggregate code 1111 into 1111A and 1111B.
+# Use NASS to find ratios of oilseed and grain production within each state to disaggregate code 1111 into 1111A and 1111B.
+# That is done in another script, disaggregate_oilseed_and_grain.r. Read in the result of that script and use to disaggregate.
+oilseed_grain_proportions <- read_csv(file.path(fp_out, 'oilseed_grain_proportions.csv') )
+
+# Create disaggregated grain and oilseed data.
+nass1111 <- nass_naics %>% 
+  filter(NAICS %in% '1111') %>%
+  left_join(oilseed_grain_proportions %>% rename(FIPS = state_fips)) %>%
+  select(-grain, -oilseed) %>%
+  pivot_longer(cols = c(proportion_grain, proportion_oilseed), names_to = 'crop', values_to = 'proportion') %>%
+  mutate(receipts = round(receipts * proportion),
+         n_workers = round(n_workers * proportion))
+
+nass1111_edited <- nass1111 %>%
+  mutate(NAICS = if_else(crop == 'proportion_grain', '111130', '111110')) %>% # These are just one of the naics codes we could use.
+  select(-crop, -proportion)
+
+nass_naics_edited <- rbind(nass1111_edited, nass_naics %>% filter(!NAICS %in% '1111'))
+
+
+# Transform nass naics to nass bea ----------------------------------------
+
+# combine them so that any "more specific" one is matched to its less specific parent code.
+nass_naics_notredundant_modified <- c('111110','111130', nass_naics_notredundant[-1])
+
+nass_naics_matchidx <- map_int(nass_naics_notredundant_modified, function(code) {
+  subcodes <- map(2:nchar(code), ~ substr(code, 1, .)) # all possible subcodes
+  match_idx <- map(subcodes, ~ grep(paste0('^', .), bea_naics$related_2012_NAICS_6digit))
+  # Find the longest matching code
+  longest_match <- max(which(map_int(match_idx, length) > 0))
+  ifelse(longest_match > 0, match_idx[[longest_match]], NA)
+})
+
+# Get BEA codes corresponding to the matches
+nass_bea_lookup <- data.frame(NAICS = nass_naics_notredundant_modified, 
+                              BEA_code = bea_naics$BEA_Code[nass_naics_matchidx])
+
+# Remove redundant rows from the NASS dataset and add column for BEA code
+nass_bea <- nass_naics %>%
+  filter(NAICS %in% nass_naics_notredundant_modified) %>%
+  left_join(nass_bea_lookup) %>%
+  select(-NAICS) %>%
+  group_by(level, FIPS, state_abbrev, state_name, BEA_code) %>%
+  summarize_all(sum)
+
 
 # Combine SUSB and NASS data ----------------------------------------------
 
 # Combine SUSB and NASS so that SUSB covers code 113*** and above, and NASS covers 111*** and 112***.
 
+nass_bea_edited <- nass_bea %>%
+  ungroup %>%
+  select(FIPS, state_name, BEA_code, n_workers, receipts) %>%
+  setNames(names(susb_bea))
 
+susb_nass_bea <- bind_rows(nass_bea_edited, ungroup(susb_bea)) %>%
+  mutate(state_name = if_else(state_name == 'United States', 'US TOTAL', state_name),
+         state_name = toupper(state_name))
+
+write_csv(susb_nass_bea, file.path(fp_out, 'susb_nass_workers_receipts_bea.csv'))
