@@ -2,6 +2,7 @@
 # Part of workflow: Bridge EEIO with FAF to get virtual transfers
 # QDR / FWE / 04 Oct 2019
 
+# Modified 07 Dec 2019: Redo the weighting with the improved combined susb-nass numbers (receipts not employees)
 
 # Load FAF data -----------------------------------------------------------
 
@@ -34,78 +35,53 @@ SCTG_BEA_list <- concordance %>%
 
 # Get weightings for mapping ----------------------------------------------
 
-# This is going to be a one to many mapping since there are ~40 SCTG codes but ~400 BEA codes.
-# What we need to do is find the relative proportions of output from the origin state and assign them that way - SUSB and QCEW should be the ones for that.
+# Load the BEA mapping to SUSB and NASS codes (already created in another script, aggregated from NAICS codes!)
 
-susb12 <- read_csv(file.path(fp, 'Census/SUSB/us_state_6digitnaics_2012.txt'), col_types = 'fffnnnffnfnfccc') 
-susb_total <- susb12 %>% 
-  filter(ENTRSIZEDSCR %in% 'Total')
-qcew12 <- read_csv(file.path(fp, 'Census/QCEW/2012.annual.singlefile.csv'))
+bea_lookup <- read_csv(file.path(fp_out, 'susb_nass_workers_receipts_bea.csv'))
 
-# See https://data.bls.gov/cew/doc/titles/agglevel/agglevel_titles.htm for details on how this is split up
-qcew_state_naics <- qcew12 %>%
-  filter(agglvl_code %in% 54:58) %>%
-  mutate(state_fips = substr(area_fips, 1, 2)) 
+# For each SCTG code, find the numbers of employees in each of the BEA codes that go with it in each state.
 
-# Also do the US wide one for the cases where we don't have state data
-qcew_uswide_naics <- qcew12 %>%
-  filter(agglvl_code %in% 14:18)
-  
-  
-# For each SCTG code, find the numbers of employees in each of the NAICS codes that go with it in each state.
-
-# This must be a two step process. First go through the BEA codes and get the relative weightings by NAICS by state
-# Then go back through and aggregate even further up to SCTG codes.
-
-# 1. get rid of bea sectors with no sctg code 
+# Get rid of bea sectors with no sctg code 
 concordance_sctgonly <- concordance %>%
   filter(!is.na(SCTG.Code))
 
-# Total employees by NAICS code by state
-industry_employees <- qcew_state_naics %>% 
-  group_by(state_fips, industry_code) %>% 
-  summarize(employees = sum(annual_avg_emplvl))
+# Check duplicated BEA codes in concordance
+sort(table(concordance_sctgonly$BEA.Code.and.Title))
+concordance_sctgonly %>% filter(BEA.Code.and.Title %in% c('212310','2123A0','324110')) # These are not relevant to us.
 
-# Define function to get the employees for the NAICS codes associated with a single BEA code for each state
-get_employee_totals <- function(naics_codes) {
-  totals_list <- industry_employees %>%
-    group_by(state_fips) %>%
-    group_map(~ .x$employees[match(naics_codes, .x$industry_code)])
-  totals_matrix <- do.call(cbind, totals_list) 
-  rownames(totals_matrix) <- naics_codes
-  totals_matrix[is.na(totals_matrix)] <- 0
-  return(totals_matrix)
-}
 
-# Map the function to each set of NAICS codes corresponding to each BEA code
-employees_industry_x_state <- map(concordance_sctgonly$related_2007_NAICS_codes, get_employee_totals)
+# Join BEA table with SCTG-NAICS-BEA concordance
+# Remove the duplicated rows.
+bea_sctg_lookup <- bea_lookup %>%
+  left_join(concordance_sctgonly, by = c('BEA_code' = 'BEA.Code.and.Title'))
+
+dup_idx <- which(duplicated(bea_sctg_lookup[,c('state_fips','state_name','BEA_code')]))
+
+bea_sctg_lookup <- bea_sctg_lookup[-dup_idx, ]
+
+# Widen the lookup
+bea_sctg_data_wide <- bea_sctg_lookup %>%
+  filter(!is.na(SCTG.Code)) %>%
+  select(state_name, SCTG.Code, BEA_code, receipts) %>%
+  rename(SCTG_Code = SCTG.Code) %>%
+  mutate(SCTG_Code = sprintf('%02d', SCTG_Code)) %>%
+  pivot_wider(names_from = state_name, values_from = receipts, values_fill = list(receipts = 0))
 
 # Lookup for state codes
-unique_fips <- unique(industry_employees$state_fips)
+unique_fips <- unique(bea_sctg_lookup$state_fips)
 unique_states <- paste('US', with(fips, STUSAB[match(unique_fips, STATE)]), sep = '_')
 
-# Since I could not figure it out in a tidy way, join all the codes back together with the results
-employees_industry_x_state <- do.call(rbind, employees_industry_x_state)
-colnames(employees_industry_x_state) <- unique_states
 
-employees_industry_x_state <- cbind(concordance_sctgonly[rep(1:nrow(concordance_sctgonly), map_int(concordance_sctgonly$related_2007_NAICS_codes, length)), 1:3], NAICS_Code = rownames(employees_industry_x_state), employees_industry_x_state)
-
-employees_BEA_x_state <- employees_industry_x_state %>%
-  group_by(SCTG.Code, BEA.Code.and.Title) %>%
-  summarize_at(vars(starts_with('US')), sum)
-
-# Check which have no employees for some codes
-which_missing <- employees_BEA_x_state %>%
-  group_by(SCTG.Code) %>%
-  summarize_at(vars(starts_with('US')), ~ sum(.x) > 0)
+# Check which have no receipt totals for some codes
+which_missing <- bea_sctg_data_wide %>%
+  group_by(SCTG_Code) %>%
+  summarize_if(is.numeric, ~ sum(.x) > 0)
 
 
 # Write output ------------------------------------------------------------
 
-# Just write the by industry one because it has more detail
-names(employees_industry_x_state)[1:2] <- c('SCTG_Code', 'BEA_Code')
-#write_csv(employees_industry_x_state, file.path(fp_out, 'employees_bea_x_state.csv'))
-
+names(bea_sctg_data_wide)[1:2] <- c('SCTG_Code', 'BEA_Code')
+#write_csv(bea_sctg_data_wide, file.path(fp_out, 'receipts_bea_sctg_x_state.csv'))
 
 # Split SCTG values into BEA ----------------------------------------------
 
@@ -120,75 +96,76 @@ faf <- faf %>%
 
 #employees_industry_x_state <- read_csv(file.path(fp_out, 'employees_bea_x_state.csv'))
 
-# Sum up employees by state and BEA code
-employees_industry_x_state_sums <- employees_industry_x_state %>%
-  mutate(SCTG_Code = sprintf('%02d', SCTG_Code)) %>%
-  group_by(SCTG_Code, BEA_Code) %>%
-  summarize_at(vars(starts_with('US')), sum) %>%
-  ungroup %>%
-  mutate(US_total = apply(.[,grep('US', names(.))],1,sum))
- 
-# Reshape to long
-employees_long <- employees_industry_x_state_sums %>%
-  gather(state, n_employees, -SCTG_Code, -BEA_Code)
+# Reshape BEA receipts to long
+bea_sctg_long <- bea_sctg_data_wide %>%
+  pivot_longer(-c(SCTG_Code, BEA_Code), names_to = 'state_name')
 
 # Widen across BEA codes
-employees_state_x_industry <- employees_long %>%
-  spread(BEA_Code, n_employees, fill = 0)
+receipts_state_x_industry <- bea_sctg_long %>%
+  pivot_wider(names_from = BEA_Code, values_fill = list(value = 0))
 
 # Replace all rows with zero for every BEA code with the US total value 
-US_total_emps <- employees_state_x_industry %>% filter(state %in% 'US_total')
+US_total_receipts <- receipts_state_x_industry %>% filter(state_name %in% 'US TOTAL')
 
-all_zero_rows <- apply(employees_state_x_industry[,-(1:2)], 1, sum) == 0
+all_zero_rows <- apply(receipts_state_x_industry[,-(1:2)], 1, sum) == 0
 
-for (i in 1:nrow(employees_state_x_industry)) {
+for (i in 1:nrow(receipts_state_x_industry)) {
   if (all_zero_rows[i]) {
-    employees_state_x_industry[i, -(1:2)] <- US_total_emps[which(US_total_emps$SCTG_Code == employees_state_x_industry$SCTG_Code[i]), -(1:2)]
+    receipts_state_x_industry[i, -(1:2)] <- US_total_receipts[which(US_total_receipts$SCTG_Code == receipts_state_x_industry$SCTG_Code[i]), -(1:2)]
   }
 }
 
-table(apply(employees_state_x_industry[,-(1:2)], 1, sum) == 0) # all have at least one nonzero entry now.
+table(apply(receipts_state_x_industry[,-(1:2)], 1, sum) == 0) # all have at least one nonzero entry now.
 
 # Make a column to note whether the weightings are nationwide values or specific to the state.
-employees_state_x_industry <- employees_state_x_industry %>%
+receipts_state_x_industry <- receipts_state_x_industry %>%
   mutate(weighting_source = if_else(all_zero_rows, 'US','state'))
 
 # Now that the missing values have been replaced, reshape the df back to a long form.
-employees_long_fixed <- employees_state_x_industry %>%
-  gather(BEA_code, n_employees, -SCTG_Code, -state, -weighting_source) %>%
-  filter(n_employees > 0)
+receipts_long_fixed <- receipts_state_x_industry %>%
+  pivot_longer(-c(SCTG_Code, state_name, weighting_source), names_to = 'BEA_Code', values_to = 'receipts') %>%
+  filter(receipts > 0)
 
 # Normalize to 1 within state and SCTG code
-employees_long_fixed <- employees_long_fixed %>%
-  group_by(SCTG_Code, state) %>%
-  mutate(empl_weight = n_employees / sum(n_employees)) %>%
+receipts_long_fixed <- receipts_long_fixed %>%
+  group_by(SCTG_Code, state_name) %>%
+  mutate(receipts_weight = receipts / sum(receipts)) %>%
   ungroup
 
+# Join with the correct state abbreviation.
+fips_fixed <- fips %>% 
+  select(-STATENS) %>% 
+  setNames(c('state_fips', 'state_abbrev', 'state_name')) %>% 
+  mutate(state_name = toupper(state_name)) %>% 
+  add_row(state_fips = '99', state_abbrev = 'US', state_name = 'US TOTAL')
+
+receipts_long_fixed <- receipts_long_fixed %>% 
+  left_join(fips_fixed) 
+
 # Join FAF and employee weights 
-faf_join_empl <- faf %>%
-  mutate(State = paste('US', State, sep = '_')) %>%
-  rename(state = State, SCTG_Code = sctg2) %>%
-  left_join(employees_long_fixed) %>%
-  mutate_at(c('tons_2012', 'value_2012', 'tmiles_2012', 'wgt_dist'), ~ .x * empl_weight)
+faf_join_weights <- faf %>%
+  rename(state_abbrev = State, SCTG_Code = sctg2) %>%
+  left_join(receipts_long_fixed) %>%
+  mutate_at(c('tons_2012', 'value_2012', 'tmiles_2012', 'wgt_dist'), ~ .x * receipts_weight)
 
 # To save space, create a smaller tibble with only the relevant columns that can be joined back with the other info later, database style
 # This result still has 13 million rows and 15 columns :-O
 # The table to join it with is the faf_region_lookup table, to be joined by dms_orig column.
 # We can get rid of the employee numbers and weights columns because that info is in other datasets
 # Convert weighting source to 1 for state, 2 for US
-faf_by_bea <- faf_join_empl %>%
-  select(fr_orig:trade_type, BEA_code, tons_2012:wgt_dist, weighting_source) %>%
+faf_by_bea <- faf_join_weights %>%
+  select(fr_orig:trade_type, BEA_Code, tons_2012:wgt_dist, weighting_source) %>%
   mutate(weighting_source = if_else(weighting_source == 'state', 1, 2))
 
 # Create a smaller summary table with all modes summed up so that we can make maps
 faf_by_bea_allmodes <- faf_by_bea %>%
-  group_by(fr_orig, dms_orig, dms_dest, fr_dest, BEA_code) %>%
+  group_by(fr_orig, dms_orig, dms_dest, fr_dest, BEA_Code) %>%
   summarize(tons_2012 = sum(tons_2012), value_2012 = sum(value_2012), tmiles_2012 = sum(tmiles_2012))
 
 # Write output ------------------------------------------------------------
 
 # Write final, correct version of the number of employees by state so that we have that for later
-write_csv(employees_long_fixed, file.path(fp_out, 'employees_bea_x_state_long_final.csv'))
+write_csv(receipts_long_fixed, file.path(fp_out, 'receipts_bea_x_state_long_final.csv'))
 
 # Write FAF by BEA as .RData so we have that for later and to save space compared to CSV
 save(faf_by_bea, file = file.path(fp_out, 'faf_by_bea.RData'))

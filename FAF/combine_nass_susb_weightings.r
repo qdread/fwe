@@ -1,7 +1,8 @@
 # Combine SUSB and NASS data by NAICS code to produce a better weighting (previous one only used QCEW = bad)
 # QDR / FWE / 05 Dec 2019
 
-# Modify code that was in sctg_to_bea.r
+# Modified 09 Dec 2019: Use imputed values from NASS
+# Originally modified from code that was in sctg_to_bea.r
 
 # Load data -----------------------------------------------------------
 
@@ -17,20 +18,14 @@ fp_satellite <- file.path(fp, 'IO_tables/output_csvs')
 fp_crosswalk <- file.path(fpq, 'crossreference_tables')
 fp_out <- file.path(fpq, 'cfs_io_analysis')
 
-faf <- read_csv(file.path(fp_faf, 'FAF4.4.1.csv'), col_types = paste(c(rep('f', 9), rep('n', 31-9)), collapse = ''))
-
 # Load crosswalk table
 load(file.path(fp_crosswalk, 'NAICS_BEA_SCTG_crosswalk.RData'))
 
 # Fips codes
 fips <- read_delim('/nfs/qread-data/statefips.txt', delim = '|')
 
-# FAF region lookup
-faf_lookup <- read_csv(file.path(fp_faf, 'faf4_region_lookup.csv'))
-
-
 # Read CDQT (NASS) data for the agricultural NAICS codes
-nass_naics <- read_csv(file.path(fp_out, 'NASS2012_receipts_workers_NAICS.csv'))
+nass_naics <- read_csv(file.path(fp_out, 'NASS2012_receipts_workers_NAICS_imputed.csv'))
 
 # Read SUSB data for all other NAICS codes
 susb12 <- read_csv(file.path(fp, 'Census/SUSB/us_state_6digitnaics_2012.txt'), col_types = 'fffnnnffnfnfccc') 
@@ -122,7 +117,7 @@ nass_redundant <- map_lgl(nass_uniquenaics, ~ nchar(.) < max(nchar(grep(paste0('
 nass_naics_notredundant <- nass_uniquenaics[!nass_redundant] # Some of these are actually less than 6 characters.
 
 # Check and make sure the 1119 is in fact redundant
-nass_naics %>% filter(FIPS %in% '99', grepl('^1119', NAICS)) # Yes, it is. Row 1 is equal to the sums of rows 2-4. 
+nass_naics %>% filter(state_fips %in% '99', grepl('^1119', NAICS)) # Yes, it is. Row 1 is equal to the sums of rows 2-4. 
 
 # However we cannot ignore the less than 6 digit NAICS codes because most of it is actually less than 6 digits.
 # Some of the four digit NAICS codes in the NASS data actually correspond to multiple BEA codes, so that's unfortunate.
@@ -143,7 +138,7 @@ oilseed_grain_proportions <- read_csv(file.path(fp_out, 'oilseed_grain_proportio
 # Create disaggregated grain and oilseed data.
 nass1111 <- nass_naics %>% 
   filter(NAICS %in% '1111') %>%
-  left_join(oilseed_grain_proportions %>% rename(FIPS = state_fips)) %>%
+  left_join(oilseed_grain_proportions) %>%
   select(-grain, -oilseed) %>%
   pivot_longer(cols = c(proportion_grain, proportion_oilseed), names_to = 'crop', values_to = 'proportion') %>%
   mutate(receipts = round(receipts * proportion),
@@ -174,11 +169,11 @@ nass_bea_lookup <- data.frame(NAICS = nass_naics_notredundant_modified,
                               BEA_code = bea_naics$BEA_Code[nass_naics_matchidx])
 
 # Remove redundant rows from the NASS dataset and add column for BEA code
-nass_bea <- nass_naics %>%
+nass_bea <- nass_naics_edited %>%
   filter(NAICS %in% nass_naics_notredundant_modified) %>%
   left_join(nass_bea_lookup) %>%
   select(-NAICS) %>%
-  group_by(level, FIPS, state_abbrev, state_name, BEA_code) %>%
+  group_by(level, state_fips, state_abbrev, state_name, BEA_code) %>%
   summarize_all(sum)
 
 
@@ -188,7 +183,7 @@ nass_bea <- nass_naics %>%
 
 nass_bea_edited <- nass_bea %>%
   ungroup %>%
-  select(FIPS, state_name, BEA_code, n_workers, receipts) %>%
+  select(state_fips, state_name, BEA_code, n_workers, receipts) %>%
   setNames(names(susb_bea))
 
 susb_nass_bea <- bind_rows(nass_bea_edited, ungroup(susb_bea)) %>%
