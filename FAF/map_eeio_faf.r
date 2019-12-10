@@ -6,14 +6,17 @@ library(tidyverse)
 library(sf)
 library(cowplot)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+is_local <- dir.exists('Z:/')
+
+fp <- ifelse(is_local, 'Z:', '/nfs/fwe-data')
 fp_cfs <- file.path(fp, 'commodity_flows/CFS')
 fp_faf <- file.path(fp, 'commodity_flows/FAF')
+fp_out <- ifelse(is_local, 'Q:/cfs_io_analysis', '/nfs/qread-data/cfs_io_analysis')
 
 cfsmap <- st_read(dsn = file.path(fp_faf, 'Freight_Analysis_Framework_Regions/cfs_aea.gpkg'))
 faf_lookup <- read_csv(file.path(fp_out, 'faf_region_lookup.csv'))
 
-load('/nfs/qread-data/cfs_io_analysis/faf_eeio_output_full.RData')
+load(file.path(fp_out, 'faf_eeio_output_full.RData'))
 
 # Determine the incoming and outgoing "virtual impacts" in different categories for each region.
 

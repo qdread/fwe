@@ -26,7 +26,7 @@ BEA_food <- read.csv(file.path(fp_crosswalk, 'naics_crosswalk_final.csv'), strin
 
 # Keep only rows of faf_by_bea that are food system
 faf_by_bea <- faf_by_bea %>%
-  filter(BEA_code %in% BEA_food$BEA_389_code)
+  filter(BEA_Code %in% BEA_food$BEA_389_code)
 
 all_codes <- read.csv(file.path(fp_crosswalk, 'all_codes.csv'), stringsAsFactors = FALSE)
 
@@ -34,7 +34,7 @@ all_codes <- read.csv(file.path(fp_crosswalk, 'all_codes.csv'), stringsAsFactors
 
 # Match codes with long code name
 code_lookup <- all_codes %>%
-  transmute(BEA_code = sector_code_uppercase, BEA_code_full = sector_desc_drc)
+  transmute(BEA_Code = sector_code_uppercase, BEA_code_full = sector_desc_drc)
 
 # Get a unique vector for each combination (make into a list) -- add up by trade type and mode
 faf_vectors <- faf_by_bea %>%

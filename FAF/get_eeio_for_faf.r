@@ -34,6 +34,7 @@ BEA_food <- read.csv(file.path(fp_crosswalk, 'naics_crosswalk_final.csv'), strin
 
 # Keep only rows of faf_by_bea that are food system
 faf_by_bea <- faf_by_bea %>%
+  rename(BEA_code = BEA_Code) %>%
   filter(BEA_code %in% BEA_food$BEA_389_code)
 
 if (!is_local) use_python('/usr/bin/python3')
