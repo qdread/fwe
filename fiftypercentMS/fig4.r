@@ -74,7 +74,7 @@ plot_impactaverted <- function(dat, the_category, unit_name, n = 5) {
     geom_point(aes(color = commodity), size = 3) +
     geom_text_repel(data = dat %>% filter(n_stages_reduced > 0), aes(label = stage_reduced), size = 2) + # Label to see which stages are being averted
     scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
-    scale_y_continuous(name = parse(text = paste('Per~capita', the_category, 'averted', unit_name, sep = '~')), 
+    scale_y_continuous(name = parse(text = paste('Per~capita~reduction', unit_name, sep = '~')), 
                        limits = c(0, max(dat$impact_averted) * 1.05), expand = c(0, 0),
                        sec.axis = sec_axis(trans = ~ ./dat$baseline_impact[1], name = 'relative to baseline', labels = scales::percent)) +
     scale_color_manual(name = 'Food group', values = alltop5_colormap, guide = guide_legend(nrow = 2)) +
@@ -119,4 +119,4 @@ bottom_row <- plot_grid(p_water + th_bottom, leg, nrow = 1)
 
 whole_plot <- plot_grid(top_row, middle_row, bottom_row, nrow = 3)
 
-ggsave(file.path(fpfig, 'stoten_ms/fig4.png'), whole_plot, height = 9.5 * 2/3, width = 9 * 2/3, dpi = 300)
+ggsave(file.path(fp_fig, 'stoten_ms/fig4.png'), whole_plot, height = 9.5 , width = 9 , dpi = 300)
