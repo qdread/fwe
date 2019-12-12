@@ -74,7 +74,7 @@ plot_impactaverted <- function(dat, the_category, unit_name, n = 5) {
     geom_point(aes(color = commodity), size = 3) +
     geom_text_repel(data = dat %>% filter(n_stages_reduced > 0), aes(label = stage_reduced), size = 2) + # Label to see which stages are being averted
     scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
-    scale_y_continuous(name = parse(text = paste('Per~capita~impact~averted:', unit_name, sep = '~')), 
+    scale_y_continuous(name = parse(text = paste('Per~capita', the_category, 'averted', unit_name, sep = '~')), 
                        limits = c(0, max(dat$impact_averted) * 1.05), expand = c(0, 0),
                        sec.axis = sec_axis(trans = ~ ./dat$baseline_impact[1], name = 'relative to baseline', labels = scales::percent)) +
     scale_color_manual(name = 'Food group', values = alltop5_colormap, guide = guide_legend(nrow = 2)) +
@@ -85,11 +85,13 @@ plot_impactaverted <- function(dat, the_category, unit_name, n = 5) {
           legend.position = 'bottom')
 }
 
-p_ghg <- plot_impactaverted(percapita_results, 'GHG', 'GHG~(kg~CO^2~eq.~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='GHG')
-p_land <- plot_impactaverted(percapita_results, 'land', 'land~(m^2~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='land')
-p_water <- plot_impactaverted(percapita_results, 'water', 'water~(m^3~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='water')
-p_energy <- plot_impactaverted(percapita_results, 'energy', 'energy~(MJ~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='energy')
-p_eutr <- plot_impactaverted(percapita_results, 'eutrophication', 'eutrophication~potential~(kg~N~eq.~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='eutrophication')
+lsize = 10
+
+p_ghg <- plot_impactaverted(percapita_results, 'GHG', '(kg~CO^2~eq.~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='c', size = lsize) + ggtitle('greenhouse warming potential')
+p_land <- plot_impactaverted(percapita_results, 'land', '(m^2~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='d', size = lsize) + ggtitle('land use')
+p_water <- plot_impactaverted(percapita_results, 'water', '(m^3~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='e', size = lsize) + ggtitle('water use')
+p_energy <- plot_impactaverted(percapita_results, 'energy', '(MJ~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='a', size = lsize) + ggtitle('energy use')
+p_eutr <- plot_impactaverted(percapita_results, 'eutrophication', '(kg~N~eq.~y^-1)') + annotate('text',x=-Inf,y=Inf,hjust=-0.2,vjust=1.2,label='b', size = lsize) + ggtitle('eutrophication potential')
 
 # Make a legend for all the plots.
 library(cowplot)
@@ -106,10 +108,15 @@ leg <- get_legend(leg_plot)
 th_top <- theme(legend.position = 'none',
                 axis.text.x = element_blank(),
                 axis.title.x = element_blank(),
-                axis.ticks.x = element_blank())
-th_bottom <- theme(legend.position = 'none')
+                axis.ticks.x = element_blank(), 
+                plot.title = element_text(hjust = 0.5))
+th_bottom <- theme(legend.position = 'none',
+                   plot.title = element_text(hjust = 0.5))
 
-top_row <- plot_grid(p_eutr + th_top, p_ghg + th_top, p_energy + th_top, nrow = 1)
-bottom_row <- plot_grid(p_land + th_bottom, p_water + th_bottom, leg, nrow = 1)
+top_row <- plot_grid(p_energy + th_top, p_eutr + th_top, nrow = 1)
+middle_row <- plot_grid(p_ghg + th_top, p_land + th_bottom, nrow = 1, align = 'h')
+bottom_row <- plot_grid(p_water + th_bottom, leg, nrow = 1)
 
-whole_plot <- plot_grid(top_row, bottom_row, nrow = 2)
+whole_plot <- plot_grid(top_row, middle_row, bottom_row, nrow = 3)
+
+ggsave(file.path(fpfig, 'stoten_ms/fig4.png'), whole_plot, height = 9.5 * 2/3, width = 9 * 2/3, dpi = 300)
