@@ -17,7 +17,7 @@ results_by_commodity_df <- read.csv(file.path(fp_output, 'bestpathway_bycommodit
 
 
 # Map stage, category, and food commodity group labels to more descriptive labels
-stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'consumption:\nfood service', L4b = 'consumption:\ninstitutional', L5 = 'consumption:\nhousehold')
+stage_full_names_lookup <- c(none = '', L1 = 'production', L2 = 'processing', L3 = 'retail', L4a = 'foodservice', L4b = 'institutions', L5 = 'households')
 categories <- c("impact potential/gcc/kg co2 eq", "resource use/land/m2*yr", "resource use/watr/m3", "resource use/enrg/mj", "impact potential/eutr/kg n eq")
 category_short <- c('GHG', 'land', 'water', 'energy', 'eutrophication')
 food_categories <- c("cereals", "roots_tubers_fresh", "roots_tubers_processed", 
