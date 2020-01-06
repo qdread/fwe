@@ -1,0 +1,389 @@
+BEA_389_code,BEA_389_def,food_system,stage,FAO_category,proportion_food,source_proportion_food,source_food_weighting,cereals,roots_tubers_fresh,roots_tubers_processed,oilseeds_pulses,fruit_veg_fresh,fruit_veg_processed,meat,fish_fresh,fish_processed,milk,eggs,sugar,beverages
+1111A0,"Fresh soybeans, canola, flaxseeds, and other oilseeds",y,agriculture,4,1,,,0,0,0,1,0,0,0,0,0,0,0,0,0
+1111B0,"Fresh wheat, corn, rice, and other grains",y,agriculture,1,1,,,1,0,0,0,0,0,0,0,0,0,0,0,0
+111200,"Fresh vegetables, melons, and potatoes",y,agriculture,"2,5",1,,QCEW,0,0.165,0,0,0.835,0,0,0,0,0,0,0,0
+111300,Fresh fruits and tree nuts,y,agriculture,5,1,,,0,0,0,0,1,0,0,0,0,0,0,0,0
+111400,"Greenhouse crops, mushrooms, nurseries, and flowers",partial,agriculture,5,0.147,QCEW,,0,0,0,0,1,0,0,0,0,0,0,0,0
+111900,"Tobacco, cotton, sugarcane, peanuts, sugar beets, herbs and spices, and other crops",partial,agriculture,"5,12",0.115,QCEW,QCEW,0,0,0,0,0.147,0,0,0,0,0,0,0.853,0
+112120,Dairies,y,agriculture,10,1,,,0,0,0,0,0,0,0,0,0,1,0,0,0
+1121A0,Cattle ranches and feedlots,y,agriculture,7,1,,,0,0,0,0,0,0,1,0,0,0,0,0,0
+112300,Poultry farms,y,agriculture,"7,11",1,,QCEW,0,0,0,0,0,0,0.302,0,0,0,0.698,0,0
+112A00,Animal farms and aquaculture ponds (except cattle and poultry),y,agriculture,"7,8,10,12",0.365,QCEW,QCEW,0,0,0,0,0,0,0.094,0.596,0,0.044,0,0.265,0
+114000,Wild-caught fish and game,y,agriculture,8,0.757,QCEW,QCEW,0,0,0,0,0,0,0,1,0,0,0,0,0
+311210,Flours and malts,y,processing,1,1,,,1,0,0,0,0,0,0,0,0,0,0,0,0
+311221,Corn products,y,processing,"1,4",1,,IO table (assuming level 1 inputs proportional to level 3 outputs),0.99,0,0,0.01,0,0,0,0,0,0,0,0,0
+311225,"Refined vegetable, olive, and seed oils",y,processing,"1,4,6",1,,IO table (assuming level 1 inputs proportional to level 3 outputs),0.448,0,0,0.478,0,0.074,0,0,0,0,0,0,0
+31122A,Vegetable oils and by-products,y,processing,"1,4,6",1,,IO table (assuming level 1 inputs proportional to level 3 outputs),0.006,0,0,0.968,0,0.026,0,0,0,0,0,0,0
+311230,Breakfast cereals,y,processing,"1,6",1,,IO table (assuming level 1 inputs proportional to level 3 outputs),0.892,0,0,0,0,0.108,0,0,0,0,0,0,0
+311300,"Sugar, candy, and chocolate",y,processing,"6,11,12",1,,IO table (assuming level 1 inputs proportional to level 3 outputs),0,0,0,0,0,0.404,0,0,0,0,0.054,0.542,0
+311410,Frozen food,y,processing,"1,3,6,9,11",1,,"IO table (use correction for 16.5% potato, 83.5% vegetable)",0.723,0,0.019,0,0,0.221,0,0,0.014,0,0.024,0,0
+311420,Fruit and vegetable preservation,y,processing,"1,3,6,9,11",1,,"IO table (use correction for 16.5% potato, 83.5% vegetable)",0.075,0,0.018,0,0,0.742,0,0,0.15,0,0.013,0,0
+311513,Cheese,y,processing,10,1,,,0,0,0,0,0,0,0,0,0,1,0,0,0
+311514,"Dry, condensed, and evaporated dairy",y,processing,10,1,,,0,0,0,0,0,0,0,0,0,1,0,0,0
+31151A,Fluid milk and butter,y,processing,10,1,,,0,0,0,0,0,0,0,0,0,1,0,0,0
+311520,Ice cream and frozen desserts,y,processing,"6,10,11,12",1,,,0,0,0,0,0,0.293,0,0,0,0.499,0.206,0.002,0
+311615,Packaged poultry,y,processing,7,1,,,0,0,0,0,0,0,1,0,0,0,0,0,0
+31161A,Packaged meat (except poultry),y,processing,7,1,,,0,0,0,0,0,0,1,0,0,0,0,0,0
+311700,Seafood,y,processing,9,1,,,0,0,0,0,0,0,0,0,1,0,0,0,0
+311810,Bread and other baked goods,y,processing,"1,6,11",1,,IO table (assuming level 1 inputs proportional to level 3 outputs),0.811,0,0,0,0,0.06,0,0,0,0,0.13,0,0
+3118A0,"Cookies, crackers, pastas, and tortillas",y,processing,"1,6,11,12",1,,IO table (assuming level 1 inputs proportional to level 3 outputs),0.526,0,0,0,0,0.178,0,0,0,0,0.292,0.004,0
+311910,Snack foods,y,processing,"1,3,4,6,7,12",1,,"IO table (use correction for 16.5% potato, 83.5% vegetable; use correction for 14.7% peanut, 85.3% sugar)",0.215,0,0.003,0.041,0,0.397,0.003,0,0,0,0,0.294,0
+311920,Coffee and tea,y,processing,13,1,,,0,0,0,0,0,0,0,0,0,0,0,0,1
+311930,Flavored drink concentrates,y,processing,13,1,,,0,0,0,0,0,0,0,0,0,0,0,0,1
+311940,Seasonings and dressings,y,processing,"3,4,6,7,11,12",1,,"IO table (use correction for 14.7% peanut, 85.3% sugar)",0,0,0.006,0.008,0,0.3,0.015,0,0,0,0.116,0.554,0
+311990,All other foods,y,processing,"1,3,4,6,7,10,11,12",1,,"IO table (use correction for 14.7% peanut, 85.3% sugar)",0.195,0,0.019,0.001,0,0.455,0.111,0,0,0.061,0.064,0.005,0
+312110,"Soft drinks, bottled water, and ice",y,processing,13,1,,,0,0,0,0,0,0,0,0,0,0,0,0,1
+312120,Breweries and beer,y,processing,13,1,,,0,0,0,0,0,0,0,0,0,0,0,0,1
+312130,Wineries and wine,y,processing,13,1,,,0,0,0,0,0,0,0,0,0,0,0,0,1
+312140,Distilleries and spirits,y,processing,13,1,,,0,0,0,0,0,0,0,0,0,0,0,0,1
+420000,Wholesale trade,partial,retail,"1,4,5,6,7,8,10,11,12,13",0.104,SUSB,IO table (assuming level 1 and 3 inputs proportional to outputs),0.32,0,0,0.346,0.013,0.012,0.154,0.024,0,0.092,0.004,0.012,0.023
+452000,General merchandise stores,partial,retail,"1,3,4,5,6,7,8,9,10,11,12,13",0.209,SUSB,IO table (assuming level 1 and 3 inputs proportional to outputs),0.534,0,0.001,0.07,0.003,0.052,0.063,0.001,0.015,0.136,0.043,0.043,0.039
+4A0000,Other retail,partial,retail,"1,2,4,5,6,7,9,10,11,12,13",0.17,SUSB,IO table (assuming level 1 and 3 inputs proportional to outputs),0.056,0.001,0,0.003,0.268,0.045,0.115,0,0.07,0.27,0.019,0.022,0.13
+493000,Warehousing,partial,retail,"1,4,5,6,7,8,10,11,12,13",0.0924,SUSB,IO table (assuming level 1 and 3 inputs proportional to outputs),0.32,0,0,0.346,0.013,0.012,0.154,0.024,0,0.092,0.004,0.012,0.023
+445000,Food and beverage stores,partial,retail,"1,2,4,5,6,7,8,9,10,11,12,13",1,,IO table (assuming level 1 and 3 inputs proportional to outputs),0.44,0.001,0,0.021,0.09,0.035,0.051,0.133,0.027,0.1,0.038,0.013,0.05
+722110,Full-service restaurants,y,foodservice,"1,2,3,4,5,6,7,8,9,10,11,12,13",1,,IO table (assuming level 1 and 3 inputs proportional to outputs),0.066,0.001,0.002,0.015,0.007,0.079,0.195,0.089,0.101,0.115,0.019,0.036,0.276
+722211,Limited-service restaurants,y,foodservice,"1,2,3,4,5,6,7,8,9,10,11,12,13",1,,IO table (assuming level 1 and 3 inputs proportional to outputs),0.062,0.001,0.001,0.016,0.004,0.075,0.199,0.049,0.107,0.124,0.02,0.042,0.299
+722A00,All other food and drinking places,y,foodservice,"1,2,3,4,5,6,7,8,9,10,11,12,13",1,,IO table (assuming level 1 and 3 inputs proportional to outputs),0.062,0.001,0.001,0.112,0.005,0.07,0.123,0.043,0.094,0.118,0.012,0.032,0.326
+481000,Air transport,partial,foodservice,"1,6,9,11,13",0.003371283,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.01,0,0,0,0,0.001,0,0,0.258,0,0.002,0,0.73
+482000,Rail transport,partial,foodservice,"1,3,4,6,7,12",0.006969007,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.226,0,0.003,0.043,0,0.417,0.003,0,0,0,0,0.308,0
+483000,"Water transport (boats, ships, ferries)",partial,foodservice,"1,3,4,6,7,9,10,11,12,13",0.011743215,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.07,0,0.001,0.001,0,0.065,0.09,0,0.28,0.078,0.018,0.032,0.363
+484000,Truck transport,partial,foodservice,"1,6,9,11,13",0.022115078,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.034,0,0,0,0,0.002,0,0,0.333,0,0.005,0,0.625
+485000,Passenger ground transport,partial,foodservice,"1,3,4,6,7,12",0.011326863,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.226,0,0.003,0.043,0,0.417,0.003,0,0,0,0,0.308,0
+48A000,Scenic and sightseeing transportation and support activities for transportation,partial,foodservice,"1,2,5,6,7,8,9,10,11,12,13",0.006518636,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.011,0.07,0,0,0.453,0.013,0.041,0.152,0.02,0.016,0.006,0.081,0.137
+512100,Movies and film,partial,foodservice,"6,9,11,12,13",0.001122339,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0,0,0,0,0,0.231,0,0,0.214,0,0.031,0.31,0.214
+711100,Performances,partial,foodservice,"1,4,6,7,9,10,11,12,13",0.003369463,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.059,0,0,0.004,0,0.041,0.144,0,0.048,0.335,0.006,0.028,0.335
+711200,Sports,partial,foodservice,"1,3,4,6,7,9,10,11,12,13",0.027312296,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.159,0,0.013,0.002,0,0.322,0.15,0,0.031,0.15,0.047,0.019,0.107
+711A00,Promoters and agents,partial,foodservice,"1,4,6,7,9,10,11,12,13",0.006208456,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.065,0,0,0.003,0,0.039,0.179,0,0.085,0.298,0.01,0.032,0.289
+712000,"Museums, historical sites, zoos, and parks",partial,foodservice,"1,4,6,7,9,10,11,12,13",0.010069032,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.055,0,0,0.002,0,0.025,0.179,0,0.125,0.233,0.007,0.016,0.358
+713100,Amusement parks and arcades,partial,foodservice,"1,3,4,5,6,7,8,9,10,11,12,13",0.112487944,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.041,0,0.002,0.001,0.009,0.059,0.189,0.029,0.034,0.105,0.011,0.014,0.504
+713200,Gambling establishments (except casino hotels),partial,foodservice,"1,3,4,5,6,7,8,9,10,11,12,13",0.031373333,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.044,0,0.001,0.002,0.029,0.037,0.116,0.051,0.056,0.073,0.012,0.05,0.531
+713900,"Golf courses, marinas, ski resorts, fitness and other rec centers and industries",partial,foodservice,"1,3,4,5,6,7,8,9,10,11,12,13",0.046589632,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.056,0,0.002,0.001,0.004,0.065,0.12,0.085,0.074,0.111,0.012,0.036,0.434
+721000,Hotels and campgrounds,partial,foodservice,"1,3,4,5,6,7,8,9,10,11,12,13",0.051285525,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.068,0,0.001,0.059,0.001,0.051,0.189,0.052,0.122,0.059,0.017,0.039,0.341
+611100,Elementary and secondary schools,partial,institutional,"1,2,3,4,5,6,7,8,9,10,11,12,13",0.113934815,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.054,0.003,0.004,0.004,0.019,0.179,0.146,0.049,0.086,0.414,0.014,0.006,0.021
+611A00,"Colleges, universities, junior colleges, and professional schools",partial,institutional,"1,2,3,4,5,6,7,8,9,10,11,12,13",0.076796265,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.123,0.001,0.002,0.021,0.007,0.091,0.229,0.002,0.095,0.119,0.034,0.043,0.233
+611B00,Other educational services,partial,institutional,"1,2,3,4,5,6,7,8,9,10,11,12,13",0.003450284,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.123,0.001,0.002,0.021,0.007,0.091,0.229,0.002,0.095,0.119,0.034,0.043,0.233
+622000,Hospitals,partial,institutional,"1,3,4,6,7,9,10,11,12,13",0.02964992,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.034,0,0.002,0.001,0,0.083,0.361,0,0.202,0.149,0.024,0.025,0.121
+623A00,Nursing and community care facilities,partial,institutional,"1,3,4,6,7,9,10,11,12,13",0.067626467,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.105,0,0.004,0.002,0,0.142,0.459,0,0.067,0.125,0.031,0.04,0.026
+623B00,"Residential mental retardation, mental health, substance abuse and other facilities",partial,institutional,"1,3,4,6,7,9,10,11,12,13",0.108235585,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.067,0,0.002,0.001,0,0.1,0.561,0,0.13,0.057,0.031,0.009,0.043
+624100,Individual and family services,partial,institutional,"1,3,4,6,7,9,10,11,12,13",0.060130251,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.147,0,0.002,0.003,0,0.083,0.46,0,0.104,0.033,0.04,0.031,0.097
+624400,Child day care,partial,institutional,"1,3,6,7,9,10,11,12",0.160596542,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.084,0,0.003,0,0,0.151,0.215,0,0.02,0.475,0.04,0.012,0
+624A00,"Community food, housing, and other relief services, including rehabilitation services",partial,institutional,"1,3,4,6,7,9,10,11,12,13",0.145432665,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.051,0,0.001,0.001,0,0.025,0.767,0,0.066,0.016,0.015,0.012,0.046
+813100,Religious organizations,partial,institutional,"1,2,3,5,6,7,8,9,10,11,12,13",0.013491707,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.103,0.001,0.003,0,0.043,0.099,0.147,0.061,0.116,0.247,0.016,0.002,0.162
+813A00,"Grantmaking, giving, and social advocacy organizations",partial,institutional,"1,6,9,11,13",0.003177055,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.043,0,0,0,0,0.003,0,0,0.447,0,0.007,0,0.5
+813B00,"Civic, social, professional, and similar organizations",partial,institutional,"1,3,4,5,6,7,8,9,10,11,12,13",0.030006667,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.107,0,0.002,0.002,0.007,0.09,0.113,0.051,0.097,0.071,0.026,0.054,0.38
+S00102,Other federal government enterprises,partial,institutional,"1,3,4,6,7,8,9,10,11,12,13",0.038072028,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.134,0,0.005,0.001,0,0.156,0.245,0.013,0.087,0.166,0.02,0.03,0.142
+S00203,Other state and local government enterprises,partial,institutional,"1,2,3,4,5,6,7,8,9,10,11,12,13",0.002709364,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.073,0.001,0.003,0.01,0.05,0.133,0.264,0.009,0.13,0.166,0.027,0.034,0.101
+S00500,Federal general government (defense),partial,institutional,"1,3,4,6,7,8,9,10,11,12,13",0.01618627,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.06,0,0.001,0.001,0,0.055,0.66,0.001,0.071,0.097,0.01,0.023,0.022
+S00700,State and local general government,partial,institutional,"1,2,3,4,5,6,7,8,9,10,11,12,13",0.065364558,IO table (assuming inputs proportional to outputs),IO table (assuming level 1 and 3 inputs proportional to outputs),0.073,0.001,0.003,0.01,0.05,0.133,0.264,0.009,0.13,0.166,0.027,0.034,0.101
+113000,Timber and raw forest products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+115000,Agriculture and forestry support,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+211000,Unrefined oil and gas,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+212100,Coal,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+212230,"Copper, nickel, lead, and zinc",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2122A0,"Iron, gold, silver, and other metal ores",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+212310,Dimensional stone,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2123A0,"Sand, gravel, clay, phosphate, other nonmetallic minerals",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+213111,Well drilling,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+21311A,Other support activities for mining,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+221100,Electricity,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+221200,Natural gas,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+221300,Drinking water and wastewater treatment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+230301,Nonresidential maintenance and repair,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+230302,Residential maintenance and repair,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+233210,Health care structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+233230,Manufacturing structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+233240,Power and communication structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+233262,Educational and vocational structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+233293,Highways and streets,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2332A0,"Commercial structures, including farm structures",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2332B0,Other nonresidential structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+233411,Single-family residential structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+233412,Multifamily residential structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2334A0,Other residential structures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+311111,Dog and cat food,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+311119,Other animal food,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+312200,Tobacco products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+313100,"Fiber, yarn, and thread",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+313200,Fabric,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+313300,Finished and coated fabric,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+314110,Carpets and rugs,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+314120,Curtains and linens,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+314900,Other textiles,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+315000,Clothing,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+316000,Leather,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+321100,Lumber and treated lumber,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+321200,Plywood and veneer,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+321910,"Wooden windows, door, and flooring",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+3219A0,"Veneer, plywood, and engineered wood",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322110,Wood pulp,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322120,Paper,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322130,Cardboard,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322210,Cardboard containers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322220,Paper bags and coated paper,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322230,Stationery,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322291,"Sanitary paper (tissues, napkins, diapers, etc.)",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+322299,All other converted paper products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+323110,"Books, newspapers, magazines, and other print media",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+323120,Printing support,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+324110,"Gasoline, fuels, and by-products of petroleum refining",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+324121,Asphalt pavement,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+324122,Asphalt shingles,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+324190,Other petroleum and coal products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325110,Petrochemicals,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325120,Compressed Gases,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325130,Synthetic dyes and pigments,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325180,Other basic inorganic chemicals,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325190,Other basic organic chemicals,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325211,Plastics,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+3252A0,Synthetic rubber and artificial and synthetic fibers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325310,Fertilizers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325320,Pesticides,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325411,Medicinal and botanical ingredients,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325412,"Pharmaceutical products (pills, powders, solutions, etc.)",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325413,"Blood sugar, pregnancy, and other diagnostic test kits",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325414,Vaccines and other biological medical products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325510,Paints and coatings,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325520,Adhesives,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325610,Soap and cleaning compounds,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325620,Toiletries,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+325910,Ink and ink cartridges,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+3259A0,"Chemicals (except basic chemicals, agrichemicals, polymers, paints, pharmaceuticals,soaps, cleaning compounds)",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326110,"Plastic bags, films, and sheets",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326120,"Plastic pipe, fittings, and sausage casings",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326130,Laminated plastic plates and shapes,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326140,Polystyrene foam products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326150,Urethane and other foam products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326160,Plastic bottles,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326190,Other plastic products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326210,Rubber tires,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326220,Rubber and plastic belts and hoses,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+326290,Other rubber products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327100,Clay and ceramic products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327200,Glass and glass products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327310,Cement,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327320,Ready-mix concrete,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327330,"Concrete pipe, bricks, and blocks",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327390,Other concrete products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327400,Lime and gypsum products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327910,Abrasive products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327991,Cut stone and stone products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327992,Ground or treated minerals and earth,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327993,Mineral wool,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+327999,Other nonmetallic mineral products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331110,"Primary iron, steel, and ferroalloy products",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331200,Secondary steel products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33131A,Aluminum,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33131B,Aluminum products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331411,Primary copper,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331419,Other primary nonferrous metals,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331420,Secondary copper products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331490,Other secondary nonferrous metal products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331510,Cast iron and steel,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+331520,Nonferrous metal casts,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332114,Custom metal rolls,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33211A,"All other forging, stamping, and sintering",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33211B,"Lids, jars, bottle caps, other metal closures and crowns",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332200,Cutlery and handtools,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332310,Metal structural products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332320,"Metal windows, doors, and architectural products",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332410,Power boilers and heat exchangers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332420,Heavy gauge metal tanks,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332430,"Light gauge metal cans, boxes, and containers",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332500,"Metal hinges, keys, lock, and other hardware",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332600,Springs and wires,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332710,Machine shops,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332720,"Screws, nuts, and bolts",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332800,"Metal coatings, engravings, and heat treatments",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332913,"Metal plumbing drains, faucets, valves, and other fittings",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33291A,Valve and fittings (except for plumbing),n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332991,Ball and roller bearings,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+332996,Fabricated pipe and pipe fittings,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33299A,"Ammunition, arms, ordnance, and related accessories",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33299B,"Metal pipe fittings, ball and roller bearings, industrial patterns, metal bath fixtures, other misc. fabricated metals",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333111,Farm machinery and equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333112,Lawn and garden equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333120,Construction machinery,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333130,Mining and oil/gas field machinery,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333220,Plastics and rubber industry machinery,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333295,Semiconductor machinery,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33329A,"Machinery for the paper, textile, food or other industries (except semiconductor machinery)",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333313,Office machinery,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333314,Optical instruments and lenses,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333315,Photography and photocopying equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33331A,"Vending, commercial laundry, and other commercial and service industry machinery",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333414,Heating equipment other than warm air furnaces,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333415,"Air conditioning, refrigeration, and warm air heating equipment",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33341A,Air purification and ventilation equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333511,Industrial molds,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333514,"Special tools, dies, jigs, and fixtures",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33351A,Metal cutting and forming machine tools,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33351B,"Cutting and machine tool accessory, rolling mill, and other metalworking machines",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333611,Turbines and turbine generator sets,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333612,"Speed changers, industrial high-speed drives, and gears",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333613,Mechanical power transmission equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333618,Other engine equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333912,Air and gas compressors,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33391A,Pumps and pumping equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333920,Material handling equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333991,Power tools,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333993,Packaging machinery,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+333994,Industrial process furnaces and ovens,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33399A,"Welding and Soldering Equipment, Scales and Balances, and other general purpose machinery",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33399B,"Hydraulic pumps, motors, cylinders and actuators",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334111,Computers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334112,Computer storage device readers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33411A,Computer terminals and other computer peripheral equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334210,Telephones,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334220,Wireless communications,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334290,Communications equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334300,Audio and video equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334413,Semiconductors,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334418,Printed circuit and electronic assembly,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33441A,"Electronic capacitors, resistors, coils, transformers, connectors and other components (except  semiconductors and printed circuit assemblies)",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334510,Electromedical appartuses,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334511,Navigation instruments,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334512,Automatic controls for HVAC and refrigeration equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334513,Industrial process variable instruments,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334514,Fluid meters and counting devices,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334515,Signal testing instruments,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334516,Analytical laboratory instruments,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334517,Irradiation apparatuses,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33451A,"Watches, clocks, and other measuring and controlling devices",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+334610,"External hard drives, CDs, other storage media",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335110,Light bulbs,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335120,Light fixtures,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335210,Small electrical appliances,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335221,Home cooking appliances,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335222,Home refrigerators and freezers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335224,Home laundry machines,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335228,"Major home appliances (except ovens, stoves, refrigerators and laundry machines)",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335311,Specialty transformers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335312,Motors and generators,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335313,Switchgear and switchboards,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335314,Relay and industrial controls,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335911,Storage batteries,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335912,Primary batteries,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335920,Communication and energy wire and cable,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335930,Wiring devices,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335991,Carbon and graphite products,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+335999,other miscellaneous electrical equipment and components,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336111,Automobiles,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336112,"Pickup trucks, vans, and SUVs",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336120,Heavy duty trucks,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336211,Vehicle bodies,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336212,Truck trailers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336213,Motor homes,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336214,Travel trailer and campers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336310,Vehicle engines and engine parts,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336320,Vehicle electrical and electronic equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336350,Transmission and power train parts,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336360,Vehicle seating and interior trim (upholstery),n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336370,Vehicle metal stamping,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336390,Other vehicle parts,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+3363A0,"Motor vehicle steering, suspension components (except spring), and brake systems",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336411,Aircraft,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336412,Aircraft engines and parts,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336413,Other aircraft parts,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336414,Guided missiles and space vehicles,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33641A,Propulsion units and parts for space vehicles and guided missiles,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336500,Railroad rolling stock,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336611,Ships and ship repair,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336612,Boats,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336991,"Motorcycle, bicycle, and parts",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336992,Military armored vehicles and tanks,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+336999,Other transportation equipment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+337110,Wood kitchen cabinets and countertops,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+337121,Home furniture - upholstered,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+337122,"Home furniture - wood, nonupholstered",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+337127,Institutional furniture,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33712A,"Home furniture - Cabinets and non-wood, nonupholstered",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+337215,Shelving and lockers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+33721A,Office furniture and custom architectural woodwork and millwork,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+337900,"Mattresses, blinds and shades",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339112,Surgical and medical instruments,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339113,Surgical appliance and supplies,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339114,Dental equipment and supplies,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339115,Ophthalmic goods,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339116,Dental laboratories,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339910,Jewelry and silverware,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339920,Sporting and athletic goods,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339930,"Dolls, toys, and games",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339940,Office supplies (not paper),n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339950,Signs,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+339990,"Gaskets, seals, musical instruments, fasteners, brooms, brushes, mop and other misc. goods",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+441000,Vehicles and parts sales,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+486000,Pipeline transport,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+491000,Postal service,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+492000,Couriers and messengers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+511110,Newspapers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+511120,Magazines and journals,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+511130,Books,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+5111A0,"Directory, mailing list, and other publishers",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+511200,Software,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+512200,Sound recording,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+515100,Radio and television,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+515200,Cable and subscription programming,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+517110,Telecommunications,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+517210,Wireless telecommunications,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+517A00,"Satellite, telecommunications resellers, and all other telecommunications",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+518200,Data processing and hosting,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+519130,Internet publishing and broadcasting,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+5191A0,"News syndicates, libraries, archives, Internet publishing and all other information services",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+522A00,Nondepository credit intermediation and related activities,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+523900,"Investment advice, portfolio management, and other financial advising services",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+523A00,Securities and commodities brokerage and exchanges,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+524100,Insurance carriers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+524200,Insurance agencies and brokerages,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+525000,"Funds, trusts, and financial vehicles",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+52A000,Monetary authorities and depository credit intermediation,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+5310HS,Housing,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+531ORE,Other real estate,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+532100,Vehicle rental and leasing,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+532400,Commercial equipment rental,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+532A00,Consumer goods and general rental centers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+533000,Lessors of nonfinancial intangible assets,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541100,Legal services,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541200,"Accounting, tax preparation, bookkeeping, and payroll",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541300,"Architectural, engineering, and related services",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541400,Specialized design,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541511,Custom computer programming,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541512,Computer systems design,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+54151A,"Other computer related services, including facilities management",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541610,Management consulting,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+5416A0,Environmental and other technical consulting services,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541700,Scientific research and development,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541800,Advertising and public relations,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541920,Photographers,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+541940,Veterinarians,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+5419A0,"Marketing research and all other miscellaneous professional, scientific, and technical services",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+550000,Company and enterprise management,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561100,Office administration,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561200,Facilities support,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561300,Employment services,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561400,Business support,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561500,Travel arrangement and reservation,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561600,Investigation and security,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561700,Buildings and dwellings services,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+561900,Other support services,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+562000,Waste management and remediation,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+621100,Physicians,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+621200,Dentists,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+621300,Healthcare practitioners (except physicians and dentists),n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+621400,Outpatient healthcare,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+621500,Medical laboratories,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+621600,Home healthcare,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+621900,Ambulances,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+711500,"Independent artists, writers, and performers",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+811100,Vehicle repair,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+811200,Electronic  equipment repair and maintenance,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+811300,Commercial machinery repair,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+811400,Household goods repair,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+812100,Salons and barber shops,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+812200,Funerary services,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+812300,Dry-cleaning and laundry,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+812900,"Pet care, photofinishing, parking and other sundry services",n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+814000,Household employees,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+S00300,Noncomparable imports,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+S00402,Used and secondhand goods,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+S00600,Federal general government (nondefense),n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+S00900,Rest of the world adjustment,n,,,0,,,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
