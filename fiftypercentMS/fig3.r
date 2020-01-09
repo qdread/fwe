@@ -98,7 +98,7 @@ facetplot <- ggplot(facetplotdat %>% mutate(letter = letters[1:5][impact_categor
   geom_line(size = 1) +
   geom_errorbar(width = 0.2, color = 'gray60') +
   geom_point(size = 3, color = 'white', fill = 'black', shape = 21, stroke = 2) +
-  geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25, size = 2.4) +
+  geom_text(aes(label = stage_reduced), angle = 45, hjust = 1.25, size = 2.25) +
   geom_text(aes(label = letter), x = 0, y = 0.79, size = 10) +
   scale_x_continuous(name = 'Number of stages where waste is reduced', breaks = 0:6) +
   scale_y_continuous(name = 'Impact relative to baseline', labels = scales::percent_format(accuracy = 1L)) +
@@ -112,3 +112,4 @@ facetplot <- ggplot(facetplotdat %>% mutate(letter = letters[1:5][impact_categor
         strip.background = element_blank())
 
 ggsave(file.path(fpfig, 'stoten_ms/fig3.png'), facetplot, height = 9.5 * 2/3, width = 9 * 2/3, dpi = 300)
+ggsave('~/google_drive/SESYNC Food Waste/Model_MS1/stoten_revision/figures_final/fig3.pdf', facetplot, height = 9.5 * 2/3, width = 9 * 2/3)

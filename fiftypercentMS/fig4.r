@@ -120,3 +120,4 @@ bottom_row <- plot_grid(p_water + th_bottom, leg, nrow = 1)
 whole_plot <- plot_grid(top_row, middle_row, bottom_row, nrow = 3)
 
 ggsave(file.path(fp_fig, 'stoten_ms/fig4.png'), whole_plot, height = 9.5 , width = 9 , dpi = 300)
+ggsave('~/google_drive/SESYNC Food Waste/Model_MS1/stoten_revision/figures_final/fig4.pdf', whole_plot, height = 9.5, width = 9)
