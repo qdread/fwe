@@ -50,7 +50,7 @@ write.table(data.frame(fao_item_name = extranames), file = 'Q:/crossreference_ta
 # Added 28 Mar 2019.
 
 # Load non-loss-adj data
-fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/FADS/tidy_data')
+fp <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'ERS/FADS/tidy_data')
 fpq <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 
 fruit_avail <- read.csv(file.path(fp, 'fruit_availability.csv'), stringsAsFactors = FALSE)

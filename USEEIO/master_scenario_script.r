@@ -74,7 +74,7 @@ library(dplyr)
 # ----------------------------------------------------------------------
 
 # Set file paths of BEA data and crosswalks
-fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA')
+fp_bea <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'BEA')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 
 

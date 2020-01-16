@@ -6,7 +6,7 @@
 # Load data ---------------------------------------------------------------
 
 
-fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/FADS')
+fp <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'ERS/FADS')
 
 library(tidyverse)
 library(tidyxl)

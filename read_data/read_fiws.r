@@ -2,7 +2,7 @@
 
 library(data.table)
 library(tidyverse)
-a2017 <- fread('/nfs/fwe-data/ERS/arms_2017.csv')
+a2017 <- fread('/nfs/qread-data/raw_data/ERS/arms_2017.csv')
 
 # Only farm finances survey is included.
 # Balance sheet, income statement, structural characteristics of farms.'
@@ -21,7 +21,7 @@ table(a2017$state)
 library(data.table)
 library(tidyverse)
 
-fiws <- fread('/nfs/fwe-data/ERS/FarmIncome_WealthStatisticsData_November2018.csv')
+fiws <- fread('/nfs/qread-data/raw_data/ERS/FarmIncome_WealthStatisticsData_November2018.csv')
 
 # Look at FIWS data
 table(fiws$VariableDescriptionPart1)
@@ -69,9 +69,9 @@ table(allexp$Year) # Good data coverage from 1949-2017.
 allexp <- allexp %>% filter(between(Year, 1949, 2017))
 
 # Write to CSV
-write.csv(bycropsum, '/nfs/fwe-data/ERS/fiws_cash_receipts_by_crop.csv', row.names = FALSE)
-write.csv(laborexp, '/nfs/fwe-data/ERS/fiws_labor_expenses_by_state.csv', row.names = FALSE)
-write.csv(allexp, '/nfs/fwe-data/ERS/fiws_all_expenses_by_state.csv', row.names = FALSE)
+write.csv(bycropsum, '/nfs/qread-data/raw_data/ERS/fiws_cash_receipts_by_crop.csv', row.names = FALSE)
+write.csv(laborexp, '/nfs/qread-data/raw_data/ERS/fiws_labor_expenses_by_state.csv', row.names = FALSE)
+write.csv(allexp, '/nfs/qread-data/raw_data/ERS/fiws_all_expenses_by_state.csv', row.names = FALSE)
 
 # Create visualizations of income data
 
@@ -82,7 +82,7 @@ labor2017 <- laborexp %>%
   mutate(type = if_else(grepl('cash',VariableDescriptionTotal), 'cash','contract_and_hired')) %>%
   select(State, type, Amount) 
 
-statepop <- read.csv('/nfs/fwe-data/Census/co-est2017-alldata.csv') %>%
+statepop <- read.csv('/nfs/qread-data/raw_data/Census/co-est2017-alldata.csv') %>%
   filter(SUMLEV==40) %>%
   select(STNAME, POPESTIMATE2017) %>%
   mutate(State = state.abb[match(STNAME, state.name)]) %>%

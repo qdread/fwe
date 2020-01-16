@@ -29,7 +29,7 @@ intensities_total <- intensities %>%
 
 # Load the crosswalk table so that we can find the average intensity by stage of supply chain.
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
-fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA/formatted')
+fp_bea <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'BEA/formatted')
 
 naicsCW <- read.csv(file.path(fp_crosswalks, 'naics_crosswalk_final.csv'), stringsAsFactors = FALSE)
 

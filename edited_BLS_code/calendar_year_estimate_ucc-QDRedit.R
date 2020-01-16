@@ -25,7 +25,7 @@ ucc_exp <- "WATER"
 # Store the directory containing the data files. It is assumed that the FMLI,
 # MTBI, and ITBI files are all in the same folder
 # File path updated by QDR, 1 Feb 2019
-data_dir <- paste0("/nfs/fwe-data/CEX/data", substr(year,3,4))
+data_dir <- paste0("/nfs/qread-data/raw_data/CEX/data", substr(year,3,4))
 
 
 ################################################################################

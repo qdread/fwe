@@ -1,7 +1,7 @@
 # View and summarize some data from ATUS
 # QDR / FWE / 11 Mar 2019
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 library(atus)
 library(tidyverse)

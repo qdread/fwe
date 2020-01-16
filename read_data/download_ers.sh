@@ -5,7 +5,7 @@
 
 # Downloaded by QDR on 13 March 2019
 
-cd /nfs/fwe-data/ERS
+cd /nfs/qread-data/raw_data/ERS
 
 #---------------------------------------------------------------
 # QFAHPD
@@ -40,7 +40,7 @@ done
 
 #-----------------------------------------------------------------
 # Added 27 March 2019: download FICRCD from food surveys research group (joint effort of ARS and ERS)
-cd /nfs/fwe-data/FICRCD
+cd /nfs/qread-data/raw_data/FICRCD
 filenames=( "2007_2008" "2005_2006" "2003_2004" "2001_2002" "1999_2000" "1994_1998" )
 baseurl="https://www.ars.usda.gov/ARSUserFiles/80400530/apps/FICRCD_"
 
@@ -58,7 +58,7 @@ done
 #-----------------------------------------------------------------
 # Added 27 March 2019: download the *not* loss-adjusted food availability data system (FADS) from ERS
 # These are the 29 Oct 2018 data.
-cd /nfs/fwe-data/ERS/FADS
+cd /nfs/qread-data/raw_data/ERS/FADS
 filenames=( "ctcsp" "dyfluid" "dymfg" "eggs" "fats" "mtfish" "frtot" "fruitcan" "fruitdr" "fruitfr" "fruitfz" "fruitju" "fruitveg" "grains" "nuts" "pop" "mtpoulsu" "mtredsu" "mtpcc" "sweets" "vegtot" "vegcan" "vegfr" "vegfrz" "legumes" "potatoes" )
 baseurl="https://www.ers.usda.gov/webdocs/DataFiles/50472/"
 

@@ -8,7 +8,7 @@ library(tidyverse)
 # Load lookup table and use table
 
 fp_crosswalk <- ifelse(dir.exists('Q:/'), 'Q:/crossreference_tables', '/nfs/qread-data/crossreference_tables')
-fp_bea <- ifelse(dir.exists('Z:/'), 'Z:/BEA', '/nfs/fwe-data/BEA')
+fp_bea <- ifelse(dir.exists('Q:/'), 'Q:/raw_data/BEA', '/nfs/qread-data/raw_data/BEA')
 
 naics_lookup <- read.csv(file.path(fp_crosswalk, 'naics_crosswalk_rawfile11jun.csv'), stringsAsFactors = FALSE)
 

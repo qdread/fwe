@@ -2,7 +2,7 @@
 
 # Food expenditure series -------------------------------------------------
 
-fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/foodexpenditure')
+fp <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'ERS/foodexpenditure')
 dir(fp)
 
 library(tidyverse)
@@ -105,7 +105,7 @@ for (obj in objs) {
 # Version 1 includes upc codes and random-weight purchases, 1999-2006
 # Version 2 is only upc coded purchases but has a couple extra groups (diet soda and coffee/tea), and covers 2004-2010.
 
-fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/QFAHPD')
+fp <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'ERS/QFAHPD')
 dir(fp)
 
 library(tidyverse)

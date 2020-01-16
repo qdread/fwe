@@ -2,7 +2,7 @@
 # Only 2018 data layer downloaded 05 Sep 2019
 # 2014 and up to public-data 13 Sep 2019
 
-cd /nfs/fwe-data/landuse/USDAcropland/CDL
+cd /nfs/qread-data/raw_data/landuse/USDAcropland/CDL
 
 for ((y=2014; y <= 2018 ; y++))
 do

@@ -15,7 +15,7 @@ concordance <- concordance[1:lastrow,]
 
 # Get proportions for the 3 with multiple SCTG ----------------------------
 
-# fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+# fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 # cs <- c('factor','numeric','character')
 # susb12 <- read.csv(file.path(fp, 'Census/SUSB/us_state_6digitnaics_2012.txt'), colClasses = cs[c(1,1,1,2,2,2,1,1,2,1,2,1,3,3,3)]) 
 # susb12US <- susb12 %>% filter(STATEDSCR == 'United States', ENTRSIZEDSCR == 'Total')

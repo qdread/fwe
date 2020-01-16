@@ -4,7 +4,7 @@ library(tidyverse)
 
 # Read text file ---------------------------------------------------
 
-cdqt_file <- '/nfs/fwe-data/USDA/2012_cdqt_data.txt'
+cdqt_file <- '/nfs/qread-data/raw_data/USDA/2012_cdqt_data.txt'
 
 cdqt <- read_delim(cdqt_file, delim = '\t', col_names = FALSE, col_types = strrep('c', 15))
 

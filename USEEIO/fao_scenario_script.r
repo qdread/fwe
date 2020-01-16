@@ -13,8 +13,8 @@ library(reticulate)
 fp_github <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/fwe', '/research-home/qread/fwe')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 fp_scenario <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_inputdata')
-fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA/formatted')
-fp_temp <- ifelse(dir.exists('~/Documents/temp'), '~/Documents/temp', '/nfs/qread-data/temp')
+fp_bea <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'BEA/formatted')
+fp_temp <- ifelse(dir.exists('~/Documents/temp'), '~/Documents/temp', '/tmp')
 fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
 fp_useeio <- ifelse(dir.exists('~/Dropbox'), '~/Dropbox/projects/foodwaste/Code/USEEIO-master', '/research-home/qread/USEEIO')
 
@@ -135,7 +135,7 @@ final_demand_lists <- map(all_final_demand, ~ list(codes = as.list(.x$sector_des
 
 # Source Python script which runs model
 # If run on server, specify we're using python3
-if (dir.exists('/nfs/fwe-data')) use_python('/usr/bin/python3')
+if (dir.exists('/nfs/qread-data')) use_python('/usr/bin/python3')
 source_python(file.path(fp_github, 'USEEIO/eeio_lcia.py'))
 
 # Run all scenarios. (takes a couple seconds per scenario)

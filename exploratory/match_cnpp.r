@@ -5,7 +5,7 @@ compare <- function(a, b) {
   c(length(setdiff(a, b)), length(intersect(a, b)), length(setdiff(b, a)))
 }
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 library(XLConnect)
 library(tidyverse)
@@ -20,7 +20,7 @@ cnpp09 <- read.csv(file.path(fp, 'food_consumption/USDAnutrients/CNPP2009.csv'),
 # cnpp09 %>% filter(is.na(as.numeric(price_09))) # It's human milk and alcoholic beverages only.
 
 # Read SAS version of CNPP data
-# cnpp_sas <- read.sas7bdat('Z:/USDAnutrients/FoodPricesDatabase0304.sas7bdat') # Contains same rows but with prices for different years and for the 4 regions.
+# cnpp_sas <- read.sas7bdat('Q:/raw_data/USDAnutrients/FoodPricesDatabase0304.sas7bdat') # Contains same rows but with prices for different years and for the 4 regions.
 
 # Do the two CNPP match?
 table(cnpp$foodcode %in% cnpp09$foodcode)

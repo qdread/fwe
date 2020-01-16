@@ -1,7 +1,7 @@
 # Use tidyxl and unpivotr to load ERS FADS data and put into tidy form
 # QDR / FWE / 27 March 2019
 
-fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/FADS')
+fp <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'ERS/FADS')
 
 library(tidyverse)
 library(tidyxl)

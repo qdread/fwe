@@ -5,7 +5,7 @@ library(tidyverse)
 library(zoo)
 library(unpivotr)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 sheet_data <- xlsx_cells(file.path(fp, 'biodiversity/chaudhary2015SI/es5b02507_si_002.xlsx'))
 

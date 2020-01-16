@@ -6,11 +6,11 @@ library(tidyverse)
 library(sf)
 library(cowplot)
 
-is_local <- dir.exists('Z:/')
+is_local <- dir.exists('Q:/')
 
-fp <- ifelse(is_local, 'Z:', '/nfs/fwe-data')
-fp_cfs <- file.path(fp, 'commodity_flows/CFS')
-fp_faf <- file.path(fp, 'commodity_flows/FAF')
+fp <- ifelse(is_local, 'Q:', '/nfs/qread-data')
+fp_cfs <- file.path(fp, 'raw_data/commodity_flows/CFS')
+fp_faf <- file.path(fp, 'raw_data/commodity_flows/FAF')
 fp_out <- ifelse(is_local, 'Q:/cfs_io_analysis', '/nfs/qread-data/cfs_io_analysis')
 
 cfsmap <- st_read(dsn = file.path(fp_faf, 'Freight_Analysis_Framework_Regions/cfs_aea.gpkg'))

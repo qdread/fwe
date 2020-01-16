@@ -22,13 +22,13 @@ library(readr)
 # File paths updated by QDR 04 Feb 2019.
 # Store the directory containing the data files. It is assumed that the FMLI,
 # FMLD, MTBI, EXPD, and ITBI files are all in the same folder
-data_dir <- paste0("/nfs/fwe-data/CEX/data", substr(year,3,4))
+data_dir <- paste0("/nfs/qread-data/raw_data/CEX/data", substr(year,3,4))
 
 # Store the path of the integrated stub file
 stub_path <- file.path(data_dir, "csxintstub.txt")
 
 # Store the path to which you would like to store the final table
-out_path <- paste0("/nfs/fwe-data/CEX/csv_output/Integrated_mean_se_", year, "_byincomeclass.csv")
+out_path <- paste0("/nfs/qread-data/raw_data/CEX/csv_output/Integrated_mean_se_", year, "_byincomeclass.csv")
 
 
 ################################################################################

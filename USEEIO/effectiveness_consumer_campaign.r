@@ -5,7 +5,7 @@
 
 library(tidyverse)
 
-is_local <- dir.exists('Z:/')
+is_local <- dir.exists('Q:/')
 fp_crosswalk <- file.path(ifelse(is_local, 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 
 # this csv is derived from pp 16 and 19 of the appendix.

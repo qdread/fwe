@@ -1,6 +1,6 @@
 # Read serving size data and match with LAFA data
 
-fp_usda <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'USDAnutrients')
+fp_usda <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'USDAnutrients')
 
 servsize <- read.csv(file.path(fp_usda, 'brandedfood/Serving_size.csv'), stringsAsFactors = FALSE)
 # Water content data file contains lafa matching columns

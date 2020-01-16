@@ -3,7 +3,7 @@
 # Annual averages of number of employees by NAICS detailed industry
 # These are also available by county but probably not necessary for now
 
-cd /nfs/fwe-data/Census/QCEW
+cd /nfs/qread-data/raw_data/Census/QCEW
 
 baseurl="https://data.bls.gov/cew/data/files/"
 # https://data.bls.gov/cew/data/files/2017/csv/2017_annual_by_industry.zip

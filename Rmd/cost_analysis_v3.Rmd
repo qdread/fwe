@@ -409,7 +409,7 @@ The second part of the analysis is somewhat more questionable in terms of the ab
 
 # Code pipeline used for analysis
 
-This is documentation of the scripts on the [FWE GitHub repository](https://github.com/qdread/fwe) that are needed to do this analysis. The underlying data is on the FWE group space on the SESYNC server at `/nfs/fwe-data/`, and some of the lookup tables are currently on my own space on the SESYNC server at `/nfs/qread-data/`. Everything could be moved to the FWE space if others want to replicate the analysis.
+This is documentation of the scripts on the [FWE GitHub repository](https://github.com/qdread/fwe) that are needed to do this analysis. The underlying data is on the SESYNC server at `/nfs/qread-data/`. 
 
 * `create_2012_bea.r`: This script maps the 2007 industry codes from the BEA input-output benchmark table to the 2012 codes and retotals the make and use tables for 2012. In other words it creates 2012 make-use tables with 2007's industry classification. This calls some functions in `reaggregate_mat.r`.
 * `partial_sector_proportions.r`, `susb_by_foodcategory.r`, `qcew_by_foodcategory.r`: These scripts find the proportion of demand for industries that are related to the food supply chain, for those industries that are only partially FSC. There are different data sources used for different industries.

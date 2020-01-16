@@ -3,7 +3,7 @@
 
 library(tidyverse)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 fpcex <- file.path(fp, 'consumer_data/CEX/final_data')
 
 # Load/clean data ---------------------------------------------------------

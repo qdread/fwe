@@ -8,15 +8,14 @@
 
 library(tidyverse)
 
-is_local <- dir.exists('Z:/')
+is_local <- dir.exists('Q:/')
 
-fp <- ifelse(is_local, 'Z:', '/nfs/fwe-data')
-fpq <- ifelse(is_local, 'Q:', '/nfs/qread-data')
-fp_cfs <- file.path(fp, 'commodity_flows/CFS')
-fp_faf <- file.path(fp, 'commodity_flows/FAF')
-fp_satellite <- file.path(fp, 'IO_tables/output_csvs')
-fp_crosswalk <- file.path(fpq, 'crossreference_tables')
-fp_out <- file.path(fpq, 'cfs_io_analysis')
+fp <- ifelse(is_local, 'Q:', '/nfs/qread-data')
+fp_cfs <- file.path(fp, 'raw_data/commodity_flows/CFS')
+fp_faf <- file.path(fp, 'raw_data/commodity_flows/FAF')
+fp_satellite <- file.path(fp, 'raw_data/IO_tables/output_csvs')
+fp_crosswalk <- file.path(fp, 'crossreference_tables')
+fp_out <- file.path(fp, 'cfs_io_analysis')
 
 # Load crosswalk table
 load(file.path(fp_crosswalk, 'NAICS_BEA_SCTG_crosswalk.RData'))

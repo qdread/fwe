@@ -3,7 +3,7 @@
 
 library(tidyverse)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 # SUSB: 6 digit NAICS by state for 2012
 # Ensure that leading zeroes are preserved in the codes

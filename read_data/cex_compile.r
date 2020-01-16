@@ -3,7 +3,7 @@
 
 library(tidyverse)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data/raw_data')
 fpcex <- file.path(fp, 'CEX/csv_output')
 
 # combine all the regional data for each year

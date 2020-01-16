@@ -7,7 +7,7 @@ library(tidyverse)
 # Load lookup table and use table
 
 fp_crosswalk <- ifelse(dir.exists('Q:/'), 'Q:/crossreference_tables', '/nfs/qread-data/crossreference_tables')
-fp_bea <- ifelse(dir.exists('Z:/'), 'Z:/BEA', '/nfs/fwe-data/BEA')
+fp_bea <- ifelse(dir.exists('Q:/'), 'Q:/raw_data/BEA', '/nfs/qread-data/raw_data/BEA')
 
 #naics_lookup <- read.csv(file.path(fp_crosswalk, 'naics_by_fao.csv'), stringsAsFactors = FALSE)
 naics_lookup <- read.csv(file.path(fp_crosswalk, 'naics_crosswalk_allproportions_rawfile07june2019.csv'), stringsAsFactors = FALSE)
@@ -64,7 +64,7 @@ write.csv(naics_lookup, file = file.path(fp_crosswalk, 'naics_crosswalk_allpropo
 library(tidyverse)
 library(data.table)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 qcew12 <- fread(file.path(fp, 'Census/QCEW/2012.annual.singlefile.csv'))
 
 # Size code is not included

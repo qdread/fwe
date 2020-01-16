@@ -1,6 +1,6 @@
 # Script to download business and economic data from US Census 
 
-cd /nfs/fwe-data/Census
+cd /nfs/qread-data/raw_data/Census
 
 # Statistics of US Businesses
 mkdir SUSB

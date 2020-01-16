@@ -1,6 +1,6 @@
 # Download CEX (Bureau of Labor Statistics Consumer Expenditure Survey) data
 # Interview zip, diary zip, interview survey documentation, diary survey documentation, interview data dictionary, diary data dictionary, hierarchical groupings
-cd /nfs/fwe-data/CEX
+cd /nfs/qread-data/raw_data/CEX
 yrs=( "08" "09" "10" "11" "12" "13" "14" "15" "16" "17" )
 
 # Download the main data files
@@ -35,7 +35,7 @@ done
 # Consolidate all data for each year into a single folder instead of having a separate one for the interview and for the diary.
 # This is needed for the sample R scripts to run with minimal modification. (added 04 Feb 2019)
 
-cd /nfs/fwe-data/CEX
+cd /nfs/qread-data/raw_data/CEX
 yrs=( "08" "09" "10" "11" "12" "13" "14" "15" "16" "17" )
 
 for y in "${yrs[@]}"

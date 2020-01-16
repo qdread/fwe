@@ -12,7 +12,7 @@ library(reticulate)
 fp_fwe <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/fwe', '/research-home/qread/fwe')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 fp_scenario <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_inputdata')
-fp_bea <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'BEA/formatted')
+fp_bea <- file.path(ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data'), 'BEA/formatted')
 fp_output <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'scenario_results')
 fp_useeio <- ifelse(dir.exists('~/Documents/GitHub'), '~/Documents/GitHub/USEEIO', '/research-home/qread/USEEIO')
 
@@ -60,7 +60,7 @@ all_codes <- read.csv(file.path(fp_crosswalks, 'all_codes.csv'), stringsAsFactor
 
 # Source Python script which runs model
 # If run on server, specify we're using python3
-if (dir.exists('/nfs/fwe-data')) use_python('/usr/bin/python3')
+if (dir.exists('/nfs/qread-data')) use_python('/usr/bin/python3')
 source_python(file.path(fp_fwe, 'USEEIO/eeio_lcia.py'))
 
 # Source R script which builds models

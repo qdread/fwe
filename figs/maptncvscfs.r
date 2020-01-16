@@ -5,7 +5,7 @@ library(tidyverse)
 library(sf)
 
 # Load table
-fp_fwe <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp_fwe <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 fp_csv <- file.path(fp_fwe, 'landuse/output_csvs')
 fp_faf <- file.path(fp_fwe, 'commodity_flows/FAF')
 fp_fig <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'figures/CFS')

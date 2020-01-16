@@ -1,7 +1,7 @@
 # American Time Use Survey datasets
 # Data from 2003-2016
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 library(atus)
 library(tidyverse)

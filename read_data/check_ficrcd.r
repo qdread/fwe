@@ -1,6 +1,6 @@
 # read FICRCD to see if columns match
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data/raw_data')
 
 fic08 <- read.csv(file.path(fp, 'food_consumption/FICRCD/ficrcd_2007_2008.csv'), stringsAsFactors = FALSE)
 

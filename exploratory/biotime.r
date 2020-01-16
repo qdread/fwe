@@ -3,8 +3,8 @@
 library(data.table)
 library(tidyverse)
 
-biot <- fread('/nfs/fwe-data/Biotime/BioTIMEQuery02_04_2018.csv')
-biotmeta <- fread('/nfs/fwe-data/Biotime/BioTIMEMetadata_02_04_2018.csv')
+biot <- fread('/nfs/qread-data/raw_data/Biotime/BioTIMEQuery02_04_2018.csv')
+biotmeta <- fread('/nfs/qread-data/raw_data/Biotime/BioTIMEMetadata_02_04_2018.csv')
 
 # Look at study IDs by time span
 length(unique(biot$STUDY_ID))

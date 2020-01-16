@@ -21,7 +21,7 @@
 year <- 2016
 
 # Set the path of the folder containing all 5 quarterly FMLI files
-data_dir <- paste0("/nfs/fwe-data/CEX/data", substr(year,3,4))
+data_dir <- paste0("/nfs/qread-data/raw_data/CEX/data", substr(year,3,4))
 
 ################################ End user inputs ###############################
 

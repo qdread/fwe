@@ -94,7 +94,7 @@ get_vars_for_data_cell <- function(parent_sheet, sheet, row, col, numeric, chara
 
 # Read EIA data -----------------------------------------------------------
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 # Summary stats on consumptions and expenditures 1.1
 ce11 <- read_eia(file.path(fp, 'EIA/ce1.1.xlsx'))

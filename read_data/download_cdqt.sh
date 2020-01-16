@@ -2,7 +2,7 @@
 # 24 Oct 2019
 
 # Census Data Query Tool 2012 and 2017
-cd /nfs/fwe-data/USDA
+cd /nfs/qread-data/raw_data/USDA
 wget https://www.nass.usda.gov/Publications/AgCensus/2012/Online_Resources/Census_Data_Query_Tool/2012_cdqt_data.txt.gz
 gunzip 2012_cdqt_data.txt.gz
 

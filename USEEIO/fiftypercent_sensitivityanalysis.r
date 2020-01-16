@@ -122,7 +122,7 @@ get_reduction_from_list <- function(input, scenario_id) {
 }
 
 # get_reduction_from_list <- function(reduction_rate, baseline_waste_rate, proportion_food, scenario_id) {
-#   if (dir.exists('/nfs/fwe-data')) use_python('/usr/bin/python3')
+#   if (dir.exists('/nfs/qread-data')) use_python('/usr/bin/python3')
 #   source_python(file.path(fp_fwe, 'USEEIO/eeio_lcia.py'))
 #   intermediate_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_rate[sector_stage_codes], proportion_food))
 #   final_demand_change_factors <- as.numeric(demand_change_fn(baseline_waste_rate, reduction_rate[final_demand_sector_codes], proportion_food))

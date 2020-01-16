@@ -2,7 +2,7 @@
 
 library(tidyverse)
 
-fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/foodexpenditure/tidy_data')
+fp <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'raw_data/ERS/foodexpenditure/tidy_data')
 
 walk(dir(fp, full.names = TRUE), ~ assign(x = tools::file_path_sans_ext(basename(.x)), value = read.csv(.x, stringsAsFactors = FALSE), envir = .GlobalEnv))
 
@@ -23,7 +23,7 @@ nominal_exp %>% filter(Year == 2012, header1 == 'Total FAFH')
 # QFAHPD data
 # -----------
 
-fp <- file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'ERS/QFAHPD/tidy_data')
+fp <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'raw_data/ERS/QFAHPD/tidy_data')
 qfahpd1 <- read.csv(file.path(fp, 'qfahpd1.csv'), stringsAsFactors = FALSE)
 qfahpd2 <- read.csv(file.path(fp, 'qfahpd2.csv'), stringsAsFactors = FALSE)
 

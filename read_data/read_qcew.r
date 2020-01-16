@@ -4,7 +4,7 @@
 library(tidyverse)
 library(data.table)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 qcew12 <- fread(file.path(fp, 'Census/QCEW/2012.annual.singlefile.csv'))
 
 # Size code is not included

@@ -4,7 +4,7 @@ library(dplyr)
 library(data.table)
 library(units)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 fp_cfs <- file.path(fp, 'commodity_flows/CFS')
 fp_faf <- file.path(fp, 'commodity_flows/FAF')
 
@@ -63,7 +63,7 @@ chordDiagram(value_mat)
 
 library(tidyverse)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 fp_cfs <- file.path(fp, 'commodity_flows/CFS')
 fp_faf <- file.path(fp, 'commodity_flows/FAF')
 

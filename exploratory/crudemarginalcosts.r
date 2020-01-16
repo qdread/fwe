@@ -2,7 +2,7 @@
 
 library(tidyverse)
 
-is_local <- dir.exists('Z:/')
+is_local <- dir.exists('Q:/')
 fp_crosswalk <- file.path(ifelse(is_local, 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 fp_github <- file.path(ifelse(is_local, '~/Documents/GitHub', '~'))
 

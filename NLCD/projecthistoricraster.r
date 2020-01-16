@@ -1,7 +1,7 @@
 # Convert the historic land cover rasters to Albers
 
 library(raster)
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 r1700 <- raster(file.path(fp, 'landuse/historic/historic_landcover_hdeg/historic_landcover_hd_1700.asc'))
 proj4string(r1700) <- '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'

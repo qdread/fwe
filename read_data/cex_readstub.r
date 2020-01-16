@@ -1,6 +1,6 @@
 # My own script for turning the stub text file into a hierarchically organized data frame
 year <- 2017
-data_dir <- paste0("/nfs/fwe-data/CEX/data", substr(year,3,4))
+data_dir <- paste0("/nfs/qread-data/raw_data/CEX/data", substr(year,3,4))
 
 stub_raw <- read.csv(file.path(data_dir, 'csxistub_cleaned.csv'), stringsAsFactors = FALSE)
 

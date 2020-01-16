@@ -2,11 +2,11 @@
 
 library(tidyverse)
 
-is_local <- dir.exists('Z:/')
+is_local <- dir.exists('Q:/')
 
-fp <- ifelse(is_local, 'Z:', '/nfs/fwe-data')
-fp_cfs <- file.path(fp, 'commodity_flows/CFS')
-fp_faf <- file.path(fp, 'commodity_flows/FAF')
+fp <- ifelse(is_local, 'Q:', '/nfs/qread-data')
+fp_cfs <- file.path(fp, 'raw_data/commodity_flows/CFS')
+fp_faf <- file.path(fp, 'raw_data/commodity_flows/FAF')
 fp_satellite <- file.path(fp, 'IO_tables/output_csvs')
 fp_crosswalk <- file.path(ifelse(is_local, 'Q:', '/nfs/qread-data'), 'crossreference_tables')
 fp_out <- file.path(ifelse(is_local, 'Q:', '/nfs/qread-data'), 'cfs_io_analysis')

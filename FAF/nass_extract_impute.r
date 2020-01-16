@@ -6,7 +6,7 @@ library(tidyverse)
 
 # Read text file ---------------------------------------------------
 
-cdqt_file <- '/nfs/fwe-data/USDA/2012_cdqt_data.txt'
+cdqt_file <- '/nfs/qread-data/raw_data/USDA/2012_cdqt_data.txt'
 
 # Columns are delimited by tabs? Probably
 # Read all as characters to begin with.

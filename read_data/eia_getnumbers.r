@@ -3,7 +3,7 @@
 
 library(tidyverse)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 fuel <- read.csv(file.path(fp, 'EIA/processed/fuel_used_usa.csv'), stringsAsFactors = FALSE)
 appl <- read.csv(file.path(fp, 'EIA/processed/appliances_usa.csv'), stringsAsFactors = FALSE)

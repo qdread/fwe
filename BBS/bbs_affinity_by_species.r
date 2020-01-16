@@ -1,6 +1,6 @@
 # Load BBS presence absence by stop, and BBS NLCD landcover 2016 by stop, to find presence absence of species by land cover type
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 bbsnlcd <- read.csv(file.path(fp, 'BBS/bbs_stop_coords_nlcd.csv'), stringsAsFactors = FALSE)
 load(file.path(fp, 'BBS/bbsworkspace_bystop_20072016.r'))

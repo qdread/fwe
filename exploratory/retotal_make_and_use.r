@@ -1,7 +1,7 @@
 # Test modification of make and use tables
 
-M <- read.csv('Z:/BEA/formatted/make2012.csv', row.names = 1, check.names = FALSE)
-U <- read.csv('Z:/BEA/formatted/use2012.csv', row.names = 1, check.names = FALSE)
+M <- read.csv('Q:/raw_data/BEA/formatted/make2012.csv', row.names = 1, check.names = FALSE)
+U <- read.csv('Q:/raw_data/BEA/formatted/use2012.csv', row.names = 1, check.names = FALSE)
 
 U_int_col <- dimnames(U)[[2]][1:(which(dimnames(U)[[2]] == 'T001') - 1)]
 U_fin_col <- dimnames(U)[[2]][(which(dimnames(U)[[2]] == 'T001') + 1):(which(dimnames(U)[[2]] == 'T004') - 1)]
@@ -37,8 +37,8 @@ T005_new <- apply(U[U_commod_row, ], 2, sum)
 
 # 0. Load make and use tables and create vectors of column and row names to be modified
 
-M <- read.csv('Z:/BEA/formatted/make2012.csv', row.names = 1, check.names = FALSE)
-U <- read.csv('Z:/BEA/formatted/use2012.csv', row.names = 1, check.names = FALSE)
+M <- read.csv('Q:/raw_data/BEA/formatted/make2012.csv', row.names = 1, check.names = FALSE)
+U <- read.csv('Q:/raw_data/BEA/formatted/use2012.csv', row.names = 1, check.names = FALSE)
 R <- c(0.75, 0.5, 0.75)
 
 M_old <- M

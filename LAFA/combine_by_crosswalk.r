@@ -6,7 +6,7 @@ library(XLConnect)
 # Load data and crosswalks ------------------------------------------------
 
 # Define file paths
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data/raw_data')
 fp_qfahpd <- file.path(fp, 'ERS/QFAHPD/tidy_data')
 fp_usda <- file.path(fp, 'foods_consumption/USDAnutrients')
 fp_crosswalks <- file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data'), 'crossreference_tables')

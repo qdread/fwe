@@ -8,7 +8,7 @@ library(tidyverse)
 library(sf)
 library(cowplot)
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 fp_cfs <- file.path(fp, 'commodity_flows/CFS')
 fp_faf <- file.path(fp, 'commodity_flows/FAF')
 fp_satellite <- file.path(fp, 'IO_tables/output_csvs')

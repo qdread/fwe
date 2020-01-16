@@ -191,4 +191,4 @@ out <- out[!(duplicated(out) |
 # Rename Region code to region name.
 names(out)[grep('Region', names(out))] <- c('Northeast', 'Midwest', 'South', 'West')
 
-write.csv(out, paste0("/nfs/fwe-data/CEX/csv_output/Integrated_mean_se_", year, "_byregion.csv"), row.names = FALSE, na = "")
+write.csv(out, paste0("/nfs/qread-data/raw_data/CEX/csv_output/Integrated_mean_se_", year, "_byregion.csv"), row.names = FALSE, na = "")

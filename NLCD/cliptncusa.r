@@ -3,7 +3,7 @@
 # Read TNC and USA shapefiles
 library(rgdal)
 library(rgeos)
-tnc <- readOGR(dsn = '/nfs/fwe-data/landuse/ecoregions', layer = 'tnc_terr_ecoregions')
+tnc <- readOGR(dsn = '/nfs/qread-data/raw_data/landuse/ecoregions', layer = 'tnc_terr_ecoregions')
 usa <- readOGR(dsn = '/nfs/public-data/GADM/USA_adm', layer = 'USA_adm0')
 
 # Ensure row names can be matched between polygons and data after the clipping
@@ -23,4 +23,4 @@ tnc_usa <- SpatialPolygonsDataFrame(tnc_usa, tncdat)
 plot(tnc_usa[c("182","183","184"),]) # Looks OK
 
 # Write as shape file
-writeOGR(tnc_usa, dsn = '/nfs/fwe-data/landuse/ecoregions', layer = 'tnc_usa', driver = 'ESRI Shapefile')
+writeOGR(tnc_usa, dsn = '/nfs/qread-data/raw_data/landuse/ecoregions', layer = 'tnc_usa', driver = 'ESRI Shapefile')

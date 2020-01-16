@@ -1,9 +1,9 @@
 # Exploratory visualizations of EEIO land satellite data
 library(tidyverse)
-land_sat <- read_xlsx(file.path("/nfs/fwe-data/IO_tables/USEEIO/USEEIOv1.1SatelliteTables", 'USEEIOv1.1_Satellite_Land.xlsx'), sheet = 'Export')
+land_sat <- read_xlsx(file.path("/nfs/qread-data/raw_data/IO_tables/USEEIO/USEEIOv1.1SatelliteTables", 'USEEIOv1.1_Satellite_Land.xlsx'), sheet = 'Export')
 
 # Also get the one with some spatial information, fixing names
-land_exch <- read_xlsx(file.path("/nfs/fwe-data/IO_tables/USEEIO/USEEIOv1.1SatelliteTables", 'USEEIOv1.1_Satellite_Land.xlsx'), sheet = 'Exchanges', skip = 4)
+land_exch <- read_xlsx(file.path("/nfs/qread-data/raw_data/IO_tables/USEEIO/USEEIOv1.1SatelliteTables", 'USEEIOv1.1_Satellite_Land.xlsx'), sheet = 'Exchanges', skip = 4)
 names(land_exch)[c(1,2,6,10)] <- c('Exchange_Name','CAS_number','Activity_Name', 'Unit_per_USD_output')
 names(land_exch) <- gsub(' ', '_', names(land_exch))
 
@@ -64,4 +64,4 @@ land_exch_sums_bytype %>%
 # Some have multiple entries because some codes in some locations contribute to >1 land use type
 
 # Write the modified output so that we can read it in later.
-write_csv(land_exch_sums_bytype, file.path(ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data'), 'IO_tables/output_csvs/land_exchanges_bytype.csv'))
+write_csv(land_exch_sums_bytype, file.path(ifelse(dir.exists('Q:/'), 'Q:', '/nfs/qread-data/raw_data'), 'IO_tables/output_csvs/land_exchanges_bytype.csv'))

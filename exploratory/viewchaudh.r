@@ -1,6 +1,6 @@
 # Load Chaudhary data to see the characterization factors of the different ecoregions in the USA
 
-fp <- ifelse(dir.exists('Z:/'), 'Z:', '/nfs/fwe-data')
+fp <- ifelse(dir.exists('Q:/'), 'Q:/raw_data', '/nfs/qread-data/raw_data')
 
 chaud <- read.csv(file.path(fp, 'biodiversity/chaudhary2015SI/chaud2015SI2.csv'), stringsAsFactors = FALSE)
 
