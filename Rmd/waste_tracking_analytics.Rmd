@@ -21,7 +21,7 @@ This is my first attempt at doing an intervention analysis of this kind. We can 
 
 The analysis proceeds as follows:
 
-1. Identify the industry groups that can adopt the intervention, using NAICS industry classifications and BEA codes that represent aggregations of NAICS industries.
+1. Identify the industry groups that can adopt the intervention, using NAICS industry classifications and BEA codes that represent aggregations of NAICS industries. Identify the NAICS codes within each industry that do and do not include food establishments.
 2. Total up the number of establishments and sales volume by size class within each industry, using SUSB data.
 3. Impute any missing or censored values.
 4. Use the predefined threshold of size class that can adopt the intervention, and the proportion of expenses by each industry that consists of food, to determine the number of establishments and proportion of receipts in each industry that will be affected by the intervention.
@@ -118,4 +118,201 @@ prop_kitchen_waste <- c(lower = 0.7, upper = 0.97, mode = 0.85) # Proportion kit
 
 ## 1. Identify industries to target
 
-I decided which BEA industries, of the 389 included in the detailed input-output table, to include in the foodservice classification. I classified foodservice industries into three broader categories: restaurants, the tourism/hospitality industry, and institutional foodservice.
+I decided which BEA industries, of the 389 included in the detailed input-output table, to include in the foodservice classification. I classified foodservice industries into three broader sectors: restaurants, the tourism/hospitality industry, and institutional foodservice. 
+
+Each of the BEA industries is an aggregation of one or more 6-digit NAICS codes. Some of the BEA industries contain NAICS codes for which only part of the industries represent establishments with a food service component. For example, code 481000, "Air transportation," includes airport foodservice operations that could conceivably adopt waste tracking systems, but also a large amount of other non-food activity. The same is true for code 711200, "Spectator sports," which includes stadium foodservice.
+
+The following table shows the industries belonging to each of the three sectors, along with the proportion of establishments (by NAICS code within industry) that have some foodservice component. (The table aggregates across all size classes but I will show data for each size class later.)
+
+```{r subset industries}
+codes_subset <- bea_codes %>% filter(stage %in% c('foodservice', 'institutional')) %>% select(BEA_389_code, BEA_389_def)
+
+restaurants <- codes_subset$BEA_389_code[1:3]
+tourism_hospitality <- codes_subset$BEA_389_code[c(4,5,6,9, 12, 14, 15, 16, 17, 18)] # Leave out movies and performances. Include air and ships.
+institutions <- codes_subset$BEA_389_code[c(19:27)]
+
+# 3 codes represent restaurants, 10 represent tourism/hospitality industry, 9 represent institutions that could adopt "WTA"
+
+bea_to_use_df <- data.frame(BEA_Code = c(restaurants, tourism_hospitality, institutions),
+                            sector = rep(c('restaurants', 'tourism and hospitality', 'institutions'), c(length(restaurants), length(tourism_hospitality), length(institutions))))
+
+bea_naics_to_use <- bea_to_use_df %>% left_join(bea_naics)
+# any(duplicated(bea_naics_to_use$related_2012_NAICS_6digit)) # There are no duplicates. 96 unique NAICS codes.
+
+# Create subset with only food service.
+susb_naics_foodservice <- bea_naics_to_use %>%
+  select(BEA_Code, BEA_Title, sector, related_2012_NAICS_6digit) %>%
+  rename(NAICS = related_2012_NAICS_6digit) %>%
+  left_join(susb_naics)
+
+# Flag rows that aren't going to be used (for example, freight transportation industries within transportation codes)
+# Also remove campgrounds within the hospitality industry.
+# unique(susb_naics_foodservice$`NAICS description`)
+words_to_remove <- c('Freight', 'Nonscheduled', 'Air Traffic', 'Support Activities', 'Port', 'Cargo', 'Navigational', 'Towing', 'Packing', 'Campground')
+
+susb_naics_foodservice <- susb_naics_foodservice %>%
+  mutate(use = !grepl(paste(words_to_remove, collapse = '|'), `NAICS description`),
+         `Size class` = factor(`Size class`, levels = c('fewer than 20', '20 to 99', '100 to 499', 'more than 500', 'total')))
+
+# Find threshold of institution size to adopt WTA so that the volume of sales associated with establishments that adopt WTA 
+# lines up with ReFED's assumptions that 80% of institutions and 15% of restaurants will adopt.
+
+susb_food_sums <- susb_naics_foodservice %>% 
+  group_by(sector, use, `Size class`) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
+  filter(!is.na(`Size class`), !`Size class` %in% 'total')
+
+# What are the proportions
+
+susb_food_cumul_prop <- susb_food_sums %>%
+  mutate_at(vars(`No. firms`:`Total receipts`), ~ cumsum(.x) / sum(.x))
+
+# We can use 20 as the threshold. It can be altered.
+
+size_classes_exclude <- expand_grid(sector = c('restaurants', 'tourism and hospitality', 'institutions'), `Size class` = levels(susb_food_sums$`Size class`)[1:4]) %>%
+  mutate(exclude = `Size class` %in% c('fewer than 20'))
+
+# Table to show in markdown with some summary info on foodservice establishment numbers.
+susb_naics_foodservice %>% 
+  group_by(sector, BEA_Code, BEA_Title, NAICS, `NAICS description`, use) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
+  ungroup %>%
+  select(sector, BEA_Title, NAICS, `NAICS description`, use, `No. establishments`) %>%
+  setNames(c('sector','BEA','NAICS','description','foodservice','establishments')) %>%
+  mutate(foodservice = if_else(foodservice, 'yes', 'no')) %>%
+  filter(!is.na(description)) %>%
+  print(n = nrow(.))
+```
+
+Side note: Not surprisingly, the number of firms as a function of size class is a "power law" relationship where there are many more small businesses than large ones with a more or less straight-line relationship on a logarithmic axis plot. Even so the total receipts per size class is dominated by the large firms.
+
+```{r power law plots}
+susb_food_sums %>%
+  mutate(employees_per_firm = `No. employees`/`No. firms` ) %>%
+  filter(use) %>%
+  ggplot(aes(x = employees_per_firm, y = `No. firms`, color = sector)) + geom_line() + scale_x_log10(name = 'Number of employees per firm') + scale_y_log10(name = 'Number of firms in size class', breaks = c(1000, 10000, 100000), limits = c(1000, 400000)) + theme_minimal()
+
+susb_food_sums %>%
+  mutate(employees_per_firm = `No. employees`/`No. firms` ) %>%
+  filter(use) %>%
+  ggplot(aes(x = employees_per_firm, y = `Total receipts`, color = sector)) + geom_line() + scale_x_log10(name = 'Number of employees per firm') + scale_y_log10(name = 'Total receipts in size class') + theme_minimal()
+```
+
+## 2-4. Total up industry statistics, imputing where necessary
+
+Next sum up all the industry statistics for all the NAICS codes that sharea a BEA code and size class. We will use this to determine the proportion of the total BEA industry volume that will be affected by implementing the intervention. If we make a logarithmic plot by industry showing the total receipts per firm, we should see a steady increase in every industry because the amount of money received by firm should increase with size. Any deviation means there are values that have been censored to protect companies' private data.
+
+```{r sum by bea}
+# Within each BEA code, get the percentage of total receipts that will be affected by WTA implementation
+# All establishments with >20 employees, and also account for the fact that some tourism and hospitality BEA codes contain NAICS codes that aren't going to adopt WTA
+
+susb_bea_food_sums <- susb_naics_foodservice %>%
+  group_by(sector, BEA_Code, BEA_Title, use, `Size class`) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
+  filter(!is.na(`Size class`), !`Size class` %in% 'total')
+```
+
+```{r diagnostic receipts plot}
+susb_bea_food_sums %>%
+  filter(use) %>%
+  mutate(receipts_per_firm = `Total receipts`/`No. firms`) %>%
+  ggplot(aes(x = `Size class`, y = receipts_per_firm, group = BEA_Title, color = BEA_Title)) + 
+    geom_line() + scale_y_log10() + theme_minimal() +
+    theme(legend.position = 'bottom')
+```
+
+The plot shows that air and water transportation have $0 receipts for large firms. This is obviously a case of censored data. I used the values for smaller firms to find a regression relationship and impute the two missing values.
+
+```{r imputation}
+recbyestb <- susb_bea_food_sums %>%
+  filter(use) %>%
+  mutate(empl_per_firm = `No. employees`/`No. firms`,
+         receipts_per_estb = `Total receipts`/`No. establishments`,
+         receipts_per_firm = `Total receipts`/`No. firms`) 
+
+recbyestb %>% 
+  filter(BEA_Code %in% c('481000', '483000'), receipts_per_firm > 0) %>%
+  ggplot(aes(x = empl_per_firm, y = receipts_per_firm, group = BEA_Title, color = BEA_Title)) + geom_point(size = 3) + scale_x_log10(name = 'employees per firm') + scale_y_log10(name = 'receipts per firm') + theme_minimal()
+```
+
+You can see that the total receipts per firm is essentially log-linear with number of employees per firm, so that is the relationship I used to impute the missing values. Unfortunately the number of employees was also censored for large water transportation firms so I used the number 700 taken from a similar industry (sightseeing transportation).
+
+```{r imputation part 2}
+# Impute the air transit number.
+lm_air <- lm(log(receipts_per_firm) ~ log(empl_per_firm), data = recbyestb, subset = BEA_Title == 'Air transportation' & receipts_per_firm > 0)
+
+predicted_air <- exp(predict(lm_air, newdata = recbyestb %>% filter(BEA_Title == 'Air transportation') %>% select(empl_per_firm)))
+# predicted_air[4] # The imputed value for air transportation total receipts for firms with 500 or more employees.
+
+# For water transportation, our problem is that we don't know either the average number of employees per firm or the receipts, the employees were
+# also clearly censored wince only 202 employees for 11 firms is a lot less than 500 per firm. 
+# Let's look for a similar industry to see whether we can get a number of employees per firm to use to impute.
+lm_water <- lm(log(receipts_per_firm) ~ log(empl_per_firm), data = recbyestb, subset = BEA_Title == 'Water transportation' & receipts_per_firm > 0)
+
+susb_bea_food_sums %>%
+ mutate(empl_per_firm = `No. employees`/`No. firms`) %>%
+ filter(`Size class` == 'more than 500')
+
+# We will use the number from scenic transportation (700) which seems fairly conservative
+# This number can be sampled from in an uncertainty analysis too.
+recbyestb %>% filter(BEA_Title == 'Water transportation') %>% mutate(empl_per_firm = if_else(`Size class` == 'more than 500', 700, empl_per_firm)) %>% select(empl_per_firm)
+predicted_water <- exp(predict(lm_water, newdata = recbyestb %>% filter(BEA_Title == 'Water transportation') %>% mutate(empl_per_firm = if_else(`Size class` == 'more than 500', 700, empl_per_firm)) %>% select(empl_per_firm)))
+exp(predict(lm_water))
+
+# Get the two imputed values
+
+# Create new imputed dataset.
+susb_bea_food_sums[susb_bea_food_sums$BEA_Code %in% c('481000', '483000') & susb_bea_food_sums$use & susb_bea_food_sums$`Size class` %in% 'more than 500', "Total receipts"] <- c(predicted_air[4], predicted_water[4])
+```
+
+With the missing values filled in we can now find the total establishments that can implement waste tracking within each BEA industry group, as well as the total proportion of industry sales volume that the food sales represent. These final values account for the threshold of 20 or more employees for adoption, for the subset of NAICS codes that represent establishments with a foodservice component, and the proportion expenses of the aggregated industries that consist of food versus other goods.
+
+```{r get final proportions}
+#### Here are the proportions of receipts that will be affected by adoption of WTA
+
+susb_bea_proportion_affected <- susb_bea_food_sums %>% 
+  ungroup %>%
+  left_join(size_classes_exclude) %>%
+  mutate(use = use & !exclude) %>%
+  group_by(sector, BEA_Code, BEA_Title) %>%
+  summarize(proportion_receipts_affected = sum(`Total receipts`[!exclude])/sum(`Total receipts`))
+
+# Now multiply this by "proportion food" for each of the industries
+prop_foods <- bea_codes %>%
+  select(BEA_389_code, proportion_food) %>%
+  rename(BEA_Code = BEA_389_code)
+
+proportion_affected <- susb_bea_proportion_affected %>% left_join(prop_foods) %>% mutate(final_proportion = proportion_receipts_affected * proportion_food)
+
+# We also need number of establishments affected so we can get the total annual cost
+establishments_affected <- susb_bea_food_sums %>% 
+  ungroup %>%
+  left_join(size_classes_exclude) %>%
+  mutate(use = use & !exclude) %>%
+  group_by(sector, BEA_Code, BEA_Title, use) %>%
+  summarize(establishments = sum(`No. establishments`))
+
+```
+
+The following two plots show the proportion of establishments that can adopt waste tracking by BEA industry, and the proportion of industry sales represented by food that is subject to waste reduction. In both cases, the threshold of &ge;20 employees is used. In the case of establishments, only the establishments belonging to NAICS codes with a foodservice component are eligible to adopt the intervention. In the case of sales, the proportions are based on the proportion of expenses in each industry that consist of food. This assumes that if, say, 10% of an industry's purchases are food, then 10% of its sales are also food (i.e. that the relative value added is the same for the foodservice part of the industry as for any other goods it sells). This assumption seems fair enough but could be relaxed potentially, if we had any relevant data.
+
+```{r barplots of establishment and sales proportions}
+ggplot(establishments_affected %>% ungroup %>% mutate(BEA_Title = factor(BEA_Title, levels = unique(BEA_Title))), aes(y = establishments, x = BEA_Title, fill = sector, alpha = use)) + 
+  geom_bar(position = 'stack', stat = 'identity') +
+  scale_y_continuous(name = 'Number of establishments', limits = c(0, 3e5), expand = c(0,0)) +
+  scale_fill_brewer(palette = 'Set2') +
+  labs(alpha = 'Can adopt') +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('Number of establishments that can adopt waste tracking', 'based on having >20 employees and inclusion in a NAICS code that involves providing food')
+
+# Make a barplot of the proportion of the environmental impact that is affected
+ggplot(proportion_affected %>% ungroup %>% mutate(BEA_Title = factor(BEA_Title, levels = unique(BEA_Title))), aes(y = final_proportion, x = BEA_Title, fill = sector)) + 
+  geom_bar(stat = 'identity') +
+  scale_y_continuous(name = 'Proportion of sales affected', limits = c(0,1), expand = c(0,0)) +
+  scale_fill_brewer(palette = 'Set2') +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle('Proportion of sales by BEA industry that will be influenced by waste tracking', 'based on proportion of expenses in each sector due to food, and excluding firms with <20 employees')
+```
+
