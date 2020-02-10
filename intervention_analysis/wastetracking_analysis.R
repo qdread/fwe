@@ -173,11 +173,15 @@ susb_bea_food_sums <- susb_naics_foodservice %>%
 # The receipts per firm should increase with size class, but some are zeroes or low
 # This may be due to data being censored (if some size classes have very few firms the data might be censored for privacy reasons)
 
+library(directlabels)
+
 susb_bea_food_sums %>%
   filter(use) %>%
-  mutate(receipts_per_firm = `Total receipts`/`No. firms`) %>%
-  ggplot(aes(x = `Size class`, y = receipts_per_firm, group = interaction(BEA_Title, use), color = interaction(BEA_Title, use))) + 
-    geom_line() + scale_y_log10()
+  mutate(receipts_per_firm = 1 + `Total receipts`/`No. firms`) %>%
+  ggplot(aes(x = `Size class`, y = receipts_per_firm, group = BEA_Title)) + 
+  geom_line(aes(color = BEA_Title)) + geom_dl(aes(label = BEA_Title), method = 'last.qp') +
+  scale_y_log10(name = 'Receipts per firm') + theme_minimal() +
+  theme(legend.position = 'none')
   
 # According to this graph and to inspecting the data, air transportation and water transportation have $0 receipts for firms greater than 500 employees
 # Obviously this is wrong.
@@ -289,3 +293,130 @@ ggplot(proportion_affected %>% ungroup %>% mutate(BEA_Title = factor(BEA_Title, 
 
 # Here we will not include beverages. Only include the lafa categories:
 # dairy, fat, fruit, grain, meat, sugar, vegetables
+
+# Use the broad LAFA weighted means.
+
+
+# Read LAFA and pull out weighted baseline rate means ---------------------
+
+source(file.path(fp_github, 'fwe/read_data/read_lafa.r'))
+
+# find the overall values for each of the 7 lafa groups
+# The total one is the last one each time. Check this.
+lafa <- list(dairy, fat, fruit, grain, meat, sugar, veg)
+map(lafa, ~ rev(unique(.$Category))[1])
+
+# If we can pull out the LAFA to BEA crosswalk, we may be able to get a better number.
+# Steps: 
+# (1) get relative % of purchases by BEA food group by $ value for each food service industry group.
+# (2) convert the relative % by $ of BEA to relative % by $ of QFAHPD using the BEA-QFAHPD crosswalk.
+# (3) convert the $ values to relative weights using the QFAHPD value to weight conversion factors (price per weight).
+# (4) convert the relative weights of QFAHPD food groups to relative weights of LAFA groups using the crosswalk table.
+
+# Step 1 can be done by taking them from the I-O table.
+# It was already done in the partialsectorproportions.R script from a few months ago.
+# Check and make sure the BEA groups included there include at least all the ones we are dealing with now.
+# If not, will have to redo.
+
+# Use table subset:
+food_U <- read.csv(file.path(fp, 'crossreference_tables/level13_to_level4678_inputs.csv'), row.names = 1, check.names = FALSE)
+# Check set diff
+setdiff(proportion_affected$BEA_Code, colnames(food_U)) # they're all there.
+
+food_U <- food_U[, proportion_affected$BEA_Code]
+food_U <- food_U[rowSums(food_U) > 0, ]
+
+# Load crosswalk(s) to see whether we have at least one QFAHPD category for each of the rows of food_U
+lafa_qfahpd_bea_cwalk <- read_csv(file.path(fp, 'crossreference_tables/lafa_qfahpd_naics_crosswalk.csv'))
+
+foodcodes <- row.names(food_U) # 35 different foods
+setdiff(foodcodes, with(lafa_qfahpd_bea_cwalk, union(NAICS_raw, NAICS_processed))) # 13 are not. We need to make a new mapping maybe?
+
+# Probably most beneficial to make a mapping starting with the food codes as rows and fill in 1 or more LAFA and QFAHPD. Comma separate to turn into list columns.
+
+# bea_codes %>%
+#   filter(BEA_389_code %in% foodcodes) %>%
+#   select(BEA_389_code, BEA_389_def) %>%
+#   write.csv(file = file.path(fp, 'crossreference_tables/bea_names_to_make_cw.csv'), row.names = FALSE)
+
+# Beverage codes should be removed.
+beveragecodes <- c('311920','311930','312110','312120','312130','312140')
+food_U <- food_U[!row.names(food_U) %in% beveragecodes, ]
+
+# Get the lafa names in a good order
+# lafa_names <- list('fruit', 'veg', 'grain', 'dairy', 'meat', 'fat', 'sugar') %>% map_dfr(~ data.frame(group = ., food = unique(get(.)$Category)))
+# write_csv(lafa_names, file.path(fp, 'crossreference_tables/lafa_names_ordered.csv'))
+
+# Mapping will need to go bea --> qfahpd --> lafa
+# Load the newly created crosswalks.
+bea2qfahpd <- read_csv(file.path(fp, 'crossreference_tables/bea_qfahpd_crosswalk.csv'))
+qfahpd2lafa <- read_csv(file.path(fp, 'crossreference_tables/qfahpd_lafa_crosswalk.csv'))
+
+# Also load the QFAHPD data so that we can get the prices.
+qfahpd2 <- read_csv(file.path(fp, 'raw_data/USDA/QFAHPD/tidy_data/qfahpd2.csv'))
+
+# Convert the comma-separated string columns to list columns.
+bea2qfahpd <- bea2qfahpd %>%
+  mutate(QFAHPD_code = strsplit(QFAHPD_code, ';'))
+qfahpd2lafa <- qfahpd2lafa %>%
+  mutate(LAFA_names = strsplit(LAFA_names, ';'))
+
+# Do the mapping of food_U to QFAHPD codes.
+# Can be done in a "tidy" workflow
+# Make it very long
+
+food_U_QFAHPD <- food_U %>%
+  mutate(BEA_389_code = row.names(food_U)) %>%
+  pivot_longer(-BEA_389_code, names_to = 'BEA_recipient_code', values_to = 'monetary_flow') %>%
+  left_join(bea2qfahpd %>% select(-BEA_389_def)) %>%
+  group_by(BEA_389_code, BEA_recipient_code) %>%
+  group_modify(~ data.frame(QFAHPD_code = .$QFAHPD_code[[1]], monetary_flow = .$monetary_flow/length(.$QFAHPD_code[[1]])))
+
+# Now we have the use table where each BEA code has multiple rows for the different QFAHPD codes that make it up
+# Create an aggregated version of QFAHPD to get the final price values for each code
+# Weighted average across all market groups, years, and quarters
+qfahpd_agg <- qfahpd2 %>%
+  group_by(foodgroup) %>%
+  summarize(price = weighted.mean(price, aggweight, na.rm = TRUE))
+
+qfahpd_agg %>% print(n=nrow(.))
+
+# Join the aggregated QFAHPD back up with its numerical codes and LAFA names
+
+setdiff(qfahpd2lafa$QFAHPD_name, qfahpd_agg$foodgroup) # A couple of the dairy names are not correct. Can easily correct.
+
+
+qfahpd_agg <- qfahpd_agg %>% 
+  mutate(foodgroup = gsub('Whole and 2%', 'Regular fat', foodgroup)) %>%
+  left_join(qfahpd2lafa, by = c('foodgroup' = 'QFAHPD_name')) %>%
+  mutate(QFAHPD_code = as.character(QFAHPD_code))
+# All match other than beverages.
+
+# Now join the aggregated QFAHPD with the food_U mapped to QFAHPD so that the total $ can be divided by $/weight to yield a weight (or mass).
+# Units do not really matter
+food_U_LAFA <- food_U_QFAHPD %>%
+  left_join(qfahpd_agg) %>%
+  mutate(mass_flow = monetary_flow / price)
+
+# For the unique LAFA names in the QFAHPD to LAFA mapping, extract the waste rates for 2012 or the closest year post-2012.
+lafa_to_extract <- Reduce(union, qfahpd2lafa$LAFA_names)
+
+
+# Split it up again by LAFA so that we can get the weights.
+# Get only the columns we care about from each LAFA element in the list
+# Then get the year closest to 2012
+lafa_df <- lafa %>% 
+  map_dfr(~ select(., Category, Year, Loss_at_consumer_level_Other__cooking_loss_and_uneaten_food__Percent)) %>%
+  rename(avoidable_consumer_loss = Loss_at_consumer_level_Other__cooking_loss_and_uneaten_food__Percent) %>%
+  filter(!is.na(avoidable_consumer_loss)) %>%
+  group_by(Category) %>%
+  summarize(avoidable_consumer_loss = avoidable_consumer_loss[which.min(abs(Year-2012))])
+
+setdiff(lafa_to_extract, lafa_df$Category)
+# The following categories will need to be used to get avoidable consumer loss percentage
+# Calculate weighted average of avoidable pct loss, weighted by weight available to consumers in the given year.
+# [1] "Fresh fruit"                 "Frozen fruit"                "Canned fruit"                "Juice"                      
+# [5] "Canned vegetables"           "Fresh vegetables"            "Frozen vegetables"           "Dry edible beans"           
+# [9] "Total grains"                "Total cheese"                "Red meat"                    "Poultry"                    
+# [13] "Total Fresh and Frozen Fish" "Canned fish and shellfish"   "Total tree nuts"             "Caloric sweeteners"         
+# [17] "beverage"                    "prepared food"              

@@ -78,6 +78,10 @@ naics_lookup2 <- read.csv(file.path(fp_crosswalk, 'naics_crosswalk_rawfile11jun_
 later_sectors <- naics_lookup %>% filter(stage %in% c('foodservice', 'institutional', 'retail'), proportion_food > 0) %>% pull(BEA_389_code) # 39 later sectors
 
 level1and3_inputs_tohigherlevels <- U[c(level1_fsc_sectors, level3_fsc_sectors), later_sectors]
+
+# Added 10 Feb. 2020: write this level 1 and 3 to levels 4 and up matrix to a CSV for use in later analysis.
+write.csv(level1and3_inputs_tohigherlevels, file.path(fp_crosswalk, 'level13_to_level4678_inputs.csv'))
+
 faoproportions_forlevel1and3 <- naics_lookup2 %>% filter(stage %in% c('agriculture', 'processing')) %>% select(cereals:beverages)
 
 # Multiply the matrices
