@@ -406,11 +406,13 @@ lafa_to_extract <- Reduce(union, qfahpd2lafa$LAFA_names)
 # Get only the columns we care about from each LAFA element in the list
 # Then get the year closest to 2012
 lafa_df <- lafa %>% 
-  map_dfr(~ select(., Category, Year, Loss_at_consumer_level_Other__cooking_loss_and_uneaten_food__Percent)) %>%
-  rename(avoidable_consumer_loss = Loss_at_consumer_level_Other__cooking_loss_and_uneaten_food__Percent) %>%
+  map_dfr(~ select(., Category, Year, Loss_at_consumer_level_Other__cooking_loss_and_uneaten_food__Percent, Consumer_weight_Lbs.year)) %>%
+  rename(avoidable_consumer_loss = Loss_at_consumer_level_Other__cooking_loss_and_uneaten_food__Percent,
+         consumer_weight = Consumer_weight_Lbs.year) %>%
   filter(!is.na(avoidable_consumer_loss)) %>%
   group_by(Category) %>%
-  summarize(avoidable_consumer_loss = avoidable_consumer_loss[which.min(abs(Year-2012))])
+  summarize(avoidable_consumer_loss = avoidable_consumer_loss[which.min(abs(Year-2012))],
+            consumer_weight = consumer_weight[which.min(abs(Year-2012))])
 
 setdiff(lafa_to_extract, lafa_df$Category)
 # The following categories will need to be used to get avoidable consumer loss percentage
@@ -420,3 +422,22 @@ setdiff(lafa_to_extract, lafa_df$Category)
 # [9] "Total grains"                "Total cheese"                "Red meat"                    "Poultry"                    
 # [13] "Total Fresh and Frozen Fish" "Canned fish and shellfish"   "Total tree nuts"             "Caloric sweeteners"         
 # [17] "beverage"                    "prepared food"              
+
+# Read the description of the nested category structure in.
+lafa_struct <- read_csv(file.path(fp, 'crossreference_tables/lafa_category_structure.csv'))
+
+lafa_df <- lafa_df %>%
+  left_join(lafa_struct, by = c('Category' = 'Food'))
+
+lafa_group_rates <- map_dfr(1:4, function(i) lafa_df %>% 
+  rename_(subgroup = paste0('subgroup', i)) %>%
+  group_by(subgroup) %>% 
+  summarize(avoidable_consumer_loss = weighted.mean(x = avoidable_consumer_loss, w = consumer_weight))) %>%
+  filter(!is.na(subgroup))
+
+# Overall mean for other category
+overall_mean <- with(lafa_df, weighted.mean(avoidable_consumer_loss, consumer_weight))
+
+all_baseline_waste_lafa <- data.frame(Category = c(lafa_df$Category, lafa_group_rates$subgroup, 'prepared food'),
+                                 avoidable_consumer_loss = c(lafa_df$avoidable_consumer_loss, lafa_group_rates$avoidable_consumer_loss, overall_mean))
+
