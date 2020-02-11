@@ -92,10 +92,11 @@ setdiff(naics_to_use, susb_naics$NAICS)
 # Final version of NAICS to use -------------------------------------------
 
 restaurants <- codes_subset$BEA_389_code[1:3]
-tourism_hospitality <- codes_subset$BEA_389_code[c(4,5,6,9, 12, 14, 15, 16, 17, 18)] # Leave out movies and performances. Include air, rail, and ships.
-institutions <- codes_subset$BEA_389_code[c(19:27)]
+tourism_hospitality <- codes_subset$BEA_389_code[c(4,6,9, 12, 14, 15, 16, 17, 18)] # Leave out movies and performances. Include air and ships.
+## edit: leave out rail transport.
+institutions <- codes_subset$BEA_389_code[c(19,20,22:27)] # Leave out other educational services since it does not appear to have food flows.
 
-# 3 codes represent restaurants, 10 represent tourism/hospitality industry, 9 represent institutions that could adopt "WTA"
+# 3 codes represent restaurants, 9 represent tourism/hospitality industry, 8 represent institutions that could adopt "WTA"
 
 bea_to_use_df <- data.frame(BEA_Code = c(restaurants, tourism_hospitality, institutions),
                             sector = rep(c('restaurants', 'tourism and hospitality', 'institutions'), c(length(restaurants), length(tourism_hospitality), length(institutions))))
@@ -438,6 +439,141 @@ lafa_group_rates <- map_dfr(1:4, function(i) lafa_df %>%
 # Overall mean for other category
 overall_mean <- with(lafa_df, weighted.mean(avoidable_consumer_loss, consumer_weight))
 
-all_baseline_waste_lafa <- data.frame(Category = c(lafa_df$Category, lafa_group_rates$subgroup, 'prepared food'),
-                                 avoidable_consumer_loss = c(lafa_df$avoidable_consumer_loss, lafa_group_rates$avoidable_consumer_loss, overall_mean))
+all_lafa_rates <- data.frame(Category = c(lafa_df$Category, lafa_group_rates$subgroup, 'prepared food'),
+                             avoidable_consumer_loss = c(lafa_df$avoidable_consumer_loss, lafa_group_rates$avoidable_consumer_loss, overall_mean))
+
+# Rates of consumer-level "avoidable" waste by food group in LAFA (262 different foods)
+ggplot(all_lafa_rates, aes(x = avoidable_consumer_loss/100)) + 
+  geom_histogram() +
+  theme_minimal() +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1), name = 'Avoidable consumer food waste') +
+  scale_y_continuous(expand = c(0,0.1))
+
+
+# Map mass flows to LAFA groups -------------------------------------------
+
+# Use the same pipe as last time to spread out the LAFA names over the rows
+
+food_U_LAFA_spread <- food_U_LAFA %>%
+  group_by(BEA_389_code, BEA_recipient_code, QFAHPD_code, price) %>%
+  group_modify(~ data.frame(LAFA_name = .$LAFA_names[[1]], 
+                            mass_flow = .$mass_flow/length(.$LAFA_names[[1]]),
+                            monetary_flow = .$monetary_flow/length(.$LAFA_names[[1]]))) %>%
+  left_join(all_lafa_rates, by = c('LAFA_name' = 'Category'))
+ 
+# Join with the proportion of sales affected (also the same as proportion of mass affected) based on % sales that are food and the >20 employee threshold
+# Then calculate the reduction in required mass flow for each food type, and then a weighted average to get the reduction in monetary flow needed
+demand_change_fn <- function(W0, r, p) p * ((1 - W0) / (1 - (1 - r) * W0) - 1) + 1
+
+food_U_LAFA_spread <- food_U_LAFA_spread %>% 
+  left_join(proportion_affected, by = c('BEA_recipient_code' = 'BEA_Code')) %>%
+  mutate(reduction_by_mass = demand_change_fn(W0 = avoidable_consumer_loss/100, r = overall_waste_reduction, p = proportion_receipts_affected),
+         mass_flow_post_intervention = mass_flow * reduction_by_mass,
+         monetary_flow_post_intervention = mass_flow_post_intervention * price)
+
+# Sum up by old row and column index from the original food_U matrix, then reshape to make the same matrix.
+food_U_postintervention_df <- food_U_LAFA_spread %>%
+  group_by(BEA_389_code, BEA_recipient_code) %>%
+  summarize(monetary_flow = sum(monetary_flow_post_intervention, na.rm = TRUE)) 
+
+food_U_postintervention <- food_U_postintervention_df %>%
+  pivot_wider(names_from = BEA_recipient_code, values_from = monetary_flow, values_fill = list(monetary_flow = 0)) %>%
+  as.data.frame
+row.names(food_U_postintervention) <- food_U_postintervention$BEA_389_code
+food_U_postintervention <- food_U_postintervention[, !names(food_U_postintervention) %in% 'BEA_389_code']
+
+# Make the row and column order the same as food_U
+row.names(food_U_postintervention) == row.names(food_U) # Good
+food_U_postintervention <- food_U_postintervention[, names(food_U)]
+
+# Summarize mass waste reduction and $ reduction --------------------------
+
+# The % of waste reduced by mass won't be exactly equivalent to the % of waste reduced by $.
+
+postintervention <- food_U_postintervention_df %>%
+  group_by(BEA_recipient_code) %>%
+  summarize(monetary_flow_postintervention = sum(monetary_flow))
+
+preintervention <- data.frame(BEA_recipient_code = names(food_U), monetary_flow_preintervention = colSums(food_U))
+
+monetary_byintervention <- left_join(postintervention, preintervention) %>%
+  mutate(reduction_bydollar = 1 - monetary_flow_postintervention / monetary_flow_preintervention) 
+
+mass_byintervention <- food_U_LAFA_spread %>%
+  group_by(BEA_recipient_code) %>%
+  summarize(mass_flow_preintervention = sum(mass_flow, na.rm = TRUE),
+            mass_flow_postintervention = sum(mass_flow_post_intervention, na.rm = TRUE)) %>%
+  mutate(reduction_bymass = 1 - mass_flow_postintervention / mass_flow_preintervention) 
+
+rate_changes <- left_join(mass_byintervention, monetary_byintervention)
+
+# Proportion reduction in monetary units is systematically higher than in mass units but 
+ggplot(rate_changes) +
+  geom_point(aes(x = reduction_bymass, y = reduction_bydollar)) +
+  geom_abline(slope=1, linetype = 'dotted') +
+  annotate(geom = 'text', x = 0.095, y = 0.094, label = "1:1 line", angle = 45) +
+  theme_minimal() +
+  labs(x = 'proportion reduction by mass', y = 'proportion reduction by $') +
+  theme(aspect.ratio = 1)
+
+# A better way is to phrase it as reducing the operating costs (purchases of raw materials) by the affected industries
+# Since we have a waste rate reduction by mass, convert it back to waste rate reduction by money and get the purchasing rate reduction from each of the industries that supply the final foodservice industries.
+
+# Calculate pre and post incoming monetary food flow in millions of dollars
+total_prepost <- data.frame(BEA_Code = names(food_U),
+                            food_purchases_baseline = colSums(food_U),
+                            food_purchases_postintervention = colSums(food_U_postintervention)) %>%
+  mutate(reduction = food_purchases_baseline - food_purchases_postintervention)
+
+
+
+# Weighted mean of waste rate by mass flow for each foodservice industry = final waste rate for the industries!
+baseline_waste_foodservice <- food_U_LAFA_spread %>%
+  group_by(BEA_recipient_code) %>%
+  summarize(avoidable_consumer_loss = weighted.mean(x = avoidable_consumer_loss, w = mass_flow, na.rm = TRUE))
+
+# One is missing (other education) so we will apply the rate for colleges and universities to it
+# baseline_waste_foodservice$avoidable_consumer_loss[baseline_waste_foodservice$BEA_recipient_code == '611B00'] <- baseline_waste_foodservice$avoidable_consumer_loss[baseline_waste_foodservice$BEA_recipient_code == '611A00']
+# No longer needed since other education has no food purchases.
+
+# Join up the names of the BEA codes and print the table of values
+trunc_ellipsis <- function(x, n) if_else(nchar(x) < 30, x, paste(substr(x, 1, n), '...'))
+baseline_waste_foodservice <- baseline_waste_foodservice %>% 
+  left_join(codes_subset, by = c('BEA_recipient_code' = 'BEA_389_code')) %>%
+  setNames(c('BEA_Code', 'baseline', 'BEA_Title')) %>%
+  left_join(bea_to_use_df)
+
+baseline_waste_foodservice <- baseline_waste_foodservice %>%
+  left_join(proportion_affected %>% select(BEA_Code, proportion_receipts_affected, proportion_food)) %>%
+  left_join(total_prepost)
+
+baseline_waste_foodservice %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>%
+  select(sector, BEA_Title, baseline, food_purchases_baseline, food_purchases_postintervention, reduction) %>%
+  rename(baseline_waste_percent = baseline) %>%
+  arrange(sector) %>%
+  print(n = nrow(.))
+
+
+# The demand on which to run the eeio -------------------------------------
+
+# Simply enough, just run it on the difference in the two rowSums for pre and post intervention
+# This represents final operating costs of the industries, as if it were final consumer demand
+
+# Above they were marginal column totals for the recipient industries
+# Phrase it also as marginal row totals for the food types
+
+reduction_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
+                                   cost_averted = rowSums(food_U) - rowSums(food_U_postintervention))
+
+# For display purposes join this with the name of the food so that we can see the names of the rows being totaled up.
+bea_codes %>%
+  select(BEA_389_code, BEA_389_def) %>%
+  rename(BEA_Code = BEA_389_code, BEA_Title = BEA_389_def) %>%
+  right_join(reduction_byfoodtype) %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>%
+  print(n = nrow(.))
+
+### RUN EEIO on this demand vector.
+
 

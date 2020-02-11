@@ -129,10 +129,10 @@ The following table shows the industries belonging to each of the three sectors,
 codes_subset <- bea_codes %>% filter(stage %in% c('foodservice', 'institutional')) %>% select(BEA_389_code, BEA_389_def)
 
 restaurants <- codes_subset$BEA_389_code[1:3]
-tourism_hospitality <- codes_subset$BEA_389_code[c(4,5,6,9, 12, 14, 15, 16, 17, 18)] # Leave out movies and performances. Include air and ships.
-institutions <- codes_subset$BEA_389_code[c(19:27)]
+tourism_hospitality <- codes_subset$BEA_389_code[c(4,6,9, 12, 14, 15, 16, 17, 18)] # Leave out movies and performances. Include air and ships.
+institutions <- codes_subset$BEA_389_code[c(19, 20, 22:27)] # Leave out other educational services.
 
-# 3 codes represent restaurants, 10 represent tourism/hospitality industry, 9 represent institutions that could adopt "WTA"
+# 3 codes represent restaurants, 9 represent tourism/hospitality industry, 8 represent institutions that could adopt "WTA"
 
 bea_to_use_df <- data.frame(BEA_Code = c(restaurants, tourism_hospitality, institutions),
                             sector = rep(c('restaurants', 'tourism and hospitality', 'institutions'), c(length(restaurants), length(tourism_hospitality), length(institutions))))
