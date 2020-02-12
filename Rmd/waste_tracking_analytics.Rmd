@@ -339,9 +339,11 @@ The proportion of sales is based on the proportion of expenses in the BEA group 
 
 **Note on scope: I am not including beverages in this analysis (alcoholic or otherwise). I don't think Leanpath or other waste trackers attempt to address beverage waste. If that is incorrect, I can add beverages back in.**
 
-We know by what relative percentage the intervention can reduce waste within each industry (based on our assumptions), but we do not yet have the baseline waste rate which we would need to get the absolute value of the reduced waste for each industry. We can get the baseline rate using LAFA data but only if we run through a few conversion steps first. This uses the Quarterly Food-at-Home Price Database (QFAHPD) as the data source for relative prices of foods. This assumes that the relative prices are the same for wholesale and retail and also uses slightly older values from 2004-2010. However since all we care about is the relative prices, this should not be a big issue.
+We know by what relative percentage the intervention can reduce waste within each industry (based on our assumptions), but we do not yet have the baseline waste rate which we would need to get the absolute value of the reduced waste for each industry. We can get the baseline rate using LAFA data but only if we run through a few conversion steps first. This uses the BEA input-output tables as the data source for the monetary flows from primary food industries (agriculture and manufacturing/processing) to the secondary foodservice industries, and the Quarterly Food-at-Home Price Database (QFAHPD) as the data source for relative prices of foods. This assumes that the relative prices are the same for wholesale and retail and also uses slightly older values from 2004-2010. However since all we care about is the relative prices, this should not be a big issue.
 
-1. get relative % of purchases by BEA food growing/manufacturing industry group by \$ value for each food service industry group.
+The necessary steps are to:
+
+1. get relative % of purchases by BEA food growing/manufacturing industry group by \$ value for each foodservice industry group.
 2. convert the relative % by \$ of BEA to relative % by \$ of QFAHPD using the BEA-QFAHPD crosswalk.
 3. convert the $ values to relative weights using the QFAHPD value to weight conversion factors (price per weight).
 4. convert the relative weights of QFAHPD food groups to relative weights of LAFA groups using the crosswalk table.
@@ -375,7 +377,7 @@ food_U <- food_U[!row.names(food_U) %in% beveragecodes, ]
 ```
 
 
-```{r convert BEA to QFAHPD to LAFA}
+```{r map BEA to QFAHPD}
 # Convert the comma-separated string columns to list columns.
 bea2qfahpd <- bea2qfahpd %>%
   mutate(QFAHPD_code = strsplit(QFAHPD_code, ';'))
@@ -409,7 +411,9 @@ qfahpd_agg <- qfahpd_agg %>%
 food_U_LAFA <- food_U_QFAHPD %>%
   left_join(qfahpd_agg) %>%
   mutate(mass_flow = monetary_flow / price)
+```
 
+```{r get all LAFA rates including averages of lower level groups}
 # For the unique LAFA names in the QFAHPD to LAFA mapping, extract the waste rates for 2012 or the closest year post-2012.
 lafa_to_extract <- Reduce(union, qfahpd2lafa$LAFA_names)
 
@@ -452,9 +456,9 @@ ggplot(all_lafa_rates, aes(x = avoidable_consumer_loss/100)) +
   scale_y_continuous(expand = c(0,0.1))
 ```
 
-**Insert a description of fig here**
+This is a histogram of the "avoidable share" of consumer food waste for all ~250 foods included in LAFA. This includes cooking loss and uneaten food but does not include inedible parts such as bones or rinds. Once we have converted the monetary flows to mass flows for each foodservice industry, we can use these individual waste rates to get a weighted average waste rate for each individual industry.
 
-```{r map mass flows to LAFA}
+```{r map mass flows to LAFA and convert back to monetary}
 # Use the same pipe as last time to spread out the LAFA names over the rows
 
 food_U_LAFA_spread <- food_U_LAFA %>%
@@ -490,14 +494,148 @@ food_U_postintervention <- food_U_postintervention[, !names(food_U_postintervent
 food_U_postintervention <- food_U_postintervention[, names(food_U)]
 ```
 
+```{r summarize monetary and mass flow changes}
+# The % of waste reduced by mass won't be exactly equivalent to the % of waste reduced by $.
+
+postintervention <- food_U_postintervention_df %>%
+  group_by(BEA_recipient_code) %>%
+  summarize(monetary_flow_postintervention = sum(monetary_flow))
+
+preintervention <- data.frame(BEA_recipient_code = names(food_U), monetary_flow_preintervention = colSums(food_U))
+
+monetary_byintervention <- left_join(postintervention, preintervention) %>%
+  mutate(reduction_bydollar = 1 - monetary_flow_postintervention / monetary_flow_preintervention) 
+
+mass_byintervention <- food_U_LAFA_spread %>%
+  group_by(BEA_recipient_code) %>%
+  summarize(mass_flow_preintervention = sum(mass_flow, na.rm = TRUE),
+            mass_flow_postintervention = sum(mass_flow_post_intervention, na.rm = TRUE)) %>%
+  mutate(reduction_bymass = 1 - mass_flow_postintervention / mass_flow_preintervention) 
+
+rate_changes <- left_join(mass_byintervention, monetary_byintervention)
+
+# A better way is to phrase it as reducing the operating costs (purchases of raw materials) by the affected industries
+# Since we have a waste rate reduction by mass, convert it back to waste rate reduction by money and get the purchasing rate reduction from each of the industries that supply the final foodservice industries.
+
+# Calculate pre and post incoming monetary food flow in millions of dollars
+total_prepost <- data.frame(BEA_Code = names(food_U),
+                            food_purchases_baseline = colSums(food_U),
+                            food_purchases_postintervention = colSums(food_U_postintervention)) %>%
+  mutate(reduction = food_purchases_baseline - food_purchases_postintervention)
+```
 
 ## 6. Find total food purchases averted by foodservice industry
 
 Once we have converted the monetary flows to mass flows, applied the waste rate changes, then converted them back to monetary flows, we have two matrices, a baseline and a post-intervention matrix. Each matrix has rows representing primary food growing and manufacturing industries, and columns representing foodservice industries. The values in the matrix are monetary flows, in millions of dollars, from each of the primary industries to the secondary industries in the baseline case and in the counterfactual case where the intervention was adopted, respectively.
 
-Here I give the marginal column totals (how much each foodservice industry has to buy, total), and the marginal row totals (how much primary production is needed to supply the foodservice industry). The difference between the baseline and counterfactual represents the industry demand that is reduced by the successful waste reduction intervention.
+Here I give the marginal column totals (how much each foodservice industry has to buy, total), and the marginal row totals (how much primary production is needed to supply the foodservice industry). The difference between the baseline and counterfactual represents the industry demand that is reduced by the successful waste reduction intervention. The value for waste reduction is currently based on a point estimate for the effectiveness of the reduction and a single value for the proportion kitchen waste across all industries (45% waste reduction and 85% of foodservice waste generated in the kitchen; $0.45 \times 0.85 = 0.3825$).
+
+```{r baseline waste rate for each foodservice industry}
+# Weighted mean of waste rate by mass flow for each foodservice industry = final waste rate for the industries!
+baseline_waste_foodservice <- food_U_LAFA_spread %>%
+  group_by(BEA_recipient_code) %>%
+  summarize(avoidable_consumer_loss = weighted.mean(x = avoidable_consumer_loss, w = mass_flow, na.rm = TRUE))
+
+# Join up the names of the BEA codes and print the table of values
+trunc_ellipsis <- function(x, n) if_else(nchar(x) < 30, x, paste(substr(x, 1, n), '...'))
+baseline_waste_foodservice <- baseline_waste_foodservice %>% 
+  left_join(codes_subset, by = c('BEA_recipient_code' = 'BEA_389_code')) %>%
+  setNames(c('BEA_Code', 'baseline', 'BEA_Title')) %>%
+  left_join(bea_to_use_df)
+
+baseline_waste_foodservice <- baseline_waste_foodservice %>%
+  left_join(proportion_affected %>% select(BEA_Code, proportion_receipts_affected, proportion_food)) %>%
+  left_join(total_prepost)
+
+baseline_waste_foodservice %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>%
+  select(sector, BEA_Title, baseline, food_purchases_baseline, food_purchases_postintervention, reduction) %>%
+  rename(baseline_waste_percent = baseline) %>%
+  arrange(sector) %>%
+  print(n = nrow(.))
+```
+
+```{r plot of monetary reduction versus mass reduction}
+# Proportion reduction in monetary units is systematically higher than in mass units but 
+ggplot(rate_changes) +
+  geom_point(aes(x = reduction_bymass, y = reduction_bydollar)) +
+  geom_abline(slope=1, linetype = 'dotted') +
+  annotate(geom = 'text', x = 0.095, y = 0.094, label = "1:1 line", angle = 45) +
+  theme_minimal() +
+  labs(x = 'proportion reduction by mass', y = 'proportion reduction by $') +
+  theme(aspect.ratio = 1)
+```
+
+Within each foodservice industry, the proportional waste reduction in monetary units tends to be slightly higher than the proportion reduction in mass units but the difference is quite small (for example, 8% reduction in mass waste equals about 9% reduction in monetary waste). Therefore the conversion and weighting procedure has a relatively small effect on the final result. 
+
+```{r marginal row totals to show waste reduction by food type}
+# Above they were marginal column totals for the recipient industries
+# Phrase it also as marginal row totals for the food types
+
+reduction_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
+                                   cost_averted = rowSums(food_U) - rowSums(food_U_postintervention))
+
+# For display purposes join this with the name of the food so that we can see the names of the rows being totaled up.
+bea_codes %>%
+  select(BEA_389_code, BEA_389_def) %>%
+  rename(BEA_Code = BEA_389_code, BEA_Title = BEA_389_def) %>%
+  right_join(reduction_byfoodtype) %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>%
+  print(n = nrow(.))
+```
+
 
 ## 7. Use input-output model to calculate impact averted by intervention
+
+Now that we have the monetary flows representing purchases from primary food industries to secondary food industries for both the baseline and counterfactual (post-intervention) case, we can run the USEEIO environmentally extended input-output model on each of these to get the baseline environmental impact and the amount of impact averted by the intervention. We treat the intermediate demand marginal sums as if it were a final demand vector to determine the impact it represents.
+
+```{r run EEIO}
+# Simply enough, just run it on the difference in the two rowSums for pre and post intervention
+# This represents final operating costs of the industries, as if it were final consumer demand
+if (!is_local) use_python('/usr/bin/python3')
+source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
+
+# The model is already built so we don't need to build it again. 
+# All we need to do is match the demand vector 6 digit codes with the codes that include the full names
+# then run eeio_lcia on it.
+
+# Demand codes table
+all_codes <- read_csv(file.path(fp, 'crossreference_tables/all_codes.csv'))
+
+demand_vector <- reduction_byfoodtype %>%
+  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
+  with(list(codes = sector_desc_drc, values = cost_averted))
+
+eeio_wta <- eeio_lcia('USEEIO2012', demand_vector$values * 1e6, demand_vector$codes) 
+
+# Also do for the baseline
+baseline_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
+                                   baseline = rowSums(food_U))
+
+demand_vector_baseline <- baseline_byfoodtype %>%
+  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
+  with(list(codes = sector_desc_drc, values = baseline))
+
+eeio_wta_baseline <- eeio_lcia('USEEIO2012', demand_vector_baseline$values * 1e6, demand_vector_baseline$codes) 
+
+```
+
+This table shows the baseline impact from food produced by primary food industries that is sold to the foodservice industry. The impact averted column shows how much of this impact would be reduced if all eligible establishments in the foodservice industry implemented waste tracking and analytics software, also expressed as a percent of the original value.
+
+```{r EEIO result as table}
+# A table is probably the best way to show it
+eeio_dat <- data.frame(category = row.names(eeio_wta),
+                       baseline = eeio_wta_baseline$Total,
+                       impact_averted = eeio_wta$Total)
+
+eeio_dat %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  mutate(baseline = baseline * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         impact_averted = impact_averted * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         category = c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'),
+         percent_averted = signif(100 * impact_averted/baseline, 2))
+```
+
 
 ## 8. Compare cost of implementation with environmental benefit
 
