@@ -533,7 +533,7 @@ total_prepost <- data.frame(BEA_Code = names(food_U),
 
 Once we have converted the monetary flows to mass flows, applied the waste rate changes, then converted them back to monetary flows, we have two matrices, a baseline and a post-intervention matrix. Each matrix has rows representing primary food growing and manufacturing industries, and columns representing foodservice industries. The values in the matrix are monetary flows, in millions of dollars, from each of the primary industries to the secondary industries in the baseline case and in the counterfactual case where the intervention was adopted, respectively.
 
-Here I give the marginal column totals (how much each foodservice industry has to buy, total), and the marginal row totals (how much primary production is needed to supply the foodservice industry). The difference between the baseline and counterfactual represents the industry demand that is reduced by the successful waste reduction intervention. The value for waste reduction is currently based on a point estimate for the effectiveness of the reduction and a single value for the proportion kitchen waste across all industries (45% waste reduction and 85% of foodservice waste generated in the kitchen; $0.45 \times 0.85 = 0.3825$).
+Here I give the marginal column totals (how much each foodservice industry has to buy, total), and the marginal row totals (how much primary production is needed to supply the foodservice industry). The difference between the baseline and counterfactual represents the industry demand that is reduced by the successful waste reduction intervention. The value for waste reduction is currently based on a point estimate for the effectiveness of the reduction and a single value for the proportion kitchen waste across all industries (45% waste reduction and 85% of foodservice waste generated in the kitchen; $0.45 \times 0.85 = 0.3825$). Note that all units are in millions of USD.
 
 ```{r baseline waste rate for each foodservice industry}
 # Weighted mean of waste rate by mass flow for each foodservice industry = final waste rate for the industries!
@@ -572,6 +572,8 @@ ggplot(rate_changes) +
 ```
 
 Within each foodservice industry, the proportional waste reduction in monetary units tends to be slightly higher than the proportion reduction in mass units but the difference is quite small (for example, 8% reduction in mass waste equals about 9% reduction in monetary waste). Therefore the conversion and weighting procedure has a relatively small effect on the final result. 
+
+This table shows the marginal row totals, by primary food industry, of value sold to the secondary foodservice industries, in millions of dollars.
 
 ```{r marginal row totals to show waste reduction by food type}
 # Above they were marginal column totals for the recipient industries
@@ -644,4 +646,48 @@ eeio_dat %>%
 
 ## 8. Compare cost of implementation with environmental benefit
 
+Because this is the first intervention we have analyzed in detail, we cannot compare the cost per unit impact reduction with other interventions yet. However, we can estimate the cost of reducing unit impact given the lower and upper bounds of the cost estimate, and compare it to existing benchmarks. For example, in the case of CO2 emissions, we can compare our cost to the "social cost of carbon" or the "McKinsey curve."
+
+To get the total cost of implementation, we need to multiply the per-establishment cost by the number of establishments, across all industries, again ignoring the ineligible ones with fewer than 20 employees.
+
+```{r multiply cost by number of establishments}
+# Print table
+establishments_affected %>% 
+  ungroup %>%
+  filter(use) %>%
+  select(-use) %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30))
+
+n_estab <- sum(establishments_affected$establishments[establishments_affected$use])
+total_cost <- c(8749, 20102) * n_estab # 4 to 9 billion
+
+```
+
+Given the numbers of establishments in this table, we multiply the total number of establishments (`r n_estab`) by the upper and lower bounds of total cost, \$8,749 and \$20,102, resulting in a total cost range of roughly **4 to 9 billion USD** to implement waste tracking and analytics across all eligible establishments.
+
+Now we simply divide the total cost by the impact reductions to get a cost per unit reduction for each category.
+
+```{r total cost per impact reduction}
+cost_per_impact <- eeio_dat %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  mutate(cost_per_reduction_lower = total_cost[1] / impact_averted,
+         cost_per_reduction_upper = total_cost[2] / impact_averted)
+
+cost_per_impact %>%
+  select(-impact_averted, -baseline) %>%
+  mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'),
+         cost_per_reduction_lower = paste0('$', round(cost_per_reduction_lower, 2)),
+         cost_per_reduction_upper = paste0('$', round(cost_per_reduction_upper, 2)))
+```
+
+The final result is shown in this table. The CO2 emission reduction cost can be compared with the "social cost of carbon" fixed several years ago by the Obama administration at approximately 5 cents per kg CO2. Unfortunately this analysis shows a fairly high cost of CO2 emission reduction, ranging from \$0.44 to \$1.00, compared to the social cost of carbon. 
+
+I will examine the assumptions here to see why the cost is so high. When I did a quick version of this analysis using the cost numbers given by ReFED, I get a much cheaper cost per kg CO2 reduction (\$0.03 for institutions and \$0.13 for restaurants), which may be due to the very low cost assumptions they make, or failure to account for all costs. Additionally, it's important to note that the environmental benefits viewed very narrowly here are not the only benefits to consider. However it may simply be that if CO2 is the only benefit we care about, it is not a great deal. 
+
+I will add more interpretation to this later.
+
 ## 9. Uncertainty analysis
+
+**Note: work in progress...**
+
+As briefly discussed above, there are a number of sources of uncertainty we can account for. Add some detail and fill out this analysis . . . 

@@ -618,3 +618,33 @@ eeio_dat %>%
          impact_averted = impact_averted * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
          category = c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'),
          percent_averted = signif(100 * impact_averted/baseline, 2))
+
+
+# Total cost and divide by impact -----------------------------------------
+
+# Cost is total n of establishments * cost per establishment
+
+# Print table
+establishments_affected %>% 
+  ungroup %>%
+  filter(use) %>%
+  select(-use) %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30))
+
+n_estab <- sum(establishments_affected$establishments[establishments_affected$use])
+total_cost <- c(8749, 20102) * n_estab # 4 to 9 billion
+
+cost_per_impact <- eeio_dat %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  mutate(cost_per_reduction_lower = total_cost[1] / impact_averted,
+         cost_per_reduction_upper = total_cost[2] / impact_averted)
+
+cost_per_impact %>%
+  select(-impact_averted, -baseline) %>%
+  mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'),
+         cost_per_reduction_lower = paste0('$', round(cost_per_reduction_lower, 2)),
+         cost_per_reduction_upper = paste0('$', round(cost_per_reduction_upper, 2)))
+
+         
+         
+         
