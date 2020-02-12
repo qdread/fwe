@@ -576,4 +576,45 @@ bea_codes %>%
 
 ### RUN EEIO on this demand vector.
 
+library(reticulate)
 
+if (!is_local) use_python('/usr/bin/python3')
+source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
+
+# The model is already built so we don't need to build it again. 
+# All we need to do is match the demand vector 6 digit codes with the codes that include the full names
+# then run eeio_lcia on it.
+
+# Demand codes table
+all_codes <- read_csv(file.path(fp, 'crossreference_tables/all_codes.csv'))
+
+demand_vector <- reduction_byfoodtype %>%
+  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
+  with(list(codes = sector_desc_drc, values = cost_averted))
+
+eeio_wta <- eeio_lcia('USEEIO2012', demand_vector$values * 1e6, demand_vector$codes) 
+
+# Also do for the baseline
+baseline_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
+                                   baseline = rowSums(food_U))
+
+demand_vector_baseline <- baseline_byfoodtype %>%
+  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
+  with(list(codes = sector_desc_drc, values = baseline))
+
+eeio_wta_baseline <- eeio_lcia('USEEIO2012', demand_vector_baseline$values * 1e6, demand_vector_baseline$codes) 
+
+
+# Make a plot of the result -----------------------------------------------
+
+# A table is probably the best way to show it
+eeio_dat <- data.frame(category = row.names(eeio_wta),
+                       baseline = eeio_wta_baseline$Total,
+                       impact_averted = eeio_wta$Total)
+
+eeio_dat %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  mutate(baseline = baseline * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         impact_averted = impact_averted * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         category = c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'),
+         percent_averted = signif(100 * impact_averted/baseline, 2))
