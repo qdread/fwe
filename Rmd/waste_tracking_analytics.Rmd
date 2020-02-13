@@ -12,9 +12,11 @@ trunc_ellipsis <- function(x, n) if_else(nchar(x) < 30, x, paste(substr(x, 1, n)
 
 # Summary
 
-This is a financial cost - environmental benefit analysis of the adoption of food waste tracking & analytics systems (e.g., Leanpath) by all foodservice establishments in the USA with sufficient volume to justify the cost of implementation. This is a refinement of the analysis presented by ReFED in their "Roadmap" report.
+**What?** This is a financial cost - environmental benefit analysis of the adoption of food waste tracking & analytics systems (e.g., Leanpath) by all foodservice establishments in the USA with sufficient volume to justify the cost of implementation. This is a refinement of the analysis presented by ReFED in their "Roadmap" report.
 
-**Once I get the results, insert a brief summary of them here.**
+**How?** I used the cost data we assembled to get per-establishment costs, and a number of assumptions to determine the industry groups and numbers of eligible establishments. I converted each foodservice industry group's food purchases by dollar into mass units, estimated baseline and post-intervention waste, then converted back into dollar units. The EEIO model tells us the averted impact associated with the dollar value of averted purchases resulting from less waste in the foodservice industry.
+
+**What was the result?** Given a roughly 40% reduction in foodservice waste, and a roughly 22-25% baseline waste rate, if all eligible establishments adopted waste tracking and analytics systems, the foodservice industry would have to buy 8-10% less raw materials. Because the EEIO model assumes linearity this would result in 8-10% decrease in environmental impact of the food service industry. The cost estimates are somewhat higher than ReFED's numbers so the cost per unit impact reduction is fairly high. If we only considered CO<sub>2</sub> emission reduction it would be well short of what is considered a "good deal" (\$400 to \$1000 invested per tonne reduced, where $46/tonne is a decent benchmark). However there are so many other co-benefits that it may still be worth the investment.
 
 This is my first attempt at doing an intervention analysis of this kind. We can do a similar analysis for other food waste reduction interventions. Ultimately the goal would be to do multiple analyses and compare them.
 
@@ -87,9 +89,10 @@ We are using the following datasets and tables:
 
 * Statistics of U.S. Businesses (SUSB) for 2012, for the numbers of employees, establishments, and total receipts by 6-digit NAICS code.
 * Crosswalks assembled for previous work that link NAICS codes to the more aggregated BEA industries, and provide the proportion of expenses consisting of food for each BEA industry.
-* USDA Loss-adjusted Food Availability (LAFA) data for each food type, to get baseline waste rates.
+* USDA Loss-adjusted Food Availability (LAFA) data for each food type, to get baseline waste rates by mass at the consumer level.
+* USDA Quarterly Food-at-Home Price Database (QFAHPD), version 2, to get relative prices of foods, allowing conversion between monetary and physical flows.
 * The cost values and other individual values we assembled, described in the "Assumptions" section above.
-* The USEEIO model requires the BEA input-output tables as well as satellite environmental impact tables for the relevant impact categories.
+* The USEEIO model requires the Bureau of Economic Analysis' (BEA) input-output tables as well as satellite environmental impact tables for the relevant impact categories.
 
 ```{r load_data}
 # Load packages and check whether this is being run locally or on rstudio server.
@@ -372,6 +375,9 @@ qfahpd2 <- read_csv(file.path(fp, 'raw_data/USDA/QFAHPD/tidy_data/qfahpd2.csv'))
 # Read the description of LAFA's nested category structure in.
 lafa_struct <- read_csv(file.path(fp, 'crossreference_tables/lafa_category_structure.csv'))
 
+# Demand codes table to convert 6 digit codes to the ones used by USEEIO
+all_codes <- read_csv(file.path(fp, 'crossreference_tables/all_codes.csv'))
+
 # Get rid of unneeded rows and columns
 food_U <- food_U[, proportion_affected$BEA_Code]
 food_U <- food_U[rowSums(food_U) > 0, ]
@@ -542,7 +548,6 @@ baseline_waste_foodservice <- food_U_LAFA_spread %>%
   summarize(avoidable_consumer_loss = weighted.mean(x = avoidable_consumer_loss, w = mass_flow, na.rm = TRUE))
 
 # Join up the names of the BEA codes and print the table of values
-trunc_ellipsis <- function(x, n) if_else(nchar(x) < 30, x, paste(substr(x, 1, n), '...'))
 baseline_waste_foodservice <- baseline_waste_foodservice %>% 
   left_join(codes_subset, by = c('BEA_recipient_code' = 'BEA_389_code')) %>%
   setNames(c('BEA_Code', 'baseline', 'BEA_Title')) %>%
@@ -606,9 +611,6 @@ source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
 # All we need to do is match the demand vector 6 digit codes with the codes that include the full names
 # then run eeio_lcia on it.
 
-# Demand codes table
-all_codes <- read_csv(file.path(fp, 'crossreference_tables/all_codes.csv'))
-
 demand_vector <- reduction_byfoodtype %>%
   left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
   with(list(codes = sector_desc_drc, values = cost_averted))
@@ -646,7 +648,7 @@ eeio_dat %>%
 
 ## 8. Compare cost of implementation with environmental benefit
 
-Because this is the first intervention we have analyzed in detail, we cannot compare the cost per unit impact reduction with other interventions yet. However, we can estimate the cost of reducing unit impact given the lower and upper bounds of the cost estimate, and compare it to existing benchmarks. For example, in the case of CO2 emissions, we can compare our cost to the "social cost of carbon" or the "McKinsey curve."
+Because this is the first intervention we have analyzed in detail, we cannot compare the cost per unit impact reduction with other interventions yet. However, we can estimate the cost of reducing unit impact given the lower and upper bounds of the cost estimate, and compare it to existing benchmarks. For example, in the case of CO<sub>2</sub> emissions, we can compare our cost to the "social cost of carbon" or the "McKinsey curve."
 
 To get the total cost of implementation, we need to multiply the per-establishment cost by the number of establishments, across all industries, again ignoring the ineligible ones with fewer than 20 employees.
 
@@ -663,7 +665,7 @@ total_cost <- c(8749, 20102) * n_estab # 4 to 9 billion
 
 ```
 
-Given the numbers of establishments in this table, we multiply the total number of establishments (`r n_estab`) by the upper and lower bounds of total cost, \$8,749 and \$20,102, resulting in a total cost range of roughly **4 to 9 billion USD** to implement waste tracking and analytics across all eligible establishments.
+Given the numbers of establishments in this table, we multiply the total number of establishments (`r as.integer(n_estab)`) by the upper and lower bounds of total cost, \$8,749 and \$20,102, resulting in a total cost range of roughly **4 to 9 billion USD** to implement waste tracking and analytics across all eligible establishments.
 
 Now we simply divide the total cost by the impact reductions to get a cost per unit reduction for each category.
 
@@ -680,14 +682,26 @@ cost_per_impact %>%
          cost_per_reduction_upper = paste0('$', round(cost_per_reduction_upper, 2)))
 ```
 
-The final result is shown in this table. The CO2 emission reduction cost can be compared with the "social cost of carbon" fixed several years ago by the Obama administration at approximately 5 cents per kg CO2. Unfortunately this analysis shows a fairly high cost of CO2 emission reduction, ranging from \$0.44 to \$1.00, compared to the social cost of carbon. 
+The final result is shown in this table. The CO<sub>2</sub> emission reduction cost can be compared with the "social cost of carbon" fixed several years ago by the Obama administration at approximately 5 cents per kg CO<sub>2</sub>. If we consider that to be a rough benchmark for the cost-effectiveness of emissions reduction efforts, this analysis unfortunately shows a fairly high cost of CO<sub>2</sub> emission reduction, ranging from \$0.44 to \$1.00. 
 
-I will examine the assumptions here to see why the cost is so high. When I did a quick version of this analysis using the cost numbers given by ReFED, I get a much cheaper cost per kg CO2 reduction (\$0.03 for institutions and \$0.13 for restaurants), which may be due to the very low cost assumptions they make, or failure to account for all costs. Additionally, it's important to note that the environmental benefits viewed very narrowly here are not the only benefits to consider. However it may simply be that if CO2 is the only benefit we care about, it is not a great deal. 
+I will examine the assumptions here to see why the cost is so high. When I did a quick version of this analysis using the cost numbers given by ReFED, I get a much cheaper cost per kg CO<sub>2</sub> reduction (\$0.03 for institutions and \$0.13 for restaurants), which may be due to the very low cost assumptions they make, or failure to account for all costs. Also, of course, CO<sub>2</sub> emission reduction is not the only benefit provided by the intervention. Reducing food purchases by the foodservice industry would also reduce the other environmental impacts of food production, especially land use (which also would indirectly reduce land use related emissions of CO<sub>2</sub>). *Later if we can get values similar to the social cost of carbon for other environmental goods, we could sum them up to get a total value of benefit per cost &mdash; but this gets into the valuation issue which some people find problematic.*
 
-I will add more interpretation to this later.
+Finally, I only account for the environmental impacts generated by the production of the raw materials up to the point where they are purchased by the foodservice industries. There are additional impacts generated when the food is transported and processed after that, that I did not consider. (However, production is by far the stage with the highest direct impact so this is unlikely to affect the final result drastically.)
+
+Additionally, it's important to note that the environmental benefits viewed very narrowly here are not the only benefits to consider. However it may simply be that if CO<sub>2</sub> is the only benefit we care about, this intervention may not be cost-effective. Once we analyze other interventions that we can compare to this one, the picture will become clearer.
 
 ## 9. Uncertainty analysis
 
 **Note: work in progress...**
 
-As briefly discussed above, there are a number of sources of uncertainty we can account for. Add some detail and fill out this analysis . . . 
+As briefly discussed above, there are a number of sources of uncertainty we can account for. On the cost side, we already have lower and upper bounds that differ by a factor of just over two. So the upper and lower bounds for our cost per unit impact reduction estimate are entirely based on that uncertainty (hence why they differ by the same factor). 
+
+The decision of which industries to include and exclude would affect the total result but probably not affect the cost per unit impact result very much. The per-unit cost is fairly constant across the foodservice industries because they all have roughly the same baseline waste rate (from 22% to 25%) and therefore the same potential benefit from adopting the intervention. 
+
+Changing the threshold from firms with 20 employees to a smaller threshold would increase the total cost and total benefit. It would probably increase the cost more than the benefit because the new firms being added are small; it would cost the same to apply the intervention at those small establishments, but only have a small benefit compared to intervening at large establishments.
+
+The most important assumption to be examined is the potential effectiveness of the intervention. We used 45% reduction in kitchen waste as the number. The benefit would scale linearly with any change in this number. Therefore if the reduction achieved is only half that, the cost per unit impact reduction would approximately double. (The same is true for changes in the ratio of kitchen to plate waste but that number is more constrained by data so we can be more confident in it.)
+
+For now we can present the uncertainty based on the cost uncertainties, but it might also be a good idea to present the uncertainty based on not knowing the true potential effectiveness of the intervention. It would be helpful to have better data on the rates of waste reduction achieved by establishments that adopt waste tracking and analytics.
+
+
