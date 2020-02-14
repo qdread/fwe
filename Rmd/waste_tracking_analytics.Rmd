@@ -700,8 +700,16 @@ The decision of which industries to include and exclude would affect the total r
 
 Changing the threshold from firms with 20 employees to a smaller threshold would increase the total cost and total benefit. It would probably increase the cost more than the benefit because the new firms being added are small; it would cost the same to apply the intervention at those small establishments, but only have a small benefit compared to intervening at large establishments.
 
+Two other inclusion/exclusion decisions that might affect the result are (1) that I excluded government foodservice which might have a large effect since the government is a large purchaser of food for foodservice. SUSB lacks data on the number of establishments in government foodservice. **Is there a way to get these data?** And (2) we are not including beverages which are a fairly large contributor to foodservice environmental impact. I based that decision on my impression that these waste tracking systems cannot do a lot about beverage waste since little of it is kitchen waste, but if establishments are overpurchasing beverages that are not used, it might be addressable by the intervention.
+
 The most important assumption to be examined is the potential effectiveness of the intervention. We used 45% reduction in kitchen waste as the number. The benefit would scale linearly with any change in this number. Therefore if the reduction achieved is only half that, the cost per unit impact reduction would approximately double. (The same is true for changes in the ratio of kitchen to plate waste but that number is more constrained by data so we can be more confident in it.)
 
 For now we can present the uncertainty based on the cost uncertainties, but it might also be a good idea to present the uncertainty based on not knowing the true potential effectiveness of the intervention. It would be helpful to have better data on the rates of waste reduction achieved by establishments that adopt waste tracking and analytics.
+
+# Future to-do items
+
+* Include the offsetting impacts required to produce the equipment needed for the interventions.
+* Find number of government establishments so we can include that.
+* Do uncertainty analysis for different ranges of assumptions.
 
 
