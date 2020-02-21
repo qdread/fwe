@@ -94,7 +94,9 @@ final_result_byindustry <- eeio_dat_byindustry_withoffset %>%
          total_cost_lower = cost_range['lower'] * establishments,
          total_cost_upper = cost_range['upper'] * establishments,
          cost_per_reduction_lower = total_cost_lower / net_impact_averted_upper,
-         cost_per_reduction_upper = total_cost_upper / net_impact_averted_lower
+         cost_per_reduction_upper = total_cost_upper / net_impact_averted_lower,
+         net_impact_averted_lower = net_impact_averted_lower * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         net_impact_averted_upper = net_impact_averted_upper * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9)
          )
 
 final_result_byindustry_display <- final_result_byindustry %>%
@@ -105,3 +107,96 @@ final_result_byindustry_display %>%
   filter(grepl('greenhouse',category), !grepl('Air', BEA_Title)) %>%
   arrange(cost_per_reduction_lower) %>%
   print(n = nrow(.))
+
+
+# Write output ------------------------------------------------------------
+
+write_csv(eeio_dat_byindustry_withoffset, file.path(fp, 'scenario_results/interventions/eeio_wta_byindustry_all.csv'))
+write_csv(final_result_byindustry, file.path(fp, 'scenario_results/interventions/eeio_wta_byindustry_5categories_processed.csv'))
+
+
+# Draw figures ------------------------------------------------------------
+
+trunc_ellipsis <- function(x, n) if_else(nchar(x) < n, x, paste(substr(x, 1, n), '...'))
+
+impact_dat <- final_result_byindustry %>%
+  filter(!grepl('Air', BEA_Title)) %>%
+  select(sector, BEA_Title, category, baseline, net_impact_averted_lower, net_impact_averted_upper) %>%
+  mutate(net_impact_averted_mean = (net_impact_averted_upper + net_impact_averted_lower)/2) 
+
+costper_dat <-  final_result_byindustry %>%
+  filter(!grepl('Air', BEA_Title)) %>%
+  select(sector, BEA_Title, category, cost_per_reduction_lower, cost_per_reduction_upper) %>%
+  mutate(cost_per_reduction_mean = (cost_per_reduction_lower + cost_per_reduction_upper)/2) 
+
+# GHG: impact reduction vs baseline
+ggplot(impact_dat %>% mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>% filter(grepl('greenhouse', category)), 
+       aes(x = BEA_Title)) +
+  geom_col(aes(y = baseline), alpha = 0.5) +
+  geom_col(aes(y = baseline - net_impact_averted_mean)) +
+  geom_errorbar(aes(ymin = baseline - net_impact_averted_upper, ymax = baseline - net_impact_averted_lower), width = 0.1, color = 'white') +
+  facet_grid(sector ~ ., scales = 'free') +
+  scale_y_continuous(name = 'Greenhouse gas emission potential (MT CO2 eq.)', expand = expand_scale(mult = c(0, 0.1))) +
+  coord_flip() +
+  theme_bw() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        strip.background = element_blank()) 
+
+# GHG: cost per reduction
+ggplot(costper_dat %>% mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>% filter(grepl('greenhouse', category)), 
+       aes(x = BEA_Title)) +
+  geom_errorbar(aes(ymin = cost_per_reduction_lower, ymax = cost_per_reduction_upper), width = 0.1) +
+  facet_grid(sector ~ ., scales = 'free') +
+  scale_y_continuous(name = 'Cost per 1 kg reduction', expand = expand_scale(mult = c(0, 0.1)), labels = scales::dollar) +
+  coord_flip() +
+  theme_bw() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        strip.background = element_blank()) 
+
+# Figures for all categories
+
+impact_figs <- impact_dat %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>%
+  group_by(category) %>%
+  group_map(~ ggplot(., aes(x = BEA_Title)) +
+                 geom_col(aes(y = baseline), alpha = 0.5) +
+                 geom_col(aes(y = baseline - net_impact_averted_mean)) +
+                 geom_errorbar(aes(ymin = baseline - net_impact_averted_upper, ymax = baseline - net_impact_averted_lower), width = 0.1, color = 'white') +
+                 facet_grid(sector ~ ., scales = 'free') +
+                 labs(x = 'industry') +
+                 scale_y_continuous(name = .$category[1], expand = expand_scale(mult = c(0, 0.1))) +
+                 coord_flip() +
+                 theme_bw() +
+                 theme(panel.grid.major.y = element_blank(),
+                       panel.grid.minor.x = element_blank(),
+                       strip.background = element_blank()), 
+            keep = TRUE )
+
+# They are all the same so we don't really need to show them all
+
+# Cost figures for all categories, rearranged to show order.
+cost_figs <- costper_dat %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30),
+         category = rep(c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'), nrow(.)/5)) %>%
+  group_by(category) %>%
+  group_map(function(dat, ...) 
+    dat %>% arrange(sector, -cost_per_reduction_mean) %>%
+      mutate(BEA_Title = factor(BEA_Title, levels = unique(BEA_Title))) %>%
+      ggplot(aes(x = BEA_Title)) +
+      geom_point(aes(y = cost_per_reduction_mean), size = 3) +
+      geom_errorbar(aes(ymin = cost_per_reduction_lower, ymax = cost_per_reduction_upper), width = 0.1) +
+      facet_grid(sector ~ ., scales = 'free') +
+      labs(x = 'industry') +
+      scale_y_continuous(name = .$category[1], expand = expand_scale(mult = c(0, 0.1)), labels = scales::dollar) +
+      coord_flip() +
+      theme_bw() +
+      theme(panel.grid.major.y = element_blank(),
+            panel.grid.minor.x = element_blank(),
+            strip.background = element_blank()),
+    keep = TRUE )
+
+# arrange(sector, cost_per_reduction_mean) %>%
+#mutate(BEA_Title = factor(BEA_Title, levels = unique(BEA_Title))) %>%
+#%>% arrange(sector, cost_per_reduction_mean) %>% mutate(BEA_Title = factor(BEA_Title, levels = unique(BEA_Title)))
