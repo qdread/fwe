@@ -109,6 +109,7 @@ susb_food_cumul_prop <- susb_food_sums %>%
 # --- Plus the number of foodservice contractors (other food and drinking estbs with bars and food trucks removed)
 # 2. The proportion of food purchases in industries that contract foodservice operators, that are affected by WTA implementation. 
 # --- We will assume that this is the % of purchases made by size class >= 20 employees.
+# --- Also, we assume that inputs are proportional to receipts.
 # --- So this would exclude the small operations for all industries EXCEPT those listed as contractors
 
 # 1. establishments that can implement
@@ -120,25 +121,26 @@ establishments_implementing <- susb_naics_foodservice %>%
   filter(!`Size class` %in% 'total') %>%
   mutate(can_implement = category == 'contractor' | category == 'restaurant' & `Size class` != 'fewer than 20')
     
-establishments_implementing %>% print(n = nrow(.))
+# establishments_implementing %>% print(n = nrow(.))
 
 establishments_implementing_total <- establishments_implementing %>%
   group_by(category, BEA_Code, can_implement) %>%
   summarize(n_estab = sum(`No. establishments`))
 
-# 2. 
-  
+# 2. sum up the non-excluded number of receipts in each industry so that food bought by very small firms isn't eligible for waste reduction
 
-size_classes_exclude <- expand_grid(sector = c('restaurants', 'tourism and hospitality', 'institutions'), `Size class` = levels(susb_food_sums$`Size class`)[1:4]) %>%
-  mutate(exclude = `Size class` %in% c('fewer than 20'))
+# size_classes_exclude <- expand_grid(sector = c('restaurants', 'tourism and hospitality', 'institutions'), `Size class` = levels(susb_food_sums$`Size class`)[1:4]) %>%
+#   mutate(exclude = `Size class` %in% c('fewer than 20'))
 
 # Within each BEA code, get the percentage of total receipts that will be affected by WTA implementation
 # All establishments with >20 employees, and also account for the fact that some tourism and hospitality BEA codes contain NAICS codes that aren't going to adopt WTA
 
 susb_bea_food_sums <- susb_naics_foodservice %>%
+  mutate(sector = if_else(category == 'contractor', 'contractors', as.character(sector))) %>%
   group_by(sector, BEA_Code, BEA_Title, use, `Size class`) %>%
   summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
   filter(!is.na(`Size class`), !`Size class` %in% 'total')
+
 
 
 # Impute missing values ---------------------------------------------------
@@ -174,27 +176,49 @@ susb_bea_food_sums[susb_bea_food_sums$BEA_Code %in% c('481000', '483000') & susb
 
 #### Here are the proportions of receipts that will be affected by adoption of WTA
 
-susb_bea_proportion_affected <- susb_bea_food_sums %>% 
+sums_by_affected <- susb_bea_food_sums %>%
   ungroup %>%
-  left_join(size_classes_exclude) %>%
-  mutate(use = use & !exclude) %>%
-  group_by(sector, BEA_Code, BEA_Title) %>%
-  summarize(proportion_receipts_affected = sum(`Total receipts`[!exclude])/sum(`Total receipts`))
+  mutate(use = `Size class` != 'fewer than 20' | sector == 'contractors') %>%
+  group_by(sector, BEA_Code, BEA_Title, use) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum)
 
-# Now multiply this by "proportion food" for each of the industries
-prop_foods <- bea_codes %>%
-  select(BEA_389_code, proportion_food) %>%
-  rename(BEA_Code = BEA_389_code)
+# Sum up again so that the other food and drinking places is included.
+sums_by_affected_final <- susb_bea_food_sums %>%
+  ungroup %>%
+  mutate(use = `Size class` != 'fewer than 20' | sector == 'contractors') %>%
+  group_by(BEA_Code, BEA_Title, use) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum)
 
-proportion_affected <- susb_bea_proportion_affected %>% left_join(prop_foods) %>% mutate(final_proportion = proportion_receipts_affected * proportion_food)
+
+
+susb_bea_proportion_affected <- sums_by_affected_final %>%
+  select(-(`No. firms`:`Total payroll`)) %>%
+  pivot_wider(names_from = use, values_from = `Total receipts`, values_fill = list(`Total receipts` = 0), names_prefix = 'receipts_') %>%
+  mutate(proportion = receipts_TRUE / (receipts_TRUE + receipts_FALSE))
+
+  
+
+# susb_bea_proportion_affected <- susb_bea_food_sums %>% 
+#   ungroup %>%
+#   left_join(size_classes_exclude) %>%
+#   mutate(use = use & !exclude) %>%
+#   group_by(sector, BEA_Code, BEA_Title) %>%
+#   summarize(proportion_receipts_affected = sum(`Total receipts`[!exclude])/sum(`Total receipts`))
+
+# # Now multiply this by "proportion food" for each of the industries
+# prop_foods <- bea_codes %>%
+#   select(BEA_389_code, proportion_food) %>%
+#   rename(BEA_Code = BEA_389_code)
+
+#proportion_affected <- susb_bea_proportion_affected %>% left_join(prop_foods) %>% mutate(final_proportion = proportion_receipts_affected * proportion_food)
 
 # We also need number of establishments affected so we can get the total annual cost
-establishments_affected <- susb_bea_food_sums %>% 
-  ungroup %>%
-  left_join(size_classes_exclude) %>%
-  mutate(use = use & !exclude) %>%
-  group_by(sector, BEA_Code, BEA_Title, use) %>%
-  summarize(establishments = sum(`No. establishments`))
+# establishments_affected <- susb_bea_food_sums %>% 
+#   ungroup %>%
+#   left_join(size_classes_exclude) %>%
+#   mutate(use = use & !exclude) %>%
+#   group_by(sector, BEA_Code, BEA_Title, use) %>%
+#   summarize(establishments = sum(`No. establishments`))
 
 
 # Load data for waste rate calc -------------------------------------------
@@ -217,7 +241,7 @@ lafa_struct <- read_csv(file.path(fp, 'crossreference_tables/lafa_category_struc
 all_codes <- read_csv(file.path(fp, 'crossreference_tables/all_codes.csv'))
 
 # Get rid of unneeded rows and columns
-food_U <- food_U[, proportion_affected$BEA_Code]
+food_U <- food_U[, susb_bea_proportion_affected$BEA_Code]
 food_U <- food_U[rowSums(food_U) > 0, ]
 
 # Beverage codes should be removed.
@@ -313,8 +337,8 @@ food_U_LAFA_spread <- food_U_LAFA %>%
 demand_change_fn <- function(W0, r, p) p * ((1 - W0) / (1 - (1 - r) * W0) - 1) + 1
 
 food_U_LAFA_spread <- food_U_LAFA_spread %>% 
-  left_join(proportion_affected, by = c('BEA_recipient_code' = 'BEA_Code')) %>%
-  mutate(reduction_by_mass = demand_change_fn(W0 = avoidable_consumer_loss/100, r = overall_waste_reduction, p = proportion_receipts_affected),
+  left_join(susb_bea_proportion_affected, by = c('BEA_recipient_code' = 'BEA_Code')) %>%
+  mutate(reduction_by_mass = demand_change_fn(W0 = avoidable_consumer_loss/100, r = overall_waste_reduction, p = proportion),
          mass_flow_post_intervention = mass_flow * reduction_by_mass,
          monetary_flow_post_intervention = mass_flow_post_intervention * price)
 
@@ -374,11 +398,10 @@ baseline_waste_foodservice <- food_U_LAFA_spread %>%
 # Join up the names of the BEA codes and print the table of values
 baseline_waste_foodservice <- baseline_waste_foodservice %>% 
   left_join(codes_subset, by = c('BEA_recipient_code' = 'BEA_389_code')) %>%
-  setNames(c('BEA_Code', 'baseline', 'BEA_Title')) %>%
-  left_join(bea_to_use_df)
+  setNames(c('BEA_Code', 'baseline', 'BEA_Title')) 
 
 baseline_waste_foodservice <- baseline_waste_foodservice %>%
-  left_join(proportion_affected %>% select(BEA_Code, proportion_receipts_affected, proportion_food)) %>%
+  left_join(susb_bea_proportion_affected %>% ungroup %>% select(BEA_Code, proportion)) %>%
   left_join(total_prepost)
 
 # Above they were marginal column totals for the recipient industries
@@ -387,107 +410,112 @@ baseline_waste_foodservice <- baseline_waste_foodservice %>%
 reduction_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
                                    cost_averted = rowSums(food_U) - rowSums(food_U_postintervention))
 
+# Edit. Run for full service, limited service, and contractors separately. Sum up all the purchases for tourism & institutions to get contractors' food purchases.
+
+fullsvc_codes <- c("722110")
+limitedsvc_codes <- c("722A00", "722211")
+
+food_U_bygroup <- data.frame(full_service_restaurants = food_U[, fullsvc_codes],
+                             limited_mobile_and_bars = rowSums(food_U[, limitedsvc_codes]),
+                             contracted_foodservice = rowSums(food_U[, !names(food_U) %in% c(fullsvc_codes, limitedsvc_codes)]))
+
+
+food_U_bygroup_postintervention <- data.frame(full_service_restaurants = food_U_postintervention[, fullsvc_codes],
+                                              limited_mobile_and_bars = rowSums(food_U_postintervention[, limitedsvc_codes]),
+                                              contracted_foodservice = rowSums(food_U_postintervention[, !names(food_U_postintervention) %in% c(fullsvc_codes, limitedsvc_codes)]))
 
 # Run EEIO ----------------------------------------------------------------
+
+
 
 # Simply enough, just run it on the difference in the two rowSums for pre and post intervention
 # This represents final operating costs of the industries, as if it were final consumer demand
 if (!is_local) use_python('/usr/bin/python3')
 source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
 
+# Match row names of food_U with longer codes that eeio_lcia() will recognize
+demand_codes <- as.list(all_codes$sector_desc_drc[match(rownames(food_U), all_codes$sector_code_uppercase)])
+
 # The model is already built so we don't need to build it again. 
 # All we need to do is match the demand vector 6 digit codes with the codes that include the full names
 # then run eeio_lcia on it.
+# Do for each of the 3 groups separately
 
-demand_vector <- reduction_byfoodtype %>%
-  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
-  with(list(codes = sector_desc_drc, values = cost_averted))
+eeio_wta_baseline_bygroup <- map(food_U_bygroup, ~ eeio_lcia('USEEIO2012', as.list(. * 1e6), demand_codes)) 
+eeio_wta_averted_bygroup <- map(food_U_bygroup - food_U_bygroup_postintervention, ~ eeio_lcia('USEEIO2012', as.list(. * 1e6), demand_codes)) 
 
-eeio_wta <- eeio_lcia('USEEIO2012', demand_vector$values * 1e6, demand_vector$codes) 
-
-# Also do for the baseline
-baseline_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
-                                  baseline = rowSums(food_U))
-
-demand_vector_baseline <- baseline_byfoodtype %>%
-  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
-  with(list(codes = sector_desc_drc, values = baseline))
-
-eeio_wta_baseline <- eeio_lcia('USEEIO2012', demand_vector_baseline$values * 1e6, demand_vector_baseline$codes) 
-
-# A table is probably the best way to show it
-eeio_dat <- data.frame(category = row.names(eeio_wta),
-                       baseline = eeio_wta_baseline$Total,
-                       impact_averted = eeio_wta$Total)
-
-# For display
-eeio_dat %>%
-  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
-  mutate(baseline = baseline * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
-         impact_averted = impact_averted * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
-         category = c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'),
-         percent_averted = signif(100 * impact_averted/baseline, 2))
+# Combine into a data frame
+eeio_dat_bygroup <- data.frame(group = c('full-service restaurants',
+                                         'limited-service restaurants, mobile foodservice, and bars',
+                                         'contracted foodservice operations')) %>%
+  mutate(category = map(eeio_wta_baseline_bygroup, row.names),
+         baseline = map(eeio_wta_baseline_bygroup, 1),
+         impact_averted = map(eeio_wta_averted_bygroup, 1)) %>%
+  unnest(cols = c(category, baseline, impact_averted))
 
 
 # Deduct offsetting impacts from benefit ----------------------------------
 
-# Number of establishments that need to adopt intervention
-n_estab <- sum(establishments_affected$establishments[establishments_affected$use])
+equipment_cost_bygroup <- establishments_implementing_total %>%
+  ungroup %>%
+  filter(can_implement) %>%
+  mutate(group = c('contracted foodservice operations', 'full-service restaurants', rep('limited-service restaurants, mobile foodservice, and bars', 2))) %>%
+  group_by(group) %>%
+  summarize(establishments = sum(n_estab)) %>%
+  mutate(equipment_cost_lower = establishments * equipment_costs['lower'],
+         equipment_cost_upper = establishments * equipment_costs['upper'])
 
 # The three potential BEA industry codes to assign costs of equipment are:
 # computer manufacturing, computer monitor and peripheral manufacturing, and the other machinery category which includes industrial and retail scales
 industries_offset <- c('334111', '33411A', '33399A')
-total_equipment_cost <- equipment_costs * n_estab # 167M to 357M
-
-# Use the mean of the two for now
-mean_total_equipment_cost <- mean(total_equipment_cost)
 
 # Find the full names of the codes for the offsetting industries
 industries_offset_codes <- all_codes$sector_desc_drc[match(industries_offset, all_codes$sector_code_uppercase)]
 
-eeio_offsets <- map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(mean_total_equipment_cost), list(.)))
-
 # Use the upper and lower bounds from the industries, and the upper and lower bounds for total cost, to get an upper and lower bound for the impact that is offset
-
-eeio_offsets_lower <- map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(total_equipment_cost['lower']), list(.)))
-eeio_offsets_upper <- map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(total_equipment_cost['upper']), list(.)))
-
-eeio_offsets_df <- rbind(data.frame(category = row.names(eeio_offsets_lower[[1]]), do.call(cbind, eeio_offsets_lower) %>% setNames(industries_offset_codes), bound = 'lower'),
-                         data.frame(category = row.names(eeio_offsets_upper[[1]]), do.call(cbind, eeio_offsets_upper) %>% setNames(industries_offset_codes), bound = 'upper'))
-
-eeio_offsets_range <- eeio_offsets_df %>%
-  pivot_longer(cols = -c(category, bound)) %>%
-  group_by(category) %>%
-  group_modify(~ data.frame(offset_lower = min(.$value), offset_upper = max(.$value)))
-
-# Final result with offset
-eeio_dat_with_offset <- eeio_dat %>%
-  left_join(eeio_offsets_range) %>%
-  mutate(net_impact_averted_lower = impact_averted - offset_upper,
-         net_impact_averted_upper = impact_averted - offset_lower) %>%
-  filter(grepl('enrg|eutr|gcc|land|watr', category)) 
-
-# For display
-eeio_dat_with_offset %>%
-  mutate_at(vars(baseline:net_impact_averted_upper), ~ . * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9)) %>%
-  mutate(net_percent_averted_lower = 100 * net_impact_averted_lower/baseline,
-         net_percent_averted_upper = 100 * net_impact_averted_upper/baseline,
-         category = c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)')) %>%
-  select(-baseline, -impact_averted) %>%
-  mutate_if(is.numeric, ~ signif(., 3))
+# For each one, 3 costs * 3 offsetting industries
+eeio_offsets_lower_bygroup <- map(equipment_cost_bygroup$equipment_cost_lower, 
+                                     function(x) map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(x), list(.))))
+eeio_offsets_upper_bygroup <- map(equipment_cost_bygroup$equipment_cost_upper, 
+                                     function(x) map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(x), list(.))))            
 
 
-# Compare cost and environmental benefit ----------------------------------
+# Within each list element, find the extreme value among the 3 offset industries
+eeio_offsets_lower_bygroup_combined <- map(eeio_offsets_lower_bygroup, ~ apply(do.call(cbind, .), 1, min))
+eeio_offsets_upper_bygroup_combined <- map(eeio_offsets_upper_bygroup, ~ apply(do.call(cbind, .), 1, max))
 
-total_cost <- cost_range * n_estab # 4 to 9 billion
+# Combine the results into a single data frame using list columns
+eeio_offsets_range_bygroup <- equipment_cost_bygroup %>%
+  mutate(category = map(eeio_offsets_lower_bygroup_combined, names),
+         offset_lower = eeio_offsets_lower_bygroup_combined,
+         offset_upper = eeio_offsets_upper_bygroup_combined) %>%
+  unnest(cols = c(category, offset_lower, offset_upper))
 
-cost_per_impact <- eeio_dat_with_offset %>%
+# Join EEIO results for the impact reduction with EEIO results for the offset
+
+eeio_dat_bygroup_withoffset <- eeio_dat_bygroup %>%
+  left_join(eeio_offsets_range_bygroup)
+
+# Combine everything
+final_result_bygroup <- eeio_dat_bygroup_withoffset %>%
+  mutate(percent_averted = signif(100 * impact_averted/baseline, 2),
+         net_impact_averted_lower = impact_averted - offset_upper,
+         net_impact_averted_upper = impact_averted - offset_lower,
+         net_percent_averted_lower = 100 * net_impact_averted_lower/baseline,
+         net_percent_averted_upper = 100 * net_impact_averted_upper/baseline) %>%
   filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
-  mutate(cost_per_reduction_lower = total_cost[1] / net_impact_averted_upper,
-         cost_per_reduction_upper = total_cost[2] / net_impact_averted_lower)
+  mutate(baseline = baseline * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         impact_averted = impact_averted * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         category = rep(c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'), nrow(.)/5),
+         total_cost_lower = cost_range['lower'] * establishments,
+         total_cost_upper = cost_range['upper'] * establishments,
+         cost_per_reduction_lower = total_cost_lower / net_impact_averted_upper,
+         cost_per_reduction_upper = total_cost_upper / net_impact_averted_lower,
+         net_impact_averted_lower = net_impact_averted_lower * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         net_impact_averted_upper = net_impact_averted_upper * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9)
+  )
 
-final_result <- cost_per_impact %>%
-  select(-impact_averted, -baseline) %>%
-  mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'),
-         cost_per_reduction_lower = paste0('$', round(cost_per_reduction_lower, 2)),
-         cost_per_reduction_upper = paste0('$', round(cost_per_reduction_upper, 2)))
+final_result_bygroup_display <- final_result_bygroup %>%
+  select(group, category, cost_per_reduction_lower, cost_per_reduction_upper) %>%
+  mutate(category = rep(c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'), nrow(.)/5))
+
