@@ -96,17 +96,38 @@ susb_food_sums <- susb_naics_foodservice %>%
   summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
   filter(!is.na(`Size class`), !`Size class` %in% 'total')
 
-# susb_food_sums <- susb_naics_foodservice %>% 
-#   group_by(sector, use, `Size class`) %>%
-#   summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
-#   filter(!is.na(`Size class`), !`Size class` %in% 'total')
 
 # What are the proportions
 
 susb_food_cumul_prop <- susb_food_sums %>%
   mutate_at(vars(`No. firms`:`Total receipts`), ~ cumsum(.x) / sum(.x))
 
-# We can use 20 as the threshold. It can be altered.
+####
+# We need two different sets of totals. 
+# 1. The total number of establishments that implement leanpath (for costs). 
+# --- This equals the number of restaurants >=20 employees
+# --- Plus the number of foodservice contractors (other food and drinking estbs with bars and food trucks removed)
+# 2. The proportion of food purchases in industries that contract foodservice operators, that are affected by WTA implementation. 
+# --- We will assume that this is the % of purchases made by size class >= 20 employees.
+# --- So this would exclude the small operations for all industries EXCEPT those listed as contractors
+
+# 1. establishments that can implement
+establishments_implementing <- susb_naics_foodservice %>%
+  filter(!category %in% 'other') %>%
+  group_by(category, BEA_Code, NAICS, `NAICS description`, `Size class`) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
+  select(-`No. employees`, -`Total payroll`) %>% 
+  filter(!`Size class` %in% 'total') %>%
+  mutate(can_implement = category == 'contractor' | category == 'restaurant' & `Size class` != 'fewer than 20')
+    
+establishments_implementing %>% print(n = nrow(.))
+
+establishments_implementing_total <- establishments_implementing %>%
+  group_by(category, BEA_Code, can_implement) %>%
+  summarize(n_estab = sum(`No. establishments`))
+
+# 2. 
+  
 
 size_classes_exclude <- expand_grid(sector = c('restaurants', 'tourism and hospitality', 'institutions'), `Size class` = levels(susb_food_sums$`Size class`)[1:4]) %>%
   mutate(exclude = `Size class` %in% c('fewer than 20'))
