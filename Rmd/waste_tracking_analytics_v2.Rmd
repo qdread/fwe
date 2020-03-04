@@ -1,7 +1,7 @@
 ---
-title: "Intervention analysis: Waste tracking and analytics (v1.1)"
+title: "Intervention analysis: Waste tracking and analytics (v2.0)"
 author: "Quentin D. Read"
-date: "February 19, 2020"
+date: "March 4, 2020"
 output: pdf_document
 ---
 
@@ -16,23 +16,22 @@ trunc_ellipsis <- function(x, n) if_else(nchar(x) < 30, x, paste(substr(x, 1, n)
 
 **How?** I used the cost data we assembled to get per-establishment costs, and a number of assumptions to determine the industry groups and numbers of eligible establishments. I converted each foodservice industry group's food purchases by dollar into mass units, estimated baseline and post-intervention waste, then converted back into dollar units. The EEIO model tells us the averted impact associated with the dollar value of averted purchases resulting from less waste in the foodservice industry.
 
-**What was the result?** Given a roughly 40% reduction in foodservice waste, and a roughly 22-25% baseline waste rate, if all eligible establishments adopted waste tracking and analytics systems, the foodservice industry would have to buy 8-10% less raw materials. Because the EEIO model assumes linearity this would result in 8-10% decrease in environmental impact of the food service industry. The cost estimates are somewhat higher than ReFED's numbers so the cost per unit impact reduction is fairly high. If we only considered CO~2~ emission reduction it would be well short of what is considered a "good deal" (\$400 to \$1000 invested per tonne reduced, where $46/tonne is a decent benchmark). However there are so many other co-benefits that it may still be worth the investment.
-
-This is my first attempt at doing an intervention analysis of this kind. We can do a similar analysis for other food waste reduction interventions. Ultimately the goal would be to do multiple analyses and compare them.
+**What was the result?** Given a roughly 40% reduction in foodservice waste, and a roughly 22-25% baseline waste rate, if all eligible establishments adopted waste tracking and analytics systems, the foodservice industry would have to buy 8-10% less raw materials. Because the EEIO model assumes linearity this would result in 8-10% decrease in environmental impact of the foodservice industry. The cost per unit impact reduction is much lower for contracted foodservice operations at institutions (\$0.06 to \$0.14 per kg CO~2~) than it is for restaurants (\$0.44 to \$1.03 per kg CO~2~). The cost estimates are fairly in agreement with ReFED's numbers for institutions, but much higher than their numbers for restaurants. If we only considered CO~2~ emission reduction, the cost of emissions reduction via installing waste tracking systems is close to the "social cost of carbon" (\$0.05 per kg) for institutional foodservice. However there are so many other co-benefits that it may still be worth the investment in either case.
 
 # Changelog
 
 * **13 Feb 2020**: First draft, v1.0
 * **19 Feb 2020**: Add estimates of environmental benefit offset by new equipment purchases, v1.1
+* **04 Mar 2020**: Change way number of establishments is calculated, then split by restaurants vs. contracted foodservice operators, v2.0.
 
 # Outline of procedure
 
 The analysis proceeds as follows:
 
 1. Identify the industry groups that can adopt the intervention, using NAICS industry classifications and BEA codes that represent aggregations of NAICS industries. Identify the NAICS codes within each industry that do and do not include food establishments.
-2. Total up the number of establishments and sales volume by size class within each industry, using SUSB data.
+2. Total up the number of establishments and sales volume by size class within each industry, using SUSB data. Assign food purchased by tourism, recreation, hospitality, and institutional groups to contracted foodservice operators.
 3. Impute any missing or censored values.
-4. Use the predefined threshold of size class that can adopt the intervention, and the proportion of expenses by each industry that consists of food, to determine the number of establishments and proportion of receipts in each industry that will be affected by the intervention.
+4. Use the predefined threshold of size class that can adopt the intervention to determine the proportion of receipts in each industry that will be affected by the intervention.
 5. Use LAFA data to get a baseline waste rate for each of the target industries, which is a weighted average of the waste rates for each of the food groups the industry uses. (In this case it is a consumer level intervention so we will use the consumer level waste rates)
 6. Use our assumptions of waste reduction rate achieved by the intervention to determine the dollar value of food waste averted by the intervention for each industry
 7. Use the USEEIO 2012 model to find the environmental impact associated with this averted food waste.
@@ -77,17 +76,17 @@ We also need to know what percent of the food waste generated by foodservice est
 
 ## Minimum size of establishments that can adopt the intervention
 
-Our data source for number of establishments by industry and by size class, Statistics of U.S. Businesses, aggregates firms by number of employees. We are assuming that any firm with **20 or more** employees can potentially adopt the intervention. *Later this assumption could be changed, or we could even specify different thresholds for different sectors or different industries within each sector. We are using a version of SUSB that I coarsened down to 4 size classes so that it could be compared to other datasets, but there are finer size classes available under 20 employees if we need them later.*
+We are assuming that all contracted foodservice operations regardless of size can adopt the intervention. For full-service restaurants, limited-service restaurants, mobile foodservice, and bars, our data source for number of establishments by industry and by size class, Statistics of U.S. Businesses, aggregates firms by number of employees. We are assuming that any firm with **20 or more** employees can potentially adopt the intervention across all its establishments. *Later this assumption could be changed, or we could even specify different thresholds for different sectors or different industries within each sector. We are using a version of SUSB that I coarsened down to 4 size classes so that it could be compared to other datasets, but there are finer size classes available under 20 employees if we need them later.*
 
 ## Other assumptions
 
-We are assuming that the wholesale equipment costs account for roughly 25% of the initial cost of purchasing the waste tracking and analytics system.
+We are assuming that the wholesale equipment costs account for roughly 25% of the initial cost of purchasing the waste tracking and analytics system. *Source: unnamed source at Leanpath*.
 
 The decision of which BEA industries (and the component NAICS industries, for partially used industries) to include or exclude is an important assumption. See details below.
 
 A further assumption is that the proportion of each industry that is affected by the intervention is related to the proportion of food expenses the industry pays for. That should be a tenable assumption in this case.
 
-We also made a few assumptions in the process of imputing a few missing values, which could also be tested in the process of the uncertainty analysis. More detail on this is given below.
+We also made a few assumptions in the process of imputing a few missing values, which could also be tested in the process of the uncertainty analysis. More detail on this is given below. However, the imputed values are relatively unimportant for the final result.
 
 # Analysis
 
@@ -152,16 +151,16 @@ The following table shows the industries belonging to each of the three sectors,
 codes_subset <- bea_codes %>% filter(stage %in% c('foodservice', 'institutional')) %>% select(BEA_389_code, BEA_389_def)
 
 restaurants <- codes_subset$BEA_389_code[1:3]
-tourism_hospitality <- codes_subset$BEA_389_code[c(4,6,9, 12, 14, 15, 16, 17, 18)] # Leave out movies and performances. Include air and ships.
+tourism_hospitality <- codes_subset$BEA_389_code[c(4,6,9, 12, 13, 14, 15, 16, 17, 18)] # Include promoters/agents (arena operators) Include air and ships. Exclude movies and performances.
 institutions <- codes_subset$BEA_389_code[c(19, 20, 22:27)] # Leave out other educational services.
 
-# 3 codes represent restaurants, 9 represent tourism/hospitality industry, 8 represent institutions that could adopt "WTA"
+# 3 codes represent restaurants, 10 represent tourism/hospitality industry, 8 represent institutions that could adopt "WTA"
 
 bea_to_use_df <- data.frame(BEA_Code = c(restaurants, tourism_hospitality, institutions),
                             sector = rep(c('restaurants', 'tourism and hospitality', 'institutions'), c(length(restaurants), length(tourism_hospitality), length(institutions))))
 
 bea_naics_to_use <- bea_to_use_df %>% left_join(bea_naics)
-# any(duplicated(bea_naics_to_use$related_2012_NAICS_6digit)) # There are no duplicates. 96 unique NAICS codes.
+# any(duplicated(bea_naics_to_use$related_2012_NAICS_6digit)) # There are no duplicates. 83 unique NAICS codes.
 
 # Create subset with only food service.
 susb_naics_foodservice <- bea_naics_to_use %>%
@@ -178,48 +177,69 @@ susb_naics_foodservice <- susb_naics_foodservice %>%
   mutate(use = !grepl(paste(words_to_remove, collapse = '|'), `NAICS description`),
          `Size class` = factor(`Size class`, levels = c('fewer than 20', '20 to 99', '100 to 499', 'more than 500', 'total')))
 
-# Find threshold of institution size to adopt WTA so that the volume of sales associated with establishments that adopt WTA 
-# lines up with ReFED's assumptions that 80% of institutions and 15% of restaurants will adopt.
+#####
+# New way of getting institutions. Use primary food service operations, and contractors/caterers.
 
-susb_food_sums <- susb_naics_foodservice %>% 
-  group_by(sector, use, `Size class`) %>%
+restaurant_naics <- c(722511, 722513, 722514, 722515, 722330, 722410)
+contractor_naics <- c(722310, 722320)
+
+susb_naics_foodservice <- susb_naics_foodservice %>%
+  mutate(category = case_when(NAICS %in% restaurant_naics ~ 'restaurant',
+                              NAICS %in% contractor_naics ~ 'contractor',
+                              TRUE ~ 'other')) 
+
+# Sum up establishments by size class in the two large categories
+# Assume all contractors/caterers can adopt, but only restaurants with >= 20 employees can adopt.
+
+susb_food_sums <- susb_naics_foodservice %>%
+  group_by(category, `Size class`) %>%
   summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
   filter(!is.na(`Size class`), !`Size class` %in% 'total')
+
 
 # What are the proportions
 
 susb_food_cumul_prop <- susb_food_sums %>%
   mutate_at(vars(`No. firms`:`Total receipts`), ~ cumsum(.x) / sum(.x))
 
-# We can use 20 as the threshold. It can be altered.
 
-size_classes_exclude <- expand_grid(sector = c('restaurants', 'tourism and hospitality', 'institutions'), `Size class` = levels(susb_food_sums$`Size class`)[1:4]) %>%
-  mutate(exclude = `Size class` %in% c('fewer than 20'))
+####
+# We need two different sets of totals. 
+# 1. The total number of establishments that implement leanpath (for costs). 
+# --- This equals the number of restaurants >=20 employees
+# --- Plus the number of foodservice contractors (other food and drinking estbs with bars and food trucks removed)
+# 2. The proportion of food purchases in industries that contract foodservice operators, that are affected by WTA implementation. 
+# --- We will assume that this is the % of purchases made by size class >= 20 employees.
+# --- Also, we assume that inputs are proportional to receipts.
+# --- So this would exclude the small operations for all industries EXCEPT those listed as contractors
+
+# 1. establishments that can implement
+establishments_implementing <- susb_naics_foodservice %>%
+  filter(!category %in% 'other') %>%
+  group_by(category, BEA_Code, NAICS, `NAICS description`, `Size class`) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
+  select(-`No. employees`, -`Total payroll`) %>% 
+  filter(!`Size class` %in% 'total') %>%
+  mutate(can_implement = category == 'contractor' | category == 'restaurant' & `Size class` != 'fewer than 20')
+    
+# establishments_implementing %>% print(n = nrow(.))
+
+establishments_implementing_total <- establishments_implementing %>%
+  group_by(category, BEA_Code, can_implement) %>%
+  summarize(n_estab = sum(`No. establishments`))
+
 
 # Table to show in markdown with some summary info on foodservice establishment numbers.
 susb_naics_foodservice %>% 
+  filter(!`Size class` %in% 'total') %>%
   group_by(sector, BEA_Code, BEA_Title, NAICS, `NAICS description`, use) %>%
   summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
   ungroup %>%
   select(sector, BEA_Title, NAICS, `NAICS description`, use, `No. establishments`) %>%
   setNames(c('sector','BEA','NAICS','description','foodservice','establishments')) %>%
-  mutate(foodservice = if_else(foodservice, 'yes', 'no')) %>%
-  filter(!is.na(description)) %>%
+  filter(!is.na(description), foodservice) %>%
+  select(-foodservice) %>%
   print(n = nrow(.))
-```
-
-Side note: Not surprisingly, the number of firms as a function of size class is a "power law" relationship where there are many more small businesses than large ones with a more or less straight-line relationship on a logarithmic axis plot. Even so the total receipts per size class is dominated by the large firms.
-
-```{r power law plots}
-susb_food_sums %>%
-  mutate(employees_per_firm = `No. employees`/`No. firms` ) %>%
-  filter(use) %>%
-  ggplot(aes(x = employees_per_firm, y = `No. firms`, color = sector)) + geom_line() + scale_x_log10(name = 'Number of employees per firm') + scale_y_log10(name = 'Number of firms in size class', breaks = c(1000, 10000, 100000), limits = c(1000, 400000)) + theme_minimal()
-
-susb_food_sums %>%
-  mutate(employees_per_firm = `No. employees`/`No. firms` ) %>%
-  filter(use) %>%
-  ggplot(aes(x = employees_per_firm, y = `Total receipts`, color = sector)) + geom_line() + scale_x_log10(name = 'Number of employees per firm') + scale_y_log10(name = 'Total receipts in size class') + theme_minimal()
 ```
 
 ## 2-4. Total up industry statistics, imputing where necessary
@@ -231,6 +251,7 @@ Next sum up all the industry statistics for all the NAICS codes that sharea a BE
 # All establishments with >20 employees, and also account for the fact that some tourism and hospitality BEA codes contain NAICS codes that aren't going to adopt WTA
 
 susb_bea_food_sums <- susb_naics_foodservice %>%
+  mutate(sector = if_else(category == 'contractor', 'contractors', as.character(sector))) %>%
   group_by(sector, BEA_Code, BEA_Title, use, `Size class`) %>%
   summarize_at(vars(`No. firms`:`Total receipts`), sum) %>%
   filter(!is.na(`Size class`), !`Size class` %in% 'total')
@@ -296,61 +317,73 @@ susb_bea_food_sums[susb_bea_food_sums$BEA_Code %in% c('481000', '483000') & susb
 With the missing values filled in we can now find the total establishments that can implement waste tracking within each BEA industry group, as well as the total proportion of industry sales volume that the food sales represent. These final values account for the threshold of 20 or more employees for adoption, for the subset of NAICS codes that represent establishments with a foodservice component, and the proportion expenses of the aggregated industries that consist of food versus other goods.
 
 ```{r get final proportions}
+# The second type of sum:
+# 2. sum up the non-excluded number of receipts in each industry so that food bought by very small firms isn't eligible for waste reduction
 #### Here are the proportions of receipts that will be affected by adoption of WTA
 
-susb_bea_proportion_affected <- susb_bea_food_sums %>% 
+sums_by_affected <- susb_bea_food_sums %>%
   ungroup %>%
-  left_join(size_classes_exclude) %>%
-  mutate(use = use & !exclude) %>%
-  group_by(sector, BEA_Code, BEA_Title) %>%
-  summarize(proportion_receipts_affected = sum(`Total receipts`[!exclude])/sum(`Total receipts`))
-
-# Now multiply this by "proportion food" for each of the industries
-prop_foods <- bea_codes %>%
-  select(BEA_389_code, proportion_food) %>%
-  rename(BEA_Code = BEA_389_code)
-
-proportion_affected <- susb_bea_proportion_affected %>% left_join(prop_foods) %>% mutate(final_proportion = proportion_receipts_affected * proportion_food)
-
-# We also need number of establishments affected so we can get the total annual cost
-establishments_affected <- susb_bea_food_sums %>% 
-  ungroup %>%
-  left_join(size_classes_exclude) %>%
-  mutate(use = use & !exclude) %>%
+  mutate(use = `Size class` != 'fewer than 20' | sector == 'contractors') %>%
   group_by(sector, BEA_Code, BEA_Title, use) %>%
-  summarize(establishments = sum(`No. establishments`))
+  summarize_at(vars(`No. firms`:`Total receipts`), sum)
+
+# Sum up again so that the other food and drinking places is included.
+sums_by_affected_final <- susb_bea_food_sums %>%
+  ungroup %>%
+  mutate(use = `Size class` != 'fewer than 20' | sector == 'contractors') %>%
+  group_by(BEA_Code, BEA_Title, use) %>%
+  summarize_at(vars(`No. firms`:`Total receipts`), sum)
+
+
+
+susb_bea_proportion_affected <- sums_by_affected_final %>%
+  select(-(`No. firms`:`Total payroll`)) %>%
+  pivot_wider(names_from = use, values_from = `Total receipts`, values_fill = list(`Total receipts` = 0), names_prefix = 'receipts_') %>%
+  mutate(proportion = receipts_TRUE / (receipts_TRUE + receipts_FALSE))
+
 
 ```
 
 The following two plots show the proportion of establishments that can adopt waste tracking by BEA industry, and the proportion of industry sales represented by food that is subject to waste reduction. In both cases, the threshold of $\geq20$ employees is used. In the case of establishments, only the establishments belonging to NAICS codes with a foodservice component are eligible to adopt the intervention. In the case of sales, the proportions are based on the proportion of expenses in each industry that consist of food. This assumes that if, say, 10% of an industry's purchases are food, then 10% of its sales are also food (i.e. that the relative value added is the same for the foodservice part of the industry as for any other goods it sells). This assumption seems fair enough but could be relaxed potentially, if we had any relevant data.
 
 ```{r barplots of establishment proportions}
-ggplot(establishments_affected %>% ungroup %>% mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30), BEA_Title = factor(BEA_Title, levels = unique(BEA_Title))), aes(y = establishments, x = BEA_Title, fill = sector, alpha = use)) + 
-  geom_bar(position = 'stack', stat = 'identity') +
-  scale_y_continuous(name = 'Number of establishments', limits = c(0, 3e5), expand = c(0,0)) +
-  scale_fill_brewer(palette = 'Set2') +
-  scale_alpha_manual(name = 'Can adopt', values = c(0.6, 1)) +
-  theme_bw() +
-  coord_flip() +
-  theme(legend.position = 'bottom', legend.box = 'vertical') +
-  ggtitle('Establishments that can adopt waste tracking')
+establishments_implementing_total %>%
+  ungroup %>%
+  left_join(codes_subset, by = c("BEA_Code" = "BEA_389_code")) %>%
+  mutate(BEA_389_def = c("Contracted foodservice operations", BEA_389_def[-1])) %>%
+  ggplot(aes(y = n_estab, x = BEA_389_def, alpha = can_implement)) + 
+    geom_bar(position = 'stack', stat = 'identity') +
+    scale_y_continuous(name = 'Number of establishments', limits = c(0, 3e5), expand = c(0,0)) +
+    scale_fill_brewer(palette = 'Set2') +
+    scale_alpha_manual(name = 'Can adopt', values = c(0.6, 1)) +
+    labs(x = "Foodservice industry group") +
+    theme_bw() +
+    coord_flip() +
+    theme(legend.position = 'bottom', legend.box = 'vertical') +
+    ggtitle('Establishments that can adopt waste tracking')
 ```
 
-The dark shaded part of the bars are the firms that have at least 20 employees and that are included in a NAICS code within the BEA aggregation that involves providing food.
+The dark shaded part of the bars are the firms that have at least 20 employees (this threshold is not applied to the contracted foodservice operators).
 
-```{r barplot of sales proportions}
-# Make a barplot of the proportion of sales that is affected
-ggplot(proportion_affected %>% ungroup %>% mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30), BEA_Title = factor(BEA_Title, levels = unique(BEA_Title))), aes(y = final_proportion, x = BEA_Title, fill = sector)) + 
-  geom_bar(stat = 'identity') +
-  scale_y_continuous(name = 'Proportion of sales affected', limits = c(0,1), expand = c(0,0)) +
-  scale_fill_brewer(palette = 'Set2') +
-  theme_bw() +
-  coord_flip() +
-  theme(legend.position = 'bottom') +
-  ggtitle('Proportion of sales influenced by waste tracking')
+```{r barplot of food expenses proportions}
+# Make a barplot of the proportion of expenses that is affected
+susb_bea_proportion_affected %>% 
+  ungroup %>% 
+  left_join(bea_to_use_df) %>%
+  arrange(sector, proportion) %>%
+  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30), BEA_Title = factor(BEA_Title, levels = unique(BEA_Title))) %>% 
+  ggplot(aes(y = proportion, x = BEA_Title, fill = sector)) + 
+    geom_bar(stat = 'identity') +
+    scale_y_continuous(name = 'Proportion of food expenses affected', limits = c(0,1), expand = c(0,0)) +
+    scale_fill_brewer(palette = 'Set2') +
+    labs(x = 'BEA industry classification') +
+    theme_bw() +
+    coord_flip() +
+    theme(legend.position = 'bottom') +
+    ggtitle('Proportion of food expenses influenced by waste tracking')
 ```
 
-The proportion of sales is based on the proportion of expenses in the BEA group due to food, and based on firms that have at least 20 employees.
+For each BEA industry that is either primarily involved in foodservice (restaurants) or contracts foodservice operators (tourism/hospitality sector and institutions including hospitals, schools, and residential facilities), the proportion of food expenses at eligible size classes ($\geq20$ employee firms) is shown here. Those purchases are made by firms with large enough size to either install waste tracking systems themselves (restaurants) or contract a foodservice operator to provide food, who in turn has installed the system.
 
 
 ## 5. Get baseline waste rates for each industry with LAFA
@@ -389,7 +422,7 @@ lafa_struct <- read_csv(file.path(fp, 'crossreference_tables/lafa_category_struc
 all_codes <- read_csv(file.path(fp, 'crossreference_tables/all_codes.csv'))
 
 # Get rid of unneeded rows and columns
-food_U <- food_U[, proportion_affected$BEA_Code]
+food_U <- food_U[, susb_bea_proportion_affected$BEA_Code]
 food_U <- food_U[rowSums(food_U) > 0, ]
 
 # Beverage codes should be removed.
@@ -456,9 +489,9 @@ lafa_df <- lafa_df %>%
   left_join(lafa_struct, by = c('Category' = 'Food'))
 
 lafa_group_rates <- map_dfr(1:4, function(i) lafa_df %>% 
-  rename_(subgroup = paste0('subgroup', i)) %>%
-  group_by(subgroup) %>% 
-  summarize(avoidable_consumer_loss = weighted.mean(x = avoidable_consumer_loss, w = consumer_weight))) %>%
+                              rename_(subgroup = paste0('subgroup', i)) %>%
+                              group_by(subgroup) %>% 
+                              summarize(avoidable_consumer_loss = weighted.mean(x = avoidable_consumer_loss, w = consumer_weight))) %>%
   filter(!is.na(subgroup))
 
 # Use LAFA overall mean for prepared food in the "other" category
@@ -494,8 +527,8 @@ food_U_LAFA_spread <- food_U_LAFA %>%
 demand_change_fn <- function(W0, r, p) p * ((1 - W0) / (1 - (1 - r) * W0) - 1) + 1
 
 food_U_LAFA_spread <- food_U_LAFA_spread %>% 
-  left_join(proportion_affected, by = c('BEA_recipient_code' = 'BEA_Code')) %>%
-  mutate(reduction_by_mass = demand_change_fn(W0 = avoidable_consumer_loss/100, r = overall_waste_reduction, p = proportion_receipts_affected),
+  left_join(susb_bea_proportion_affected, by = c('BEA_recipient_code' = 'BEA_Code')) %>%
+  mutate(reduction_by_mass = demand_change_fn(W0 = avoidable_consumer_loss/100, r = overall_waste_reduction, p = proportion),
          mass_flow_post_intervention = mass_flow * reduction_by_mass,
          monetary_flow_post_intervention = mass_flow_post_intervention * price)
 
@@ -511,7 +544,6 @@ row.names(food_U_postintervention) <- food_U_postintervention$BEA_389_code
 food_U_postintervention <- food_U_postintervention[, !names(food_U_postintervention) %in% 'BEA_389_code']
 
 # Make the row and column order the same as food_U
-#row.names(food_U_postintervention) == row.names(food_U) # Good
 food_U_postintervention <- food_U_postintervention[, names(food_U)]
 ```
 
@@ -560,23 +592,21 @@ baseline_waste_foodservice <- food_U_LAFA_spread %>%
 # Join up the names of the BEA codes and print the table of values
 baseline_waste_foodservice <- baseline_waste_foodservice %>% 
   left_join(codes_subset, by = c('BEA_recipient_code' = 'BEA_389_code')) %>%
-  setNames(c('BEA_Code', 'baseline', 'BEA_Title')) %>%
-  left_join(bea_to_use_df)
+  setNames(c('BEA_Code', 'baseline', 'BEA_Title')) 
 
 baseline_waste_foodservice <- baseline_waste_foodservice %>%
-  left_join(proportion_affected %>% select(BEA_Code, proportion_receipts_affected, proportion_food)) %>%
+  left_join(susb_bea_proportion_affected %>% ungroup %>% select(BEA_Code, proportion)) %>%
   left_join(total_prepost)
 
 baseline_waste_foodservice %>%
   mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30)) %>%
-  select(sector, BEA_Title, baseline, food_purchases_baseline, food_purchases_postintervention, reduction) %>%
+  select(BEA_Title, baseline, food_purchases_baseline, food_purchases_postintervention, reduction) %>%
   rename(baseline_waste_percent = baseline) %>%
-  arrange(sector) %>%
   print(n = nrow(.))
 ```
 
 ```{r plot of monetary reduction versus mass reduction}
-# Proportion reduction in monetary units is systematically higher than in mass units but 
+# Proportion reduction in monetary units is systematically higher than in mass units but not that far off.
 ggplot(rate_changes) +
   geom_point(aes(x = reduction_bymass, y = reduction_bydollar)) +
   geom_abline(slope=1, linetype = 'dotted') +
@@ -596,6 +626,20 @@ This table shows the marginal row totals, by primary food industry, of value sol
 
 reduction_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
                                    cost_averted = rowSums(food_U) - rowSums(food_U_postintervention))
+
+# Edit. Run for full service, limited service, and contractors separately. Sum up all the purchases for tourism & institutions to get contractors' food purchases.
+
+fullsvc_codes <- c("722110")
+limitedsvc_codes <- c("722A00", "722211")
+
+food_U_bygroup <- data.frame(full_service_restaurants = food_U[, fullsvc_codes],
+                             limited_mobile_and_bars = rowSums(food_U[, limitedsvc_codes]),
+                             contracted_foodservice = rowSums(food_U[, !names(food_U) %in% c(fullsvc_codes, limitedsvc_codes)]))
+
+
+food_U_bygroup_postintervention <- data.frame(full_service_restaurants = food_U_postintervention[, fullsvc_codes],
+                                              limited_mobile_and_bars = rowSums(food_U_postintervention[, limitedsvc_codes]),
+                                              contracted_foodservice = rowSums(food_U_postintervention[, !names(food_U_postintervention) %in% c(fullsvc_codes, limitedsvc_codes)]))
 
 # For display purposes join this with the name of the food so that we can see the names of the rows being totaled up.
 bea_codes %>%
@@ -617,25 +661,16 @@ Now that we have the monetary flows representing purchases from primary food ind
 if (!is_local) use_python('/usr/bin/python3')
 source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
 
+# Match row names of food_U with longer codes that eeio_lcia() will recognize
+demand_codes <- as.list(all_codes$sector_desc_drc[match(rownames(food_U), all_codes$sector_code_uppercase)])
+
 # The model is already built so we don't need to build it again. 
 # All we need to do is match the demand vector 6 digit codes with the codes that include the full names
 # then run eeio_lcia on it.
+# Do for each of the 3 groups separately
 
-demand_vector <- reduction_byfoodtype %>%
-  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
-  with(list(codes = sector_desc_drc, values = cost_averted))
-
-eeio_wta <- eeio_lcia('USEEIO2012', demand_vector$values * 1e6, demand_vector$codes) 
-
-# Also do for the baseline
-baseline_byfoodtype <- data.frame(BEA_Code = row.names(food_U),
-                                   baseline = rowSums(food_U))
-
-demand_vector_baseline <- baseline_byfoodtype %>%
-  left_join(all_codes, by = c('BEA_Code' = 'sector_code_uppercase')) %>%
-  with(list(codes = sector_desc_drc, values = baseline))
-
-eeio_wta_baseline <- eeio_lcia('USEEIO2012', demand_vector_baseline$values * 1e6, demand_vector_baseline$codes) 
+eeio_wta_baseline_bygroup <- map(food_U_bygroup, ~ eeio_lcia('USEEIO2012', as.list(. * 1e6), demand_codes)) 
+eeio_wta_averted_bygroup <- map(food_U_bygroup - food_U_bygroup_postintervention, ~ eeio_lcia('USEEIO2012', as.list(. * 1e6), demand_codes)) 
 
 ```
 
@@ -643,15 +678,20 @@ This table shows the baseline impact from food produced by primary food industri
 
 ```{r EEIO result as table}
 # A table is probably the best way to show it
-eeio_dat <- data.frame(category = row.names(eeio_wta),
-                       baseline = eeio_wta_baseline$Total,
-                       impact_averted = eeio_wta$Total)
+# Combine into a data frame
+eeio_dat_bygroup <- data.frame(group = c('full-service restaurants',
+                                         'limited-service restaurants, mobile foodservice, and bars',
+                                         'contracted foodservice operations')) %>%
+  mutate(category = map(eeio_wta_baseline_bygroup, row.names),
+         baseline = map(eeio_wta_baseline_bygroup, 1),
+         impact_averted = map(eeio_wta_averted_bygroup, 1)) %>%
+  unnest(cols = c(category, baseline, impact_averted))
 
-eeio_dat %>%
+eeio_dat_bygroup %>%
   filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
   mutate(baseline = baseline * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
          impact_averted = impact_averted * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
-         category = c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'),
+         category = rep(c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'), times = 3),
          percent_averted = signif(100 * impact_averted/baseline, 2))
 ```
 
@@ -665,44 +705,79 @@ We are assuming that the impact can be attributed to a combination of three BEA 
 However, the impacts of producing the additional required equipment are very small compared to the potential impact averted by reduced food production. For instance, the CO~2~ emissions associated with the equipment production are between 0.1% and 1.6% of the emissions averted by reduced food production. Therefore, this offset does not dramatically affect the final result; this is relatively insensitive to our assumptions. As seen in the table, the net percent impact averted, relative to baseline for the foodservice industry, after accounting for the offset is still around 9% for all impact categories.
 
 ```{r estimate environmental benefit offset}
-# Number of establishments that need to adopt intervention
-n_estab <- sum(establishments_affected$establishments[establishments_affected$use])
+equipment_cost_bygroup <- establishments_implementing_total %>%
+  ungroup %>%
+  filter(can_implement) %>%
+  mutate(group = c('contracted foodservice operations', 'full-service restaurants', rep('limited-service restaurants, mobile foodservice, and bars', 2))) %>%
+  group_by(group) %>%
+  summarize(establishments = sum(n_estab)) %>%
+  mutate(equipment_cost_lower = establishments * equipment_costs['lower'],
+         equipment_cost_upper = establishments * equipment_costs['upper'])
 
 # The three potential BEA industry codes to assign costs of equipment are:
 # computer manufacturing, computer monitor and peripheral manufacturing, and the other machinery category which includes industrial and retail scales
 industries_offset <- c('334111', '33411A', '33399A')
-total_equipment_cost <- equipment_costs * n_estab # 167M to 357M
 
 # Find the full names of the codes for the offsetting industries
 industries_offset_codes <- all_codes$sector_desc_drc[match(industries_offset, all_codes$sector_code_uppercase)]
 
 # Use the upper and lower bounds from the industries, and the upper and lower bounds for total cost, to get an upper and lower bound for the impact that is offset
+# For each one, 3 costs * 3 offsetting industries
+eeio_offsets_lower_bygroup <- map(equipment_cost_bygroup$equipment_cost_lower, 
+                                     function(x) map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(x), list(.))))
+eeio_offsets_upper_bygroup <- map(equipment_cost_bygroup$equipment_cost_upper, 
+                                     function(x) map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(x), list(.))))            
 
-eeio_offsets_lower <- map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(total_equipment_cost['lower']), list(.)))
-eeio_offsets_upper <- map(industries_offset_codes, ~ eeio_lcia('USEEIO2012', list(total_equipment_cost['upper']), list(.)))
 
-eeio_offsets_df <- rbind(data.frame(category = row.names(eeio_offsets_lower[[1]]), do.call(cbind, eeio_offsets_lower) %>% setNames(industries_offset_codes), bound = 'lower'),
-                         data.frame(category = row.names(eeio_offsets_upper[[1]]), do.call(cbind, eeio_offsets_upper) %>% setNames(industries_offset_codes), bound = 'upper'))
+# Within each list element, find the extreme value among the 3 offset industries
+eeio_offsets_lower_bygroup_combined <- map(eeio_offsets_lower_bygroup, ~ apply(do.call(cbind, .), 1, min))
+eeio_offsets_upper_bygroup_combined <- map(eeio_offsets_upper_bygroup, ~ apply(do.call(cbind, .), 1, max))
 
-eeio_offsets_range <- eeio_offsets_df %>%
-  pivot_longer(cols = -c(category, bound)) %>%
-  group_by(category) %>%
-  group_modify(~ data.frame(offset_lower = min(.$value), offset_upper = max(.$value)))
+# Combine the results into a single data frame using list columns
+eeio_offsets_range_bygroup <- equipment_cost_bygroup %>%
+  mutate(category = map(eeio_offsets_lower_bygroup_combined, names),
+         offset_lower = eeio_offsets_lower_bygroup_combined,
+         offset_upper = eeio_offsets_upper_bygroup_combined) %>%
+  unnest(cols = c(category, offset_lower, offset_upper))
 
-# Final result with offset
-eeio_dat_with_offset <- eeio_dat %>%
-  left_join(eeio_offsets_range) %>%
-  mutate(net_impact_averted_lower = impact_averted - offset_upper,
-         net_impact_averted_upper = impact_averted - offset_lower) %>%
-  filter(grepl('enrg|eutr|gcc|land|watr', category)) 
+# Join EEIO results for the impact reduction with EEIO results for the offset
+
+eeio_dat_bygroup_withoffset <- eeio_dat_bygroup %>%
+  left_join(eeio_offsets_range_bygroup)
+
+# Combine everything
+final_result_bygroup <- eeio_dat_bygroup_withoffset %>%
+  mutate(percent_averted = signif(100 * impact_averted/baseline, 2),
+         net_impact_averted_lower = impact_averted - offset_upper,
+         net_impact_averted_upper = impact_averted - offset_lower,
+         net_percent_averted_lower = 100 * net_impact_averted_lower/baseline,
+         net_percent_averted_upper = 100 * net_impact_averted_upper/baseline) %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  mutate(baseline = baseline * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         impact_averted = impact_averted * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         category = rep(c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'), nrow(.)/5),
+         total_cost_lower = cost_range['lower'] * establishments,
+         total_cost_upper = cost_range['upper'] * establishments,
+         cost_per_reduction_lower = total_cost_lower / net_impact_averted_upper,
+         cost_per_reduction_upper = total_cost_upper / net_impact_averted_lower,
+         net_impact_averted_lower = net_impact_averted_lower * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9),
+         net_impact_averted_upper = net_impact_averted_upper * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9)
+  )
 
 # For display
-eeio_dat_with_offset %>%
-  mutate_at(vars(baseline:net_impact_averted_upper), ~ . * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9)) %>%
+eeio_dat_bygroup_withoffset %>%
+  mutate(percent_averted = signif(100 * impact_averted/baseline, 2),
+         net_impact_averted_lower = impact_averted - offset_upper,
+         net_impact_averted_upper = impact_averted - offset_lower,
+         net_percent_averted_lower = 100 * net_impact_averted_lower/baseline,
+         net_percent_averted_upper = 100 * net_impact_averted_upper/baseline) %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  
   mutate(net_percent_averted_lower = 100 * net_impact_averted_lower/baseline,
          net_percent_averted_upper = 100 * net_impact_averted_upper/baseline,
-         category = c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)')) %>%
-  select(-baseline, -impact_averted) %>%
+         category = rep(c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'), times=3)) %>%
+  mutate_at(vars(offset_lower,offset_upper,net_impact_averted_upper,net_impact_averted_lower), ~ . * c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9)) %>%
+  select(group, category, percent_averted, net_impact_averted_lower, net_impact_averted_upper, net_percent_averted_lower, net_percent_averted_upper) %>%
   mutate_if(is.numeric, ~ signif(., 3))
 
 ```
@@ -718,36 +793,33 @@ The final estimate is now based on the net environmental impact after deducting 
 
 ```{r multiply cost by number of establishments}
 # Print table
-establishments_affected %>% 
+establishments_implementing_total %>%
   ungroup %>%
-  filter(use) %>%
-  select(-use) %>%
-  mutate(BEA_Title = trunc_ellipsis(BEA_Title, 30))
+  filter(can_implement) %>%
+  mutate(group = c('contracted foodservice operations', 'full-service restaurants', rep('limited-service restaurants, mobile foodservice, and bars', 2))) %>%
+  group_by(group) %>%
+  summarize(establishments = sum(n_estab)) %>%
+  mutate(total_cost_lower = cost_range["lower"] * establishments,
+         total_cost_upper = cost_range["upper"] * establishments)
 
-total_cost <- cost_range * n_estab # 4 to 9 billion
 
 ```
 
-Given the numbers of establishments in this table, we multiply the total number of establishments (`r as.integer(n_estab)`) by the upper and lower bounds of total cost, \$8,749 and \$20,102, resulting in a total cost range of roughly **4 to 9 billion USD** to implement waste tracking and analytics across all eligible establishments.
+Given the numbers of establishments in this table, we multiply the total number of establishments (~255,000) by the upper and lower bounds of total cost, \$8,749 and \$20,102, resulting in a total cost range of roughly **2.2 to 5.1 billion USD** to implement waste tracking and analytics across all eligible establishments.
 
 Now we simply divide the total cost by the impact reductions to get a cost per unit reduction for each category.
 
 ```{r total cost per impact reduction}
-cost_per_impact <- eeio_dat_with_offset %>%
-  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
-  mutate(cost_per_reduction_lower = total_cost[1] / net_impact_averted_upper,
-         cost_per_reduction_upper = total_cost[2] / net_impact_averted_lower)
+# Already calculated above
 
-cost_per_impact %>%
-  select(-impact_averted, -baseline) %>%
-  mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'),
-         cost_per_reduction_lower = paste0('$', round(cost_per_reduction_lower, 2)),
-         cost_per_reduction_upper = paste0('$', round(cost_per_reduction_upper, 2)))
+final_result_bygroup %>%
+  select(group, category, cost_per_reduction_lower, cost_per_reduction_upper) %>%
+  mutate(category = rep(c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'), nrow(.)/5))
 ```
 
-The final result is shown in this table. The CO~2~ emission reduction cost can be compared with the "social cost of carbon" fixed several years ago by the Obama administration at approximately 5 cents per kg CO~2~. If we consider that to be a rough benchmark for the cost-effectiveness of emissions reduction efforts, this analysis unfortunately shows a fairly high cost of CO~2~ emission reduction, ranging from \$0.44 to \$1.02. 
+The final result is shown in this table. The CO~2~ emission reduction cost can be compared with the "social cost of carbon" fixed several years ago by the Obama administration at approximately 5 cents per kg CO~2~. If we consider that to be a rough benchmark for the cost-effectiveness of emissions reduction efforts, this analysis shows that CO~2~ emission reduction is relatively expensive for restaurants, ranging from \$0.44 to \$1.03 per kg for full-service restaurants, and from \$0.54 to \$1.26 for limited-service restaurants. However, given the larger size of the institutions at which contracted operations provide foodservice, the cost is much less, ranging from \$0.06 to \$0.14 per kg.
 
-I will examine the assumptions here to see why the cost is so high. When I did a quick version of this analysis using the cost numbers given by ReFED, I get a much cheaper cost per kg CO~2~ reduction (\$0.03 for institutions and \$0.13 for restaurants), which may be due to the very low cost assumptions they make, or failure to account for all costs. Also, of course, CO~2~ emission reduction is not the only benefit provided by the intervention. Reducing food purchases by the foodservice industry would also reduce the other environmental impacts of food production, especially land use (which also would indirectly reduce land use related emissions of CO~2~). *Later if we can get values similar to the social cost of carbon for other environmental goods, we could sum them up to get a total value of benefit per cost &mdash; but this gets into the valuation issue which some people find problematic.*
+I will examine the assumptions here to see why the cost is so high for restaurants. When I did a quick version of this analysis using the cost numbers given by ReFED, I get a much cheaper cost per kg CO~2~ reduction (\$0.03 for institutions and \$0.13 for restaurants), which may be due to the very low cost assumptions they make, or failure to account for all costs. The discrepancy is not too high for contracted foodservice at institutions, however. Also, of course, CO~2~ emission reduction is not the only benefit provided by the intervention. Reducing food purchases by the foodservice industry would also reduce the other environmental impacts of food production, especially land use (which also would indirectly reduce land use related emissions of CO~2~). *Later if we can get values similar to the social cost of carbon for other environmental goods, we could sum them up to get a total value of benefit per cost &mdash; but this gets into the valuation issue which some people find problematic.*
 
 Finally, I only account for the environmental impacts generated by the production of the raw materials up to the point where they are purchased by the foodservice industries. There are additional impacts generated when the food is transported and processed after that, that I did not consider. (However, production is by far the stage with the highest direct impact so this is unlikely to affect the final result drastically.)
 
@@ -765,9 +837,11 @@ Changing the threshold from firms with 20 employees to a smaller threshold would
 
 Two other inclusion/exclusion decisions that might affect the result are (1) that I excluded government foodservice which might have a large effect since the government is a large purchaser of food for foodservice. It is known that some government foodservice establishments have already adopted waste tracking systems, meaning that there is a large potential for food waste reduction if government foodservice would uniformly adopt the intervention. SUSB lacks data on the number of establishments in government foodservice. **Is there a way to get these data?** And (2) we are not including beverages which are a fairly large contributor to foodservice environmental impact. I based that decision on my impression that these waste tracking systems cannot do a lot about beverage waste since little of it is kitchen waste, but if establishments are overpurchasing beverages that are not used, it might be addressable by the intervention.
 
-The most important assumption to be examined is the potential effectiveness of the intervention. We used 45% reduction in kitchen waste as the number. The benefit would scale linearly with any change in this number. Therefore if the reduction achieved is only half that, the cost per unit impact reduction would approximately double. (The same is true for changes in the ratio of kitchen to plate waste but that number is more constrained by data so we can be more confident in it.)
+Another important assumption to be examined is the potential effectiveness of the intervention. We used 45% reduction in kitchen waste as the number. The benefit would scale linearly with any change in this number. Therefore if the reduction achieved is only half that, the cost per unit impact reduction would approximately double. (The same is true for changes in the ratio of kitchen to plate waste but that number is more constrained by data so we can be more confident in it.)
 
-For now we can present the uncertainty based on the cost uncertainties, but it might also be a good idea to present the uncertainty based on not knowing the true potential effectiveness of the intervention. It would be helpful to have better data on the rates of waste reduction achieved by establishments that adopt waste tracking and analytics.
+Finally, the total cost is strongly dependent on our assumption that the cost of installing the system is fixed per establishment regardless of how large or small the establishment is, and also dependent on how reliable are the SUSB data for numbers of establishments in the restaurant and contracted foodservice operator industry groups.
+
+For now we can present the uncertainty based on the cost uncertainties, but it might also be a good idea to present the uncertainty based on not knowing the true potential effectiveness of the intervention or the number of establishments implementing. It would be helpful to have better data on the rates of waste reduction achieved by establishments that adopt waste tracking and analytics.
 
 # Future to-do items
 

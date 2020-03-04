@@ -127,7 +127,7 @@ establishments_implementing_total <- establishments_implementing %>%
   group_by(category, BEA_Code, can_implement) %>%
   summarize(n_estab = sum(`No. establishments`))
 
-# 2. sum up the non-excluded number of receipts in each industry so that food bought by very small firms isn't eligible for waste reduction
+
 
 # size_classes_exclude <- expand_grid(sector = c('restaurants', 'tourism and hospitality', 'institutions'), `Size class` = levels(susb_food_sums$`Size class`)[1:4]) %>%
 #   mutate(exclude = `Size class` %in% c('fewer than 20'))
@@ -174,6 +174,8 @@ susb_bea_food_sums[susb_bea_food_sums$BEA_Code %in% c('481000', '483000') & susb
 
 # Get final proportions affected ------------------------------------------
 
+# The second type of sum:
+# 2. sum up the non-excluded number of receipts in each industry so that food bought by very small firms isn't eligible for waste reduction
 #### Here are the proportions of receipts that will be affected by adoption of WTA
 
 sums_by_affected <- susb_bea_food_sums %>%
