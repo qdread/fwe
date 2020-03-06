@@ -10,6 +10,7 @@ output:
 ```{r setup, include=FALSE}
 # We only want to show graphs and tables.
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE) # default to not show any of the code, messages, or warnings.
+trunc_ellipsis <- function(x, n) if_else(nchar(x) < n, x, paste(substr(x, 1, n), '...')) # Convenience function to cut off long labels.
 ```
 
 # Summary
