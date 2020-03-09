@@ -82,6 +82,148 @@ modelrun100_materials %>% select(Total_5th:Total_95th) %>% colSums # 0, because 
 datelabel_material_costs_nocoord <- modelrun0_materials %>% select(Total_5th:Total_95th) %>% colSums
 datelabel_material_costs_allcoord <- modelrun100_materials %>% select(Total_5th:Total_95th) %>% colSums # zeroes.
 
+# Annualization
+(datelabel_material_costs_nocoord_annual <- pmt(datelabel_material_costs_nocoord, r = 0.07, n = 5, f = 0, t = 0)) # 80M to 192M.
+
+#### 
+# Waste reduction rates from date labeling standardization, and which categories it acts on.
+consumer_response <- c(lower = 0.05, upper = 0.10)
+# Refed also assumes 20% of avoidable household waste is due to confusion over expiration dates (this seems high so set it as an upper bound)
+proportion_confusion_waste <- c(lower = 0.10, upper = 0.20)
+
+# If baseline avoidable household rate is ~ 20 to 25 percent, then the baseline confusion rate is 0.20 * 0.20 = 0.04. If 5 to 10 percent of consumers 
+# change their behavior, the post-intervention confusion rate is 3.6 to 3.8%.
+
+# So we can use the baseline confusion rate for the baseline waste demand, then the post-intervention rate, for all households.
+# 0.002 to 0.004 of all final consumer food demand, roughly. That actually seems pretty plausible.
+
+# Using all final demand from levels 1 and 3, multiplied by the appropriately adjusted pre-intervention and post-intervention "confusion waste rate".
+finaldemand2012 <- read_csv(file.path(fp_github, 'USEEIO/useeiopy/Model Builds/USEEIO2012/USEEIO2012_FinalDemand.csv'))
+
+# Load waste rates for the BEA codes, calculated in lafa_rate_conversion.R
+bea_waste_rates <- read_csv(file.path(fp, 'crossreference_tables/waste_rates_bea.csv'))
+
+# Consumer demand baseline, averted in lower bound scenario, and averted in upper bound scenario
+demand_change_fn <- function(W0, r, p) p * ((1 - W0) / (1 - (1 - r) * W0) - 1) + 1
+
+# baseline waste rate is the baseline avoidable consumer waste rate times the proportion of that waste that is "confusion"
+# waste reduction rate is the consumer response
+# proportion food is the % food in that BEA code
+
+# We also need to include a very simple accounting of beverages.
+# 311920: coffee and tea, 311930 drink concentrates, 312110 soft drinks, bottled water, and ice.
+# This is supplemented with very crude numbers I estimated from lit sources, which appear in the stoten II paper.
+beverage_waste_rates <- bea_codes %>% 
+  filter(beverages > 0, stage == 'processing') %>% 
+  filter(!grepl('beer|wine|spirits', BEA_389_def)) %>%
+  select(BEA_389_code, BEA_389_def) %>%
+  mutate(primary_loss_value = 4.5, retail_loss_value = 5, avoidable_consumer_loss_value = 8)
+
+bea_waste_rates <- bind_rows(bea_waste_rates, beverage_waste_rates)
+
+datelabelingdemand <- finaldemand2012 %>%
+  right_join(bea_waste_rates) %>%
+  left_join(bea_codes) %>%
+  mutate(baseline_demand = `2012_US_Consumption` * proportion_food,
+         baseline_consumer_waste_demand = baseline_demand * avoidable_consumer_loss_value / 100,
+         averted_demand_lower = baseline_demand * (1 - demand_change_fn(W0 = proportion_confusion_waste['lower'] * avoidable_consumer_loss_value / 100,
+                                                                        r = consumer_response['lower'],
+                                                                        p = proportion_food)),
+         averted_demand_upper = baseline_demand * (1 - demand_change_fn(W0 = proportion_confusion_waste['upper'] * avoidable_consumer_loss_value / 100,
+                                                                        r = consumer_response['upper'],
+                                                                        p = proportion_food))) %>%
+  select(BEA_389_code, BEA_389_def, baseline_demand, baseline_consumer_waste_demand, averted_demand_lower, averted_demand_upper)
+
+
+# Join with long code names
+datelabelingdemand <- datelabelingdemand %>%
+  left_join(all_codes[,c(1,3)], by = c('BEA_389_code' = 'sector_code_uppercase'))
+
+######
+###### NOTE: right now beverages are included in the costs, but not in the waste rates because we don't have a good rate for them.
+###### Either add a crappy number for beverage waste rates or get rid of them from the costs.
+######
+  
+# Run EEIO for the baseline, averted lower, and averted upper values
+# For now, just sum everything up across food types (not that important which is which)
+
+if (!is_local) use_python('/usr/bin/python3')
+source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
+
+datelabeling_baseline_eeio <- with(datelabelingdemand, eeio_lcia('USEEIO2012', as.list(baseline_demand), as.list(sector_desc_drc)))
+datelabeling_avertedlower_eeio <- with(datelabelingdemand, eeio_lcia('USEEIO2012', as.list(averted_demand_lower), as.list(sector_desc_drc)))
+datelabeling_avertedupper_eeio <- with(datelabelingdemand, eeio_lcia('USEEIO2012', as.list(averted_demand_upper), as.list(sector_desc_drc)))
+
+# Convert EEIO output into a single data frame
+
+eeio_datelabeling <- map2_dfr(list(datelabeling_baseline_eeio, datelabeling_avertedlower_eeio, datelabeling_avertedupper_eeio),
+                              c('impact_baseline', 'impact_averted_lower', 'impact_averted_upper'),
+                              ~ data.frame(category = row.names(.x),
+                                           scenario = .y,
+                                           impact = .x[,'Total']))
+
+# Offsetting impacts, using the lower, mean, and upper bounds of annualization of materials costs.
+# Industries for this should be food packaging and labeling machinery - assign the entire one time cost to this.
+
+pkg_machinery_code <- all_codes$sector_desc_drc[all_codes$sector_code_uppercase == '333993']
+
+datelabeling_offset_eeio <- eeio_lcia('USEEIO2012', list(1), list(pkg_machinery_code))
+datelabeling_offset_eeio <- data.frame(category = row.names(datelabeling_offset_eeio), 
+                                                            outer(datelabeling_offset_eeio[,'Total'], datelabel_material_costs_nocoord_annual)) %>%
+  setNames(c('category', 'offset_lower', 'offset_mean', 'offset_upper'))
+
+# Combine impact and offset to get net impact reduced
+eeio_datelabeling_result <- eeio_datelabeling %>% 
+  pivot_wider(names_from = scenario, values_from = impact) %>%
+  left_join(datelabeling_offset_eeio) %>%
+  mutate(net_averted_lower_coordination = impact_averted_lower,
+         net_averted_upper_coordination = impact_averted_upper,
+         net_averted_lower_nocoordination = impact_averted_lower - offset_upper,
+         net_averted_upper_nocoordination = impact_averted_upper - offset_lower,
+         net_percent_averted_lower_coordination = 100 * net_averted_lower_coordination / impact_baseline,
+         net_percent_averted_upper_coordination = 100 * net_averted_lower_coordination / impact_baseline,
+         net_percent_averted_lower_nocoordination = 100 * net_averted_lower_nocoordination / impact_baseline,
+         net_percent_averted_upper_nocoordination = 100 * net_averted_upper_nocoordination / impact_baseline)
+# It averts 0.1% to 0.4% of the food system's environmental impact. That's plausible, if anything high.
+  
+
+# Cost per unit reduction for date labeling, using annualization of one-time costs
+eeio_datelabeling_result <- eeio_datelabeling_result %>%
+  mutate(cost_per_reduction_lower_coordination = datelabel_costs_coord_annual['lower'] / net_averted_upper_coordination,
+         cost_per_reduction_upper_coordination = datelabel_costs_coord_annual['upper'] / net_averted_lower_coordination,
+         cost_per_reduction_lower_nocoordination = datelabel_costs_nocoord_annual['lower'] / net_averted_upper_nocoordination,
+         cost_per_reduction_upper_nocoordination = datelabel_costs_nocoord_annual['upper'] / net_averted_lower_nocoordination)
+
+# Display the results.
+
+conversion_factors <- c(1e-9, 1e-6, 1e-9, 1e-10, 1e-9)
+category_names <- c('energy (PJ)', 'eutrophication (kT N)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)')
+
+datelabeling_impact_data <- eeio_datelabeling_result %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  select(category, contains('net')) %>%
+  mutate(category = category_names) %>%
+  mutate_at(vars(contains('net_averted')), ~ .* conversion_factors)
+
+datelabeling_cost_data <- eeio_datelabeling_result %>%
+  filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
+  select(category, contains('cost'))
+
+datelabeling_cost_data %>%
+  mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)',  'land ($/m2)', 'water ($/m3)')) %>%
+  filter(!grepl('eutr', category)) %>%
+  pivot_longer(-category) %>%
+  mutate(bound = if_else(grepl('lower', name), 'lower', 'upper'),
+         coordination = if_else(grepl('nocoordination', name), 'no', 'yes')) %>%
+  select(-name) %>%
+  pivot_wider(names_from = bound, values_from = value) %>%
+  ggplot(aes(x = coordination, color = coordination, ymin = lower, ymax = upper)) +
+    geom_errorbar(size = 1, width = 0.1) +
+    facet_wrap(~ category, scales = 'free_y') +
+    scale_y_continuous(labels = scales::dollar) +
+    theme_bw() + 
+    theme(panel.grid = element_blank(), strip.background = element_blank(), legend.position = 'none')
+
 # Spoilage prevention packaging -------------------------------------------
 
 # For packaging, we are going to use one-time costs, then per-unit costs. 
@@ -125,10 +267,6 @@ prop_fruit_veg <- U[c('111200', '111300'), c('311420')]
 prop_processed_fruit <- prop_fruit_veg[2]/sum(prop_fruit_veg) # 85.16% by $ value of the processed fruit/veg industry is fruit.
 
 food_U[fruit_rows, retail_codes] # This is basically zero. We will need to just change the final consumer demand by the product of the waste rates, and use consumer price.
-
-##################
-# EDIT ANYTHING BELOW TO INCLUDE FRUIT, MEAT, POULTRY, AND SEAFOOD
-##################
 
 ##########
 # LAFA rate conversion for the fruit and meat codes in LAFA.
