@@ -17,6 +17,8 @@ industries_joined <- BEA_NAICS %>%
   filter(!duplicated(.)) %>%
   right_join(industries)
 
+industries_joined %>% group_by(NAICS) %>% summarize(nbea = length(unique(BEA_Code))) %>% arrange(-nbea)
+
 BEA_NAICS %>% filter(BEA_Code %in% c('33329A', '333220')) # There is one case where a single NAICS code is related to two BEA codes
 # I think they are both valid. OK.
 
