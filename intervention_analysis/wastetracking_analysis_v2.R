@@ -521,3 +521,17 @@ final_result_bygroup_display <- final_result_bygroup %>%
   select(group, category, cost_per_reduction_lower, cost_per_reduction_upper) %>%
   mutate(category = rep(c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'land ($/m2)', 'water ($/m3)'), nrow(.)/5))
 
+final_result_bygroup_tocsv <- eeio_dat_bygroup_withoffset %>%
+  mutate(percent_averted = signif(100 * impact_averted/baseline, 2),
+         net_impact_averted_lower = impact_averted - offset_upper,
+         net_impact_averted_upper = impact_averted - offset_lower,
+         net_percent_averted_lower = 100 * net_impact_averted_lower/baseline,
+         net_percent_averted_upper = 100 * net_impact_averted_upper/baseline) %>%
+  mutate(total_cost_lower = cost_range['lower'] * establishments,
+         total_cost_upper = cost_range['upper'] * establishments,
+         cost_per_reduction_lower = total_cost_lower / net_impact_averted_upper,
+         cost_per_reduction_upper = total_cost_upper / net_impact_averted_lower)
+
+# Save results
+write_csv(final_result_bygroup, file.path(fp, 'scenario_results/interventions/eeio_wta_bysector_5categories_processed.csv'))
+write_csv(final_result_bygroup_tocsv, file.path(fp, 'scenario_results/interventions/eeio_wta_bysector_all.csv'))
