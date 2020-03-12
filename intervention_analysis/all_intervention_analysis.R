@@ -126,10 +126,10 @@ datelabelingdemand <- finaldemand2012 %>%
   left_join(bea_codes) %>%
   mutate(baseline_demand = `2012_US_Consumption` * proportion_food,
          baseline_consumer_waste_demand = baseline_demand * avoidable_consumer_loss_value / 100,
-         averted_demand_lower = baseline_demand * (1 - demand_change_fn(W0 = proportion_confusion_waste['lower'] * avoidable_consumer_loss_value / 100,
+         averted_demand_lower = `2012_US_Consumption` * (1 - demand_change_fn(W0 = proportion_confusion_waste['lower'] * avoidable_consumer_loss_value / 100,
                                                                         r = consumer_response['lower'],
                                                                         p = proportion_food)),
-         averted_demand_upper = baseline_demand * (1 - demand_change_fn(W0 = proportion_confusion_waste['upper'] * avoidable_consumer_loss_value / 100,
+         averted_demand_upper = `2012_US_Consumption` * (1 - demand_change_fn(W0 = proportion_confusion_waste['upper'] * avoidable_consumer_loss_value / 100,
                                                                         r = consumer_response['upper'],
                                                                         p = proportion_food))) %>%
   select(BEA_389_code, BEA_389_def, baseline_demand, baseline_consumer_waste_demand, averted_demand_lower, averted_demand_upper)
@@ -505,3 +505,72 @@ cost_per_reduction_packaging %>%
   mutate(category = c('eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'energy ($/MJ)', 'land ($/m2)', 'water ($/m3)'))
 # Net result: 4 to 22 cents per kg CO2 averted. Compares favorably to WTA. Scale could be interesting too.
          
+
+
+# Consumer education campaigns --------------------------------------------
+
+# Assumptions: 
+
+# Reduction in rate of food waste
+consumer_ed_waste_reduction <- (1/3) * (2/3) * c(.05,.1,.15) # 1.1 to 3.3 percent reduction, we can use this fairly small number
+
+# Proportion of baseline demand affected is equal to the proportion of population who lives in the metropolitan areas that are big enough to get a targeted campaign
+
+# Cost is the annual cost per campaign multiplied by the number of metropolitan areas that will have campaigns
+
+# The offsetting impact should be fairly negligible, using the environmental impact from media industries which will be very low per $1 output.
+
+# There are 1251 counties within metropolitan statistical areas, together representing 85.6% of the US pop
+pop_in_metro <- 0.856 # see read_msas.R for derivation of this number.
+n_metro_counties <- 1251
+
+# Costs: content development 1x per year regardless, media consultant 1-2x per year (low/high), media costs 1-2x per year (low/high)
+consumer_ed_costs <- c(content_development = 70e3,
+                       media_consultant = 16e3,
+                       media_costs = 30e3)
+
+consumer_ed_costs_annual <- n_metro_counties * c(lower = sum(consumer_ed_costs),
+                                                 upper = sum(consumer_ed_costs * c(1,2,2)))
+# 145 to 203 million
+
+# Calculate baseline demand & baseline waste at consumer level, multiplied by the 85.6% number.
+
+# Using all final demand from levels 1 and 3, multiplied by the appropriately adjusted pre-intervention and post-intervention "confusion waste rate".
+finaldemand2012 <- read_csv(file.path(fp_github, 'USEEIO/useeiopy/Model Builds/USEEIO2012/USEEIO2012_FinalDemand.csv'))
+
+# Load waste rates for the BEA codes, calculated in lafa_rate_conversion.R
+bea_waste_rates <- read_csv(file.path(fp, 'crossreference_tables/waste_rates_bea.csv'))
+
+# Consumer demand baseline, averted in lower bound scenario, and averted in upper bound scenario
+demand_change_fn <- function(W0, r, p) p * ((1 - W0) / (1 - (1 - r) * W0) - 1) + 1
+
+# add beverage rates (copied from above)
+beverage_waste_rates <- bea_codes %>% 
+  filter(beverages > 0, stage == 'processing') %>% 
+  filter(!grepl('beer|wine|spirits', BEA_389_def)) %>%
+  select(BEA_389_code, BEA_389_def) %>%
+  mutate(primary_loss_value = 4.5, retail_loss_value = 5, avoidable_consumer_loss_value = 8)
+
+bea_waste_rates <- bind_rows(bea_waste_rates, beverage_waste_rates)
+
+############ edit the following to have lower, mean, and upper, and make sure numbers are correct
+consumer_ed_demand <- finaldemand2012 %>%
+  right_join(bea_waste_rates) %>%
+  left_join(bea_codes) %>%
+  mutate(baseline_demand = `2012_US_Consumption` * proportion_food * pop_in_metro,
+         baseline_consumer_waste_demand = baseline_demand * avoidable_consumer_loss_value / 100,
+         averted_demand_lower = `2012_US_Consumption` * (1 - demand_change_fn(W0 = avoidable_consumer_loss_value / 100,
+                                                                              r = consumer_ed_waste_reduction[1],
+                                                                              p = proportion_food * pop_in_metro)),
+         averted_demand_mean = `2012_US_Consumption` * (1 - demand_change_fn(W0 = avoidable_consumer_loss_value / 100,
+                                                                              r = consumer_ed_waste_reduction[2],
+                                                                              p = proportion_food * pop_in_metro)),
+         averted_demand_upper = `2012_US_Consumption` * (1 - demand_change_fn(W0 = avoidable_consumer_loss_value / 100,
+                                                                              r = consumer_ed_waste_reduction[3],
+                                                                              p = proportion_food * pop_in_metro))) %>%
+  select(BEA_389_code, BEA_389_def, baseline_demand, baseline_consumer_waste_demand, averted_demand_lower, averted_demand_upper)
+
+
+# Join with long code names
+consumer_ed_demand <- consumer_ed_demand %>%
+  left_join(all_codes[,c(1,3)], by = c('BEA_389_code' = 'sector_code_uppercase'))
