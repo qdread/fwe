@@ -1,0 +1,66 @@
+---
+title: "Comparison of four interventions"
+author: "Quentin D. Read"
+date: "March 25, 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+# Description
+
+These are some high-level figures that compare four food waste reduction interventions:
+
+* consumer education campaigns
+* spoilage prevention packaging
+* standardized date labeling
+* waste tracking and analytics software
+
+The interventions are compared on three metrics:
+
+* total cost of implementation (Figure 1)
+* net environmental impacts averted (Figure 2)
+* cost per unit environmental impact averted (Figure 3)
+
+For now, this document mainly just contains the final results. I am working on documenting all the methods, assumptions, and other details for each of the interventions.
+
+The total cost and the net impact averted are assuming that the intervention is implemented to the extent practicable. For consumer education campaigns, that is all metropolitan areas in the United States (totaling over 80% of the population). For spoilage prevention packaging, that is the food categories identified by ReFED as amenable to the intervention (I have the results separated out by food group but they aren't shown here). For standardized date labeling, it is all food. For waste tracking and analytics software, it is all food purchased by contracted foodservice operations of any size, and by restaurants operated by companies with at least 20 employees (large enough to afford the system).
+
+The net impact averted is the gross impact averted by reduction of food waste leading to decreased requirement of food production, minus the impact created by the intervention itself. In most cases the offsetting impact is a fairly small percentage. (I also have results for the gross impact versus net impact but they aren't shown here).
+
+On all the plots, the error bars represent a fairly conservative estimate of uncertainty so they are pretty wide.
+
+The standardized date labeling intervention has two possible scenarios, one with 0% coordination where the changes to the labels are made without any other concurrent changes, and one with 100% coordination (no extra adjustments to packaging are made that weren't already planned). The cost of the latter is much cheaper, but the net impact is about the same because the same amount of FLW is reduced and the offset is more or less negligible.
+
+The waste tracking and analytics scenario is split up into 3 industry groups: contracted foodservice, full-service restaurants, and limited-service restaurants. This is informative because the total and relative costs are very different for each group. I also show the total when adding the three groups.
+
+\newpage
+
+![Total cost of implementation](C:\Users\qread\Dropbox\Q\projects\foodwaste\Results\four_interventions_total_cost.png){ width=70% }
+
+\newpage
+
+![Total environmental impacts averted](C:\Users\qread\Dropbox\Q\projects\foodwaste\Results\four_interventions_total_impact_averted.png){ width=90% }
+
+\newpage
+
+![Cost per unit impact averted](C:\Users\qread\Dropbox\Q\projects\foodwaste\Results\four_interventions_unit_cost.png){ width=90% }
+
+\newpage
+
+# Comments
+
+The total cost of the consumer education campaigns is very low, and I don't know whether it is valid.
+
+There are some trade-offs with the total impact averted by category. I think the spoilage prevention packaging uses a fair amount of energy to produce the packaging, so you get a slightly worse return in terms of energy, than for the other categories.
+
+For the relative costs, the interventions are more or less comparable except that we get very high relative costs for the 0% coordination in standardized date labeling (it's fairly expensive and only has a modest reduction effect) and for the restaurant groups in waste tracking and analytics (it's more efficient to install WTA systems in larger foodservice operations, because the amount of food waste prevented by a single WTA system installed in a restaurant is much less than a system installed in a large foodservice kitchen. Maybe if you limited WTA systems in restaurants to really large establishments you could get a similar cost.)
+
+# To do
+
+* We still need to standardize everything to 2012 dollars.
+* The spoilage prevention packaging may not be the most up-to-date result with all eligible food groups included.
+* Check over all assumptions and confirm validity.
+* The uncertainty given here is very crude, do a more refined job with it.
