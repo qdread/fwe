@@ -90,9 +90,9 @@ datelabel_material_costs_allcoord <- modelrun100_materials %>% select(Total_5th:
 
 #### 
 # Waste reduction rates from date labeling standardization, and which categories it acts on.
-consumer_response <- c(lower = 0.05, upper = 0.10)
+consumer_response <- c(lower = 0.05, upper = 0.10, mean = 0.075)
 # Refed also assumes 20% of avoidable household waste is due to confusion over expiration dates (this seems high so set it as an upper bound)
-proportion_confusion_waste <- c(lower = 0.10, upper = 0.20)
+proportion_confusion_waste <- c(lower = 0.10, upper = 0.20, mean = 0.15)
 
 # If baseline avoidable household rate is ~ 20 to 25 percent, then the baseline confusion rate is 0.20 * 0.20 = 0.04. If 5 to 10 percent of consumers 
 # change their behavior, the post-intervention confusion rate is 3.6 to 3.8%.
@@ -129,33 +129,37 @@ datelabelingdemand <- finaldemand2012 %>%
   left_join(bea_codes) %>%
   mutate(baseline_demand = `2012_US_Consumption` * proportion_food,
          baseline_consumer_waste_demand = baseline_demand * avoidable_consumer_loss_value / 100,
+         averted_demand_mean = `2012_US_Consumption` * (1 - demand_change_fn(W0 = proportion_confusion_waste['mean'] * avoidable_consumer_loss_value / 100,
+                                                                              r = consumer_response['mean'],
+                                                                              p = proportion_food)),
          averted_demand_lower = `2012_US_Consumption` * (1 - demand_change_fn(W0 = proportion_confusion_waste['lower'] * avoidable_consumer_loss_value / 100,
                                                                         r = consumer_response['lower'],
                                                                         p = proportion_food)),
          averted_demand_upper = `2012_US_Consumption` * (1 - demand_change_fn(W0 = proportion_confusion_waste['upper'] * avoidable_consumer_loss_value / 100,
                                                                         r = consumer_response['upper'],
                                                                         p = proportion_food))) %>%
-  select(BEA_389_code, BEA_389_def, baseline_demand, baseline_consumer_waste_demand, averted_demand_lower, averted_demand_upper)
+  select(BEA_389_code, BEA_389_def, baseline_demand, baseline_consumer_waste_demand, averted_demand_mean, averted_demand_lower, averted_demand_upper)
 
 
 # Join with long code names
 datelabelingdemand <- datelabelingdemand %>%
   left_join(all_codes[,c(1,3)], by = c('BEA_389_code' = 'sector_code_uppercase'))
 
-# Run EEIO for the baseline, averted lower, and averted upper values
+# Run EEIO for the baseline, averted mean, averted lower, and averted upper values
 # For now, just sum everything up across food types (not that important which is which)
 
 if (!is_local) use_python('/usr/bin/python3')
 source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
 
 datelabeling_baseline_eeio <- with(datelabelingdemand, eeio_lcia('USEEIO2012', as.list(baseline_demand), as.list(sector_desc_drc)))
+datelabeling_avertedmean_eeio <- with(datelabelingdemand, eeio_lcia('USEEIO2012', as.list(averted_demand_mean), as.list(sector_desc_drc)))
 datelabeling_avertedlower_eeio <- with(datelabelingdemand, eeio_lcia('USEEIO2012', as.list(averted_demand_lower), as.list(sector_desc_drc)))
 datelabeling_avertedupper_eeio <- with(datelabelingdemand, eeio_lcia('USEEIO2012', as.list(averted_demand_upper), as.list(sector_desc_drc)))
 
 # Convert EEIO output into a single data frame
 
-eeio_datelabeling <- map2_dfr(list(datelabeling_baseline_eeio, datelabeling_avertedlower_eeio, datelabeling_avertedupper_eeio),
-                              c('impact_baseline', 'impact_averted_lower', 'impact_averted_upper'),
+eeio_datelabeling <- map2_dfr(list(datelabeling_baseline_eeio, datelabeling_avertedmean_eeio, datelabeling_avertedlower_eeio, datelabeling_avertedupper_eeio),
+                              c('impact_baseline', 'impact_averted_mean', 'impact_averted_lower', 'impact_averted_upper'),
                               ~ data.frame(category = row.names(.x),
                                            scenario = .y,
                                            impact = .x[,'Total']))
@@ -174,12 +178,16 @@ datelabeling_offset_eeio <- data.frame(category = row.names(datelabeling_offset_
 eeio_datelabeling_result <- eeio_datelabeling %>% 
   pivot_wider(names_from = scenario, values_from = impact) %>%
   left_join(datelabeling_offset_eeio) %>%
-  mutate(net_averted_lower_coordination = impact_averted_lower,
+  mutate(net_averted_mean_coordination = impact_averted_mean,
+         net_averted_lower_coordination = impact_averted_lower,
          net_averted_upper_coordination = impact_averted_upper,
+         net_averted_mean_nocoordination = impact_averted_mean - offset_mean,
          net_averted_lower_nocoordination = impact_averted_lower - offset_upper,
          net_averted_upper_nocoordination = impact_averted_upper - offset_lower,
+         net_percent_averted_mean_coordination = 100 * net_averted_mean_coordination / impact_baseline,
          net_percent_averted_lower_coordination = 100 * net_averted_lower_coordination / impact_baseline,
          net_percent_averted_upper_coordination = 100 * net_averted_lower_coordination / impact_baseline,
+         net_percent_averted_mean_nocoordination = 100 * net_averted_mean_nocoordination / impact_baseline,
          net_percent_averted_lower_nocoordination = 100 * net_averted_lower_nocoordination / impact_baseline,
          net_percent_averted_upper_nocoordination = 100 * net_averted_upper_nocoordination / impact_baseline)
 # It averts 0.1% to 0.4% of the food system's environmental impact. That's plausible, if anything high.
@@ -187,8 +195,10 @@ eeio_datelabeling_result <- eeio_datelabeling %>%
 
 # Cost per unit reduction for date labeling, using annualization of one-time costs
 eeio_datelabeling_result <- eeio_datelabeling_result %>%
-  mutate(cost_per_reduction_lower_coordination = datelabel_costs_coord_annual['lower'] / net_averted_upper_coordination,
+  mutate(cost_per_reduction_mean_coordination = datelabel_costs_coord_annual['mean'] / net_averted_mean_coordination,
+         cost_per_reduction_lower_coordination = datelabel_costs_coord_annual['lower'] / net_averted_upper_coordination,
          cost_per_reduction_upper_coordination = datelabel_costs_coord_annual['upper'] / net_averted_lower_coordination,
+         cost_per_reduction_mean_nocoordination = datelabel_costs_nocoord_annual['mean'] / net_averted_mean_nocoordination,
          cost_per_reduction_lower_nocoordination = datelabel_costs_nocoord_annual['lower'] / net_averted_upper_nocoordination,
          cost_per_reduction_upper_nocoordination = datelabel_costs_nocoord_annual['upper'] / net_averted_lower_nocoordination)
 
@@ -211,11 +221,14 @@ datelabeling_cost_data %>%
   mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)',  'land ($/m2)', 'water ($/m3)')) %>%
   filter(!grepl('eutr', category)) %>%
   pivot_longer(-category) %>%
-  mutate(bound = if_else(grepl('lower', name), 'lower', 'upper'),
+  mutate(bound = case_when(grepl('lower', name) ~ 'lower',
+                           grepl('upper', name) ~ 'upper',
+                           TRUE ~ 'mean'),
          coordination = if_else(grepl('nocoordination', name), 'no', 'yes')) %>%
   select(-name) %>%
   pivot_wider(names_from = bound, values_from = value) %>%
-  ggplot(aes(x = coordination, color = coordination, ymin = lower, ymax = upper)) +
+  ggplot(aes(x = coordination, color = coordination, y = mean, ymin = lower, ymax = upper)) +
+    geom_point(size = 2) +
     geom_errorbar(size = 1, width = 0.1) +
     facet_wrap(~ category, scales = 'free_y') +
     scale_y_continuous(labels = scales::dollar) +

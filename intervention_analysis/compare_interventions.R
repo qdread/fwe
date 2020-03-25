@@ -59,25 +59,38 @@ wta_cost <- result_wta %>%
   select(total_cost_lower, total_cost_mean, total_cost_upper) %>%
   setNames(names(consumer_ed_costs_annual))
 
+wta_cost_total <- colSums(wta_cost)
+
 # get pkg cost
 pkg_cost <- result_packaging %>%
   select(contains("total_cost")) %>%
   slice(1) %>%
   setNames(names(consumer_ed_costs_annual))
 
-dat_totalcost <- data.frame(intervention = c('consumer education campaign', rep('standardized date labeling', 2), rep('waste tracking and analytics', 3), 'spoilage prevention packaging'),
-                            scenario = c(NA, '0% coordinated', '100% coordinated', 'contracted foodservice', 'full-service restaurants', 'limited-service restaurants', NA),
+dat_totalcost <- data.frame(intervention = c('consumer education campaign', rep('standardized date labeling', 2), rep('waste tracking and analytics', 4), 'spoilage prevention packaging'),
+                            scenario = c(NA, '0% coordinated', '100% coordinated', 'contracted foodservice', 'full-service restaurants', 'limited-service restaurants', 'total', NA),
                             rbind(consumer_ed_costs_annual,
                                   datelabelcosts_nocoord_annual,
                                   datelabelcosts_coord_annual,
                                   wta_cost,
+                                  wta_cost_total,
                                   pkg_cost)
 )
 
 # Data for cost per unit impact reduction and for total impact averted (net)
 
+# WTA: get total when adding the three groups
+result_wta_total <- result_wta %>%
+  group_by(category) %>%
+  summarize_at(vars(baseline:offset_upper, net_impact_averted_lower:net_impact_averted_upper, total_cost_lower:total_cost_upper), sum) %>%
+  mutate(group = 'total')
+
+result_wta <- bind_rows(result_wta, result_wta_total)
+
 # For WTA, split into a list by sector
 result_wta_list <- result_wta %>%
+  mutate(group = gsub(' operations', '', map_chr(strsplit(group, ','), 1))) %>%
+  arrange(group, category) %>%
   rename(impact_baseline = baseline) %>%
   mutate(offset_mean = (offset_lower + offset_upper) / 2) %>%
   select(group, category, impact_baseline, contains("offset"), contains("net_impact_averted"), contains("cost_per")) %>%
@@ -119,52 +132,75 @@ all_interventions <- bind_rows(all_interventions_list) %>%
 
 # Total cost plot ---------------------------------------------------------
 
-dat_totalcost$xpos = c(1, 2.8, 3.2, 4.8, 5, 5.2, 7)
+x_positions <- c(1, 2, 2.8, 3.2, 3.8, 4, 4.2, 4)
 
-ggplot(dat_totalcost, aes(y = mean/1e6, ymin = lower/1e6, ymax = upper/1e6, color = intervention, group = intervention, x = xpos)) +
-  geom_point(size = 2) +
-  geom_errorbar(width = 0.1) +
-  geom_text(aes(x = xpos - 0.5, label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.7) +
-  scale_y_continuous(name = 'Total cost (million $)') +
-  theme_bw() +
+dat_totalcost <- dat_totalcost %>%
+  arrange(intervention, scenario) %>%
+  mutate(xpos = x_positions) 
+
+interv_colors <- scale_color_brewer(type = 'qual', palette = 'Set2', guide = guide_legend(nrow = 2))
+
+theme_set(theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         axis.text.x = element_blank(),
         axis.title.x = element_blank(),
-        axis.ticks.x = element_blank())
+        axis.ticks.x = element_blank(),
+        strip.background = element_blank(),
+        legend.position = 'bottom'))
+
+p_totalcost <- ggplot(dat_totalcost, aes(y = mean/1e6, ymin = lower/1e6, ymax = upper/1e6, color = intervention, group = intervention, x = xpos)) +
+  geom_point(size = 2) +
+  geom_errorbar(width = 0.05) +
+  geom_text(aes(x = xpos, label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5) +
+  scale_x_continuous(limits = c(1, 4.5)) +
+  scale_y_continuous(name = 'Total cost (million $)') +
+  interv_colors 
+  
 
 
 # Total impact averted plot -----------------------------------------------
 
+category_labels <- c('energy~(PJ)', 'greenhouse~gas~(MT~CO[2])', 'land~(Mha)', 'water~(km^3)')
+cost_labels <- c('energy~(cost/MJ)', 'greenhouse~gas~(cost/kg~CO[2])', 'land~(cost/m^2)', 'water~(cost/m^3)')
+
 all_interventions_4cat <- all_interventions %>%
   filter(grepl('enrg|gcc|land|watr', category)) %>%
   mutate_at(vars(contains('net_averted')), ~ . * c(1e-9, 1e-9, 1e-10, 1e-9)) %>%
-  mutate(category = rep(c('energy (PJ)', 'greenhouse gas (MT CO2)', 'land (Mha)', 'water (km3)'), nrow(.)/4),
-         category_cost = rep(c('energy (MJ)', 'greenhouse gas (kg CO2)', 'land (m2)', 'water (m3)'), nrow(.)/4)) 
+  mutate(category = rep(category_labels, nrow(.)/4),
+         category_cost = rep(cost_labels, nrow(.)/4)) %>%
+  rename(scenario = group) %>%
+  arrange(category, intervention, scenario) %>%
+  mutate(xpos = rep(x_positions, nrow(.)/length(x_positions)))
 
-ggplot(all_interventions_4cat, aes(x = intervention, group = group, color = intervention,
-                                   y = net_averted_mean, ymin = net_averted_lower, ymax = net_averted_upper)) +
-  facet_wrap(~ category, scales = 'free_y') +
+p_totalimpact <- ggplot(all_interventions_4cat, aes(x = xpos, group = scenario, color = intervention,
+                                                    y = net_averted_mean, ymin = net_averted_lower, ymax = net_averted_upper)) +
+  facet_wrap(~ category, scales = 'free_y', labeller = label_parsed) +
   geom_point(size = 2) +
-  geom_errorbar(width = 0.1) +
-  theme_bw() +
-  theme(panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.x = element_blank())
+  geom_errorbar(width = 0.05) +
+  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3) +
+  scale_x_continuous(limits = c(1, 4.5)) +
+  scale_y_continuous(name = 'Net impact averted') +
+  interv_colors 
+
 
 # Cost per impact averted plot --------------------------------------------
 
-ggplot(all_interventions_4cat, aes(x = intervention, group = group, color = intervention,
-                                   y = cost_per_reduction_mean, ymin = cost_per_reduction_lower, ymax = cost_per_reduction_upper)) +
-  facet_wrap(~ category_cost, scales = 'free_y') +
+p_unitcost <- ggplot(all_interventions_4cat, aes(x = xpos, group = scenario, color = intervention,
+                                                 y = cost_per_reduction_mean, ymin = cost_per_reduction_lower, ymax = cost_per_reduction_upper)) +
+  facet_wrap(~ category_cost, scales = 'free_y', labeller = label_parsed) +
   geom_point(size = 2) +
-  geom_errorbar(width = 0.1) +
-  scale_y_continuous(labels = scales::dollar) +
-  theme_bw() +
-  theme(panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.ticks.x = element_blank())
+  geom_errorbar(width = 0.05) +
+  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3) +
+  scale_x_continuous(limits = c(1, 4.5)) +
+  scale_y_continuous(name = 'Cost per unit reduction ($)', labels = scales::dollar) +
+  interv_colors 
+
+
+# Save plots --------------------------------------------------------------
+
+fp_fig <- file.path(fp, 'figures/intervention_analysis')
+
+ggsave(file.path(fp_fig, 'four_interventions_total_cost.png'), p_totalcost, height = 5, width = 5, dpi = 300)
+ggsave(file.path(fp_fig, 'four_interventions_total_impact_averted.png'), p_totalimpact, height = 9, width = 7, dpi = 300)
+ggsave(file.path(fp_fig, 'four_interventions_unit_cost.png'), p_unitcost, height = 9, width = 7, dpi = 300)
