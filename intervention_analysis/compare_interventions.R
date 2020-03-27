@@ -162,7 +162,7 @@ p_totalcost <- ggplot(dat_totalcost, aes(y = mean/1e6, ymin = lower/1e6, ymax = 
 # Total impact averted plot -----------------------------------------------
 
 category_labels <- c('energy~(PJ)', 'greenhouse~gas~(MT~CO[2])', 'land~(Mha)', 'water~(km^3)')
-cost_labels <- c('energy~(cost/MJ)', 'greenhouse~gas~(cost/kg~CO[2])', 'land~(cost/m^2)', 'water~(cost/m^3)')
+cost_labels <- c('energy~("$"/MJ)', 'greenhouse~gas~("$"/kg~CO[2])', 'land~("$"/m^2)', 'water~("$"/m^3)')
 
 all_interventions_4cat <- all_interventions %>%
   filter(grepl('enrg|gcc|land|watr', category)) %>%
