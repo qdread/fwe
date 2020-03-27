@@ -1,7 +1,7 @@
 ---
 title: "Comparison of four interventions"
 author: "Quentin D. Read"
-date: "March 25, 2020"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: pdf_document
 ---
 
@@ -61,6 +61,10 @@ For the relative costs, the interventions are more or less comparable except tha
 # To do
 
 * We still need to standardize everything to 2012 dollars.
-* The spoilage prevention packaging may not be the most up-to-date result with all eligible food groups included.
-* Check over all assumptions and confirm validity.
+* Note that all costs are either annual costs, or if one-time costs, annualized over 5 years at 7% interest.
+* The spoilage prevention packaging may not be the most up-to-date result with all eligible food groups included. (Get rid of seafood, add in vegetables?)
+* Consumer education campaigns should be modeled as being more frequent (6x and 12x instead of 1x and 2x yearly) which will increase the costs.
+* Probably get rid of the 0% coordination since that is a fairly unlikely scenario.
+* Check over all other assumptions and confirm validity.
 * The uncertainty given here is very crude, do a more refined job with it.
+* Look into what journal(s) to consider submitting.
