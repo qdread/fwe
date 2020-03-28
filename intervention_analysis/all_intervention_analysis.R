@@ -4,7 +4,9 @@
 
 # Standardized date labeling ----------------------------------------------
 
-# One-time costs for two scenarios: no coordination and coordination
+# Edit 27 March 2020: Get rid of 0% coordination scenario, since it is not realistic. Update costs and convert all costs to 2012 dollars.
+
+# One-time costs for two scenarios: no coordination and coordination (remove coordination )
 # Get them from the document
 
 library(tidyverse)
@@ -24,9 +26,9 @@ bea_codes <- read_csv(file.path(fp, 'crossreference_tables/naics_crosswalk_final
 # Demand codes table to convert 6 digit codes to the ones used by USEEIO
 all_codes <- read_csv(file.path(fp, 'crossreference_tables/all_codes.csv'))
 
-datelabel_costs <- read_xlsx(file.path(fp, 'scenario_inputdata/date_labeling/costs for date labeling change.xlsx'), skip = 9)
+datelabel_costs <- read_xlsx(file.path(fp, 'scenario_inputdata/intervention_costs_26mar2020/costs for date labeling change_3-26-2020.xlsx'), skip = 9)
 
-datelabel_costs_nocoord <- datelabel_costs[which(datelabel_costs[,1] == "Total costs for date labeling (w/o coordination)"), 2:4] %>% t %>% c %>% setNames(c('lower','mean','upper'))
+#datelabel_costs_nocoord <- datelabel_costs[which(datelabel_costs[,1] == "Total costs for date labeling (w/o coordination)"), 2:4] %>% t %>% c %>% setNames(c('lower','mean','upper'))
 datelabel_costs_coord <- datelabel_costs[which(datelabel_costs[,1] == "Total costs for date labeling (with coordination)"), 2:4] %>% t %>% c %>% setNames(c('lower','mean','upper'))
 
 # We have one-time costs but need to annualize using 5 years at 7% interest as was done for waste tracking.
@@ -34,59 +36,10 @@ datelabel_costs_coord <- datelabel_costs[which(datelabel_costs[,1] == "Total cos
 # Annuity function as implemented in excel, f and t are zero.
 pmt <- function(p, r, n, f, t) (p * r * (1+r)^n  - f) / (((1+r)^n - 1) * (1 + r * t))
 
-(datelabel_costs_nocoord_annual <- pmt(datelabel_costs_nocoord, r = 0.07, n = 5, f = 0, t = 0)) # 350m to 1.4b
-(datelabel_costs_coord_annual <- pmt(datelabel_costs_coord, r = 0.07, n = 5, f = 0, t = 0)) # 33m to 286m
+#(datelabel_costs_nocoord_annual <- pmt(datelabel_costs_nocoord, r = 0.07, n = 5, f = 0, t = 0)) # 350m to 1.4b
+(datelabel_costs_coord_annual <- pmt(datelabel_costs_coord, r = 0.07, n = 5, f = 0, t = 0)) # 35m to 283m. This matches Mary's calculations.
 
-# Go back into the reformulation model output to see what portion of the total cost of the intervention is equipment, so we can get offsetting impact.
-# For each model run, this will be in the tab "Detailed Cost" and each product category has a materials cost per UPC and total materials cost.
-# The costs are split into labor and materials so we need to pull out the materials rows only.
-
-### Do this with readxl
-
-### 0% coordination
-modelrun0 <- read_xlsx(file.path(fp, 'scenario_inputdata/date_labeling/date labeling model run-0% coordination.xlsx'), sheet = 'Detailed Costs', col_names = FALSE)
-
-# carry over the first row to fill in the empty cells, then paste together rows 1 and 2 names to create the true header.
-header_names <- gsub('NA_', '', paste(na.locf(unlist(modelrun0[1,]), na.rm = FALSE), unlist(modelrun0[2,]), sep = '_') )
-
-modelrun0 <- modelrun0 %>%
-  slice(-(1:2)) %>%
-  setNames(header_names) %>%
-  mutate_at(1:3, na.locf)
-
-modelrun0_materials <- modelrun0 %>%
-  filter(Cost_Type %in% 'Materials') %>%
-  select(`Product Category`:`Brand Type`, Total_5th:Total_95th) %>%
-  mutate_at(vars(Total_5th:Total_95th), as.numeric)
-
-# Totals across all the food types
-modelrun0_materials %>% select(Total_5th:Total_95th) %>% colSums # 330M to 789M
-
-### 100% coordination
-modelrun100 <- read_xlsx(file.path(fp, 'scenario_inputdata/date_labeling/date labeling model run-100% coordination.xlsx'), sheet = 'Detailed Costs', col_names = FALSE)
-
-# carry over the first row to fill in the empty cells, then paste together rows 1 and 2 names to create the true header.
-header_names <- gsub('NA_', '', paste(na.locf(unlist(modelrun100[1,]), na.rm = FALSE), unlist(modelrun100[2,]), sep = '_') )
-
-modelrun100 <- modelrun100 %>%
-  slice(-(1:2)) %>%
-  setNames(header_names) %>%
-  mutate_at(1:3, na.locf)
-
-modelrun100_materials <- modelrun100 %>%
-  filter(Cost_Type %in% 'Materials') %>%
-  select(`Product Category`:`Brand Type`, Total_5th:Total_95th) %>%
-  mutate_at(vars(Total_5th:Total_95th), as.numeric)
-
-# Totals across all the food types
-modelrun100_materials %>% select(Total_5th:Total_95th) %>% colSums # 0, because all of it is labor costs in this model.
-
-# Low mean and high for no coordination and all coordination
-datelabel_material_costs_nocoord <- modelrun0_materials %>% select(Total_5th:Total_95th) %>% colSums
-datelabel_material_costs_allcoord <- modelrun100_materials %>% select(Total_5th:Total_95th) %>% colSums # zeroes.
-
-# Annualization
-(datelabel_material_costs_nocoord_annual <- pmt(datelabel_material_costs_nocoord, r = 0.07, n = 5, f = 0, t = 0)) # 80M to 192M.
+# Update 27 Mar 2020: We do not need to do an offset for materials because we're assuming 100% coordination and no materials are used.
 
 #### 
 # Waste reduction rates from date labeling standardization, and which categories it acts on.
@@ -164,43 +117,24 @@ eeio_datelabeling <- map2_dfr(list(datelabeling_baseline_eeio, datelabeling_aver
                                            scenario = .y,
                                            impact = .x[,'Total']))
 
-# Offsetting impacts, using the lower, mean, and upper bounds of annualization of materials costs.
-# Industries for this should be food packaging and labeling machinery - assign the entire one time cost to this.
-
-pkg_machinery_code <- all_codes$sector_desc_drc[all_codes$sector_code_uppercase == '333993']
-
-datelabeling_offset_eeio <- eeio_lcia('USEEIO2012', list(1), list(pkg_machinery_code))
-datelabeling_offset_eeio <- data.frame(category = row.names(datelabeling_offset_eeio), 
-                                                            outer(datelabeling_offset_eeio[,'Total'], datelabel_material_costs_nocoord_annual)) %>%
-  setNames(c('category', 'offset_lower', 'offset_mean', 'offset_upper'))
 
 # Combine impact and offset to get net impact reduced
 eeio_datelabeling_result <- eeio_datelabeling %>% 
   pivot_wider(names_from = scenario, values_from = impact) %>%
-  left_join(datelabeling_offset_eeio) %>%
+  #left_join(datelabeling_offset_eeio) %>%
   mutate(net_averted_mean_coordination = impact_averted_mean,
          net_averted_lower_coordination = impact_averted_lower,
          net_averted_upper_coordination = impact_averted_upper,
-         net_averted_mean_nocoordination = impact_averted_mean - offset_mean,
-         net_averted_lower_nocoordination = impact_averted_lower - offset_upper,
-         net_averted_upper_nocoordination = impact_averted_upper - offset_lower,
          net_percent_averted_mean_coordination = 100 * net_averted_mean_coordination / impact_baseline,
          net_percent_averted_lower_coordination = 100 * net_averted_lower_coordination / impact_baseline,
-         net_percent_averted_upper_coordination = 100 * net_averted_lower_coordination / impact_baseline,
-         net_percent_averted_mean_nocoordination = 100 * net_averted_mean_nocoordination / impact_baseline,
-         net_percent_averted_lower_nocoordination = 100 * net_averted_lower_nocoordination / impact_baseline,
-         net_percent_averted_upper_nocoordination = 100 * net_averted_upper_nocoordination / impact_baseline)
+         net_percent_averted_upper_coordination = 100 * net_averted_upper_coordination / impact_baseline)
 # It averts 0.1% to 0.4% of the food system's environmental impact. That's plausible, if anything high.
   
-
 # Cost per unit reduction for date labeling, using annualization of one-time costs
 eeio_datelabeling_result <- eeio_datelabeling_result %>%
   mutate(cost_per_reduction_mean_coordination = datelabel_costs_coord_annual['mean'] / net_averted_mean_coordination,
          cost_per_reduction_lower_coordination = datelabel_costs_coord_annual['lower'] / net_averted_upper_coordination,
-         cost_per_reduction_upper_coordination = datelabel_costs_coord_annual['upper'] / net_averted_lower_coordination,
-         cost_per_reduction_mean_nocoordination = datelabel_costs_nocoord_annual['mean'] / net_averted_mean_nocoordination,
-         cost_per_reduction_lower_nocoordination = datelabel_costs_nocoord_annual['lower'] / net_averted_upper_nocoordination,
-         cost_per_reduction_upper_nocoordination = datelabel_costs_nocoord_annual['upper'] / net_averted_lower_nocoordination)
+         cost_per_reduction_upper_coordination = datelabel_costs_coord_annual['upper'] / net_averted_lower_coordination)
 
 # Display the results.
 
@@ -216,26 +150,26 @@ datelabeling_impact_data <- eeio_datelabeling_result %>%
 datelabeling_cost_data <- eeio_datelabeling_result %>%
   filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
   select(category, contains('cost'))
-
-datelabeling_cost_data %>%
-  mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)',  'land ($/m2)', 'water ($/m3)')) %>%
-  filter(!grepl('eutr', category)) %>%
-  pivot_longer(-category) %>%
-  mutate(bound = case_when(grepl('lower', name) ~ 'lower',
-                           grepl('upper', name) ~ 'upper',
-                           TRUE ~ 'mean'),
-         coordination = if_else(grepl('nocoordination', name), 'no', 'yes')) %>%
-  select(-name) %>%
-  pivot_wider(names_from = bound, values_from = value) %>%
-  ggplot(aes(x = coordination, color = coordination, y = mean, ymin = lower, ymax = upper)) +
-    geom_point(size = 2) +
-    geom_errorbar(size = 1, width = 0.1) +
-    facet_wrap(~ category, scales = 'free_y') +
-    scale_y_continuous(labels = scales::dollar) +
-    theme_bw() + 
-    theme(panel.grid = element_blank(), strip.background = element_blank(), legend.position = 'none')
-
-ggsave(file.path(fp, 'figures/intervention_analysis/date_labeling_cost_per_reduction.pdf'), height = 7, width = 8)
+# 
+# datelabeling_cost_data %>%
+#   mutate(category = c('energy ($/MJ)', 'eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)',  'land ($/m2)', 'water ($/m3)')) %>%
+#   filter(!grepl('eutr', category)) %>%
+#   pivot_longer(-category) %>%
+#   mutate(bound = case_when(grepl('lower', name) ~ 'lower',
+#                            grepl('upper', name) ~ 'upper',
+#                            TRUE ~ 'mean'),
+#          coordination = if_else(grepl('nocoordination', name), 'no', 'yes')) %>%
+#   select(-name) %>%
+#   pivot_wider(names_from = bound, values_from = value) %>%
+#   ggplot(aes(x = coordination, color = coordination, y = mean, ymin = lower, ymax = upper)) +
+#     geom_point(size = 2) +
+#     geom_errorbar(size = 1, width = 0.1) +
+#     facet_wrap(~ category, scales = 'free_y') +
+#     scale_y_continuous(labels = scales::dollar) +
+#     theme_bw() + 
+#     theme(panel.grid = element_blank(), strip.background = element_blank(), legend.position = 'none')
+# 
+# ggsave(file.path(fp, 'figures/intervention_analysis/date_labeling_cost_per_reduction.pdf'), height = 7, width = 8)
 
 # Save result
 write_csv(eeio_datelabeling_result, file.path(fp, 'scenario_results/interventions/eeio_datelabeling_all.csv'))
@@ -255,17 +189,20 @@ datelabeling_cost_data_tocsv %>%
 
 # Spoilage prevention packaging -------------------------------------------
 
+# Edit 27 March 2020: Update the costs with 2012 dollars. The new costs apply to fresh fruit, vegetables, meat, and poultry, but not seafood.
+# Assume same % of fruit and vegetables are packaged. 1/3 packaging for both fruit and veg, and 1/2 for meat and poultry.
+
 # For packaging, we are going to use one-time costs, then per-unit costs. 
 # Mary has already done the cost totals. 
 # The annualized initial cost is relatively small; most of it is the annual cost. We will represent 100% of the annual cost being materials.
 
 # We now use ReFED's assumptions that this can be done for 15% of fruit and 25% of meat, with 10-33% retail waste reduction and 5-10% residential waste reduction.
 
-packaging_costs <- read_xlsx(file.path(fp, 'scenario_inputdata/packaging/costs for packaging development.xlsx'), skip = 10, col_names = c('cost_type_2014_dollars', 'low', 'mean', 'high', 'notes')) 
+packaging_costs <- read_xlsx(file.path(fp, 'scenario_inputdata/intervention_costs_26mar2020/costs for intelligent packaging_3-26-2020.xlsx'), skip = 10, col_names = c('cost_type_2012_dollars', 'low', 'mean', 'high', 'notes')) 
 
-packaging_annual_equipment_costs <- packaging_costs[packaging_costs$cost_type_2014_dollars %in% 'Total annual costs', 2:4]
-packaging_total_costs <- packaging_costs[packaging_costs$cost_type_2014_dollars %in% 'Total annualized and annual costs', 2:4]
-packaging_initial_costs <- packaging_costs[packaging_costs$cost_type_2014_dollars %in% 'Annualized initial costs (5 years, 7%)', 2:4]
+packaging_annual_equipment_costs <- packaging_costs[packaging_costs$cost_type_2012_dollars %in% 'Total annual costs', 2:4]
+packaging_total_costs <- packaging_costs[packaging_costs$cost_type_2012_dollars %in% 'Total annualized and annual costs', 2:4]
+packaging_initial_costs <- packaging_costs[packaging_costs$cost_type_2012_dollars %in% 'Annualized initial costs (5 years, 7%)', 2:4]
 
 # We also use the values from the cost model for material costs to get the one-time materials costs, and annualize them too.
 # Cost of materials for packaging assessment are lower $86, median $100, upper $114, per formula.
@@ -293,7 +230,7 @@ fruit_rows <- grep("fruit", bea_codes$BEA_389_def, ignore.case = TRUE)
 U <- read.csv(file.path(fp, 'raw_data/BEA/formatted/use2012.csv'), stringsAsFactors = FALSE, check.names = FALSE, row.names = 1)
 
 prop_fruit_veg <- U[c('111200', '111300'), c('311420')]
-prop_processed_fruit <- prop_fruit_veg[2]/sum(prop_fruit_veg) # 85.16% by $ value of the processed fruit/veg industry is fruit.
+prop_processed_fruit <- prop_fruit_veg[2]/sum(prop_fruit_veg) # 85.16% by $ value of the processed fruit/veg industry is fruit. (This isn't needed anymore)
 
 food_U[fruit_rows, retail_codes] # This is basically zero. We will need to just change the final consumer demand by the product of the waste rates, and use consumer price.
 
@@ -307,14 +244,14 @@ fruit_meat <- bea_codes %>% filter(stage %in% c('agriculture','processing'),
 
 # Load LAFA
 source(file.path(fp_github, 'fwe/read_data/read_lafa.r'))
-lafa <- list(fruit, meat)
+lafa <- list(veg, fruit, meat)
 
 # Read the description of LAFA's nested category structure in.
 lafa_struct <- read_csv(file.path(fp, 'crossreference_tables/lafa_category_structure.csv'))
 
 # find the single year closest to 2012.
 lafa_df <- lafa %>%
-  map2_dfr(c('fruit','meat'), ~ select(.x, Category, Year, Retail_weight_Lbs.year, Loss_from_retail__institutional_to_consumer_level_Percent, Consumer_weight_Lbs.year,
+  map2_dfr(c('veg', 'fruit','meat'), ~ select(.x, Category, Year, Retail_weight_Lbs.year, Loss_from_retail__institutional_to_consumer_level_Percent, Consumer_weight_Lbs.year,
                    Loss_at_consumer_level_Other__cooking_loss_and_uneaten_food__Percent) %>%
              mutate(Group = .y)) %>%
   setNames(c('Food','Year','retail_weight','retail_loss','consumer_weight','avoidable_consumer_loss','Group')) %>%
@@ -325,8 +262,8 @@ lafa_df <- lafa %>%
 lafa_df <- lafa_df %>% 
   ungroup %>%
   left_join(lafa_struct) %>%
-  filter(subgroup2 == 'Fresh fruit' | subgroup1 %in% c('Red meat', 'Poultry', 'Total Fresh and Frozen Fish')) %>%
-  mutate(group_final = if_else(Group == 'meat', subgroup1, subgroup2)) %>%
+  filter(subgroup2 == 'Fresh fruit' | subgroup1 %in% c('Fresh vegetables', 'Red meat', 'Poultry')) %>%
+  mutate(group_final = if_else(Group == 'fruit', subgroup2, subgroup1)) %>%
   select(group_final, Food:avoidable_consumer_loss)
 
 fruitmeat_wtdavg_rates <- lafa_df %>%
@@ -338,8 +275,11 @@ fruitmeat_wtdavg_rates <- lafa_df %>%
 
 ### Load the baseline consumer demand for fresh fruit, red meat, poultry, and seafood in 2012.
 # Do not include processed and frozen products, only fresh.
-fruit_meat_codes <- c('111300', '311615', '31161A', '112A00', '114000') # fresh fruit, pkg poultry, pkg meat, aquaculture, wild caught fish
-fruit_meat_proportions <- c(1, 1, 1, 0.113, 0.757) # the final two categories that contain seafood are not all seafood. (source: QCEW)
+#fruit_meat_codes <- c('111300', '311615', '31161A', '112A00', '114000') # fresh fruit, pkg poultry, pkg meat, aquaculture, wild caught fish
+#fruit_meat_proportions <- c(1, 1, 1, 0.113, 0.757) # the final two categories that contain seafood are not all seafood. (source: QCEW)
+# Update: Now we are using vegetables but not seafood.
+fruit_meat_codes <- c('111200', '111300', '311615', '31161A')
+fruit_meat_proportions <- rep(1, 4)
 
 finaldemand2012 <- read_csv(file.path(fp_github, 'USEEIO/useeiopy/Model Builds/USEEIO2012/USEEIO2012_FinalDemand.csv'))
 
@@ -359,7 +299,7 @@ packaging_reduction_rates_wide <- packaging_reduction_rates %>%
 # and reduction rates of retail and household demand (lower and upper bounds)
 # from this get the averted demand after the intervention for each food
 fruitmeatdemand2012 <- fruitmeatdemand2012 %>%
-  mutate(food = c('fruit',rep('meat',4)), group_final = c('Fresh fruit', 'Poultry', 'Red meat', rep('Total Fresh and Frozen Fish', 2))) %>%
+  mutate(food = c('fruit','fruit','meat','meat'), group_final = c('Fresh vegetables', 'Fresh fruit', 'Poultry', 'Red meat')) %>%
   left_join(fruitmeat_wtdavg_rates) %>%
   left_join(packaging_reduction_rates_wide) %>%
   mutate(baseline_demand = `2012_US_Consumption` * proportion,
@@ -372,7 +312,7 @@ fruitmeatdemand2012 <- fruitmeatdemand2012 %>%
          demand_averted_lower = baseline_demand * (1 - demand_reduction_lower),
          demand_averted_upper = baseline_demand * (1 - demand_reduction_upper))
 
-c(sum(fruitmeatdemand2012$demand_averted_lower), sum(fruitmeatdemand2012$demand_averted_upper))/1e9 # 1.27 to 2.91 billion dollars.
+c(sum(fruitmeatdemand2012$demand_averted_lower), sum(fruitmeatdemand2012$demand_averted_upper))/1e9 # 1.34 to 3.12 billion dollars.
 
 # Get full codes that will be recognized by USEEIO.
 fruitmeatdemand2012 <- all_codes %>%
@@ -386,7 +326,7 @@ fruitmeatdemand2012 <- all_codes %>%
 if (!is_local) use_python('/usr/bin/python3')
 source_python(file.path(fp_github, 'fwe/USEEIO/eeio_lcia.py'))
 
-# 5 categories x (1 baseline+1averted lower+1averted upper) = 15 runs of model
+# 4 categories x (1 baseline+1averted lower+1averted upper) = 12 runs of model
 # Already in units of dollars so don't need to multiply by any factor.
 eeio_packaging_averted <- pmap(fruitmeatdemand2012, function(sector_desc_drc, baseline_demand, demand_averted_lower, demand_averted_upper, ...) {
   demand_code <- as.list(sector_desc_drc)
@@ -396,7 +336,7 @@ eeio_packaging_averted <- pmap(fruitmeatdemand2012, function(sector_desc_drc, ba
 })
 
 # Put this into a data frame
-eeio_packaging_averted <- map2_dfr(c('fresh fruit', 'poultry', 'meat', 'farmed seafood', 'wild-caught seafood'), eeio_packaging_averted, function(x, y) {
+eeio_packaging_averted <- map2_dfr(c('fresh vegetables', 'fresh fruit', 'poultry', 'meat'), eeio_packaging_averted, function(x, y) {
   impacts <- do.call(cbind, y) %>% setNames(names(y))
   data.frame(food = x, category = row.names(impacts), impacts)
 })
@@ -409,7 +349,7 @@ errorbarplot_data <- eeio_packaging_averted %>%
   filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
   mutate_if(is.numeric, ~ . * conversion_factors) %>%
   mutate(category = rep(category_names, times = nrow(.)/5),
-         food = factor(food, levels = c('meat', 'poultry', 'fresh fruit', 'farmed seafood', 'wild-caught seafood'))) 
+         food = factor(food, levels = c('meat', 'poultry', 'fresh vegetables', 'fresh fruit'))) 
 
 
 pkg_errorbarplot <- ggplot(errorbarplot_data, aes(x = food, ymin = averted_lower, ymax = averted_upper)) +
@@ -529,7 +469,7 @@ cost_per_reduction_packaging <- eeio_packaging_averted %>%
 cost_per_reduction_packaging %>% 
   filter(grepl('enrg|eutr|gcc|land|watr', category)) %>%
   mutate(category = c('eutrophication ($/kg N)', 'greenhouse gas ($/kg CO2)', 'energy ($/MJ)', 'land ($/m2)', 'water ($/m3)'))
-# Net result: 4 to 22 cents per kg CO2 averted. Compares favorably to WTA. Scale could be interesting too.
+# Net result: 5 to 36 cents per kg CO2 averted. Compares favorably to WTA. Scale could be interesting too.
          
 # Save results
 
@@ -538,7 +478,34 @@ write_csv(errorbarplot_data, file.path(fp, 'scenario_results/interventions/eeio_
 write_csv(impactandoffset_plot_data, file.path(fp, 'scenario_results/interventions/eeio_packaging_byfoodtype_5categories_withoffset.csv'))
 write_csv(cost_per_reduction_packaging, file.path(fp, 'scenario_results/interventions/eeio_packaging_costperreduction_all.csv'))
 
+# Put results from packaging into a "standardized" form that is similar to the other ones.
+
+eeio_packaging_averted_total <- eeio_packaging_averted %>%
+  group_by(category) %>%
+  summarize_if(is.numeric, sum)
+
+# This includes some irrelevant categories of packaging material
+# eeio_packaging_offsetting_impacts
+
+eeio_packaging_result <- eeio_packaging_averted_total %>%
+  left_join(packaging_annual_offset %>% ungroup %>% select(category, contains('offset'))) %>%
+  mutate(net_averted_lower = averted_lower - offset_upper,
+         net_averted_mean = (averted_lower + averted_upper) / 2 - offset_mean,
+         net_averted_upper = averted_upper - offset_lower)
+
+# Add costs
+eeio_packaging_result <- eeio_packaging_result %>%
+  cbind(packaging_total_costs %>% setNames(paste0('total_cost_', names(.)))) %>%
+  mutate(cost_per_reduction_lower = total_cost_low / net_averted_upper,
+         cost_per_reduction_mean = total_cost_mean / net_averted_mean,
+         cost_per_reduction_upper = total_cost_high / net_averted_lower)
+
+write_csv(eeio_packaging_result, file.path(fp, 'scenario_results/interventions/eeio_packaging_all.csv'))
+
+
 # Consumer education campaigns --------------------------------------------
+
+# Edited 26 March 2020: convert costs to 2012 dollars, increase frequency of low and high number of campaigns per year to 6 and 12
 
 # Assumptions: 
 
@@ -555,14 +522,14 @@ consumer_ed_waste_reduction <- (1/3) * (2/3) * c(.05,.1,.15) # 1.1 to 3.3 percen
 pop_in_metro <- 0.856 # see read_msas.R for derivation of this number.
 n_metro_counties <- 1251
 
-# Costs: content development 1x per year regardless, media consultant 1-2x per year (low/high), media costs 1-2x per year (low/high)
-consumer_ed_costs <- c(content_development = 70e3,
-                       media_consultant = 16e3,
-                       media_costs = 30e3)
+# Costs: content development 1x per year regardless, media consultant 6-12x per year (low/high), media costs 6-12x per year (low/high)
+consumer_ed_costs <- c(content_development = 68.6e3,
+                       media_consultant = 15.68e3,
+                       media_costs = 29.4e3)
 
-consumer_ed_costs_annual <- n_metro_counties * c(lower = sum(consumer_ed_costs),
-                                                 upper = sum(consumer_ed_costs * c(1,2,2)))
-# 145 to 203 million
+consumer_ed_costs_annual <- n_metro_counties * c(lower = sum(consumer_ed_costs * c(1,6,6)),
+                                                 upper = sum(consumer_ed_costs * c(1,12,12)))
+# 424 to 763 million
 
 # Calculate baseline demand & baseline waste at consumer level, multiplied by the 85.6% number.
 
@@ -647,12 +614,8 @@ consumer_ed_offset_eeio %>% filter(grepl('gcc',category)) # They vary by a facto
 # Calculate upper and lower bounds for offset based on assigning media impacts to upper and lower most impactful industries
 
 # Calculate upper and lower bounds based on costs
-consumer_ed_costs <- c(content_development = 70e3,
-                       media_consultant = 16e3,
-                       media_costs = 30e3)
-
-consumer_ed_costs_lower <- n_metro_counties * consumer_ed_costs
-consumer_ed_costs_upper <- n_metro_counties * consumer_ed_costs * c(1,2,2)
+consumer_ed_costs_lower <- n_metro_counties * consumer_ed_costs * c(1,6,6)
+consumer_ed_costs_upper <- n_metro_counties * consumer_ed_costs * c(1,12,12)
 
 # Find lower and upper limits for the media component
 media_impacts <- consumer_ed_offset_eeio %>%

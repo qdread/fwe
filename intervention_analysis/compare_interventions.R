@@ -1,6 +1,8 @@
 # Tables/figures comparing all interventions
 # QDR / FWE / 12 Mar 2020
 
+# Edit 27 Mar 2020: Update all figures, including updating cost data for the total cost figure. Also get rid of 0% coordination.
+
 # Compare four interventions: waste tracking & analytics, spoilage prevention packaging, standardized date labeling, and consumer education campaigns
 # Compare by: total cost, total environmental benefit (net and also show offset) and cost-effectiveness (cost per unit impact reduction)
 
@@ -29,20 +31,22 @@ result_packaging <- read_csv(file.path(fp_res, 'eeio_packaging_all.csv'))
 pop_in_metro <- 0.856 # see read_msas.R for derivation of this number.
 n_metro_counties <- 1251
 
-# Costs: content development 1x per year regardless, media consultant 1-2x per year (low/high), media costs 1-2x per year (low/high)
-consumer_ed_costs <- c(content_development = 70e3,
-                       media_consultant = 16e3,
-                       media_costs = 30e3)
+# Costs: content development 1x per year regardless, media consultant 6-12x per year (low/high), media costs 6-12x per year (low/high)
+consumer_ed_costs <- c(content_development = 68.6e3,
+                       media_consultant = 15.68e3,
+                       media_costs = 29.4e3)
 
-consumer_ed_costs_annual <- n_metro_counties * c(lower = sum(consumer_ed_costs),
-                                                 mean = sum(consumer_ed_costs * c(1,1.5,1.5)),
-                                                 upper = sum(consumer_ed_costs * c(1,2,2)))
+consumer_ed_costs_annual <- n_metro_counties * c(lower = sum(consumer_ed_costs * c(1,6,6)),
+                                                 mean = sum(consumer_ed_costs * c(1,9,9)),
+                                                 upper = sum(consumer_ed_costs * c(1,12,12)))
 
 
 # Total costs for date labeling:
-datelabelcosts_coord_annual <- c(lower = 33282569.8605775, mean = 123208497.157611, upper = 286034468.241575
+#datelabelcosts_coord_annual <- c(lower = 33282569.8605775, mean = 123208497.157611, upper = 286034468.241575
 )
-datelabelcosts_nocoord_annual <- c(lower = 349243816.792413, mean = 759583378.714786, upper = 1403967428.67742
+#datelabelcosts_nocoord_annual <- c(lower = 349243816.792413, mean = 759583378.714786, upper = 1403967428.67742
+)
+datelabelcosts_coord_annual <- c(lower = 34660059.5639933, mean = 123151178.697763, upper = 282615486.346382
 )
 
 # Combine into single DF --------------------------------------------------
@@ -67,10 +71,10 @@ pkg_cost <- result_packaging %>%
   slice(1) %>%
   setNames(names(consumer_ed_costs_annual))
 
-dat_totalcost <- data.frame(intervention = c('consumer education campaign', rep('standardized date labeling', 2), rep('waste tracking and analytics', 4), 'spoilage prevention packaging'),
-                            scenario = c(NA, '0% coordinated', '100% coordinated', 'contracted foodservice', 'full-service restaurants', 'limited-service restaurants', 'total', NA),
+dat_totalcost <- data.frame(intervention = c('consumer education campaign', 'standardized date labeling', rep('waste tracking and analytics', 4), 'spoilage prevention packaging'),
+                            scenario = c(NA, NA, 'contracted foodservice', 'full-service restaurants', 'limited-service restaurants', 'total', NA),
                             rbind(consumer_ed_costs_annual,
-                                  datelabelcosts_nocoord_annual,
+                                  #datelabelcosts_nocoord_annual,
                                   datelabelcosts_coord_annual,
                                   wta_cost,
                                   wta_cost_total,
@@ -113,11 +117,11 @@ all_interventions_list <- c(list(consumered = result_consumered %>%
      datelabeling_coordination = result_datelabeling %>%
        select(category, impact_baseline, contains("offset"), contains("_coordination")) %>%
        setNames(gsub('_coordination', '', names(.))) %>%
-       mutate(intervention = 'standardized date labeling', group = '100% coordinated'),
-     datelabeling_nocoordination = result_datelabeling %>%
-       select(category, impact_baseline, contains("offset"), contains("_nocoordination")) %>%
-       setNames(gsub('_nocoordination', '', names(.))) %>%
-       mutate(intervention = 'standardized date labeling', group = '0% coordinated'),
+       mutate(intervention = 'standardized date labeling', group = NA),
+     # datelabeling_nocoordination = result_datelabeling %>%
+     #   select(category, impact_baseline, contains("offset"), contains("_nocoordination")) %>%
+     #   setNames(gsub('_nocoordination', '', names(.))) %>%
+     #   mutate(intervention = 'standardized date labeling', group = '0% coordinated'),
      packaging = result_packaging %>%
        rename(impact_baseline = baseline) %>%
        select(category, impact_baseline, contains("offset"), contains("net_averted"), contains("cost_per")) %>%
@@ -132,7 +136,7 @@ all_interventions <- bind_rows(all_interventions_list) %>%
 
 # Total cost plot ---------------------------------------------------------
 
-x_positions <- c(1, 2, 2.8, 3.2, 3.8, 4, 4.2, 4)
+x_positions <- c(1, 1.5, 2, 2.5, 2.9, 3.3, 3.7)
 
 dat_totalcost <- dat_totalcost %>%
   arrange(intervention, scenario) %>%
@@ -152,8 +156,8 @@ theme_set(theme_bw() +
 p_totalcost <- ggplot(dat_totalcost, aes(y = mean/1e6, ymin = lower/1e6, ymax = upper/1e6, color = intervention, group = intervention, x = xpos)) +
   geom_point(size = 2) +
   geom_errorbar(width = 0.05) +
-  geom_text(aes(x = xpos, label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5) +
-  scale_x_continuous(limits = c(1, 4.5)) +
+  geom_text(aes(x = xpos, label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, hjust = 1.2) +
+  scale_x_continuous(limits = c(0.9, 3.8)) +
   scale_y_continuous(name = 'Total cost (million $)') +
   interv_colors 
   
@@ -178,8 +182,8 @@ p_totalimpact <- ggplot(all_interventions_4cat, aes(x = xpos, group = scenario, 
   facet_wrap(~ category, scales = 'free_y', labeller = label_parsed) +
   geom_point(size = 2) +
   geom_errorbar(width = 0.05) +
-  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3) +
-  scale_x_continuous(limits = c(1, 4.5)) +
+  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3, hjust = 1.2) +
+  scale_x_continuous(limits = c(0.9, 3.8)) +
   scale_y_continuous(name = 'Net impact averted') +
   interv_colors 
 
@@ -191,8 +195,8 @@ p_unitcost <- ggplot(all_interventions_4cat, aes(x = xpos, group = scenario, col
   facet_wrap(~ category_cost, scales = 'free_y', labeller = label_parsed) +
   geom_point(size = 2) +
   geom_errorbar(width = 0.05) +
-  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3) +
-  scale_x_continuous(limits = c(1, 4.5)) +
+  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3, hjust = 1.2) +
+  scale_x_continuous(limits = c(0.9, 3.8)) +
   scale_y_continuous(name = 'Cost per unit reduction ($)', labels = scales::dollar) +
   interv_colors 
 
