@@ -23,18 +23,45 @@ The interventions are compared on three metrics:
 * total cost of implementation (Figure 1)
 * net environmental impacts averted (Figure 2)
 * cost per unit environmental impact averted (Figure 3)
+* environmental impact averted per dollar spent, or cost-effectiveness (Figure 4 &mdash; inverse of Figure 3)
 
 For now, this document mainly just contains the final results. I am working on documenting all the methods, assumptions, and other details for each of the interventions.
 
-The total cost and the net impact averted are assuming that the intervention is implemented to the extent practicable. For consumer education campaigns, that is all metropolitan areas in the United States (totaling over 80% of the population). For spoilage prevention packaging, that is the food categories identified by ReFED as amenable to the intervention (I have the results separated out by food group but they aren't shown here). For standardized date labeling, it is all food. For waste tracking and analytics software, it is all food purchased by contracted foodservice operations of any size, and by restaurants operated by companies with at least 20 employees (large enough to afford the system).
+The total cost (Fig. 1) and the net impact averted (Fig. 2) are assuming that the intervention is implemented to the extent practicable. For consumer education campaigns, that is all metropolitan areas in the United States (totaling over 80% of the population). For spoilage prevention packaging, that is the food categories identified by ReFED as amenable to the intervention (I have the results separated out by food group but they aren't shown here). For standardized date labeling, it is all food. For waste tracking and analytics software, it is all food purchased by contracted foodservice operations of any size, and by restaurants operated by companies with at least 20 employees (large enough to afford the system).
 
-The net impact averted is the gross impact averted by reduction of food waste leading to decreased requirement of food production, minus the impact created by the intervention itself. In most cases the offsetting impact is a fairly small percentage. (I also have results for the gross impact versus net impact but they aren't shown here).
+The net impact averted (Fig. 2) is the gross impact averted by reduction of food waste leading to decreased requirement of food production, minus the impact created by the intervention itself. In most cases the offsetting impact is a fairly small percentage. (I also have results for the gross impact versus net impact but they aren't shown here). The offsetting impact that makes the most difference is the energy input required to produce the plastic material in the spoilage prevention packaging; this leads to spoilage prevention packaging having a disproportionately low cost-effectiveness for energy use.
 
 On all the plots, the error bars represent a fairly conservative estimate of uncertainty so they are pretty wide.
 
-The standardized date labeling intervention has two possible scenarios, one with 0% coordination where the changes to the labels are made without any other concurrent changes, and one with 100% coordination (no extra adjustments to packaging are made that weren't already planned). The cost of the latter is much cheaper, but the net impact is about the same because the same amount of FLW is reduced and the offset is more or less negligible.
+The standardized date labeling intervention assumes 100% coordination (any adjustments to packaging machinery or design are made concurrently with other changes that would have been made anyway). This assumes that there is a negligible environmental impact of implementing the intervention. There are still costs associated with it, but they are all labor costs with no additional materials costs.
 
 The waste tracking and analytics scenario is split up into 3 industry groups: contracted foodservice, full-service restaurants, and limited-service restaurants. This is informative because the total and relative costs are very different for each group. I also show the total when adding the three groups.
+
+\newpage
+
+# Comments
+
+The total cost of the consumer education campaigns is relatively low, even with the increased frequency. Possibly try to find other sources of cost data than just the King County, WA data?
+
+There are some trade-offs with the total impact averted by category (Fig. 2). I think the spoilage prevention packaging uses a fair amount of energy to produce the packaging, so you get a slightly worse return in terms of energy, than for the other categories.
+
+For the relative costs (Fig. 3, Fig. 4), the interventions are more or less comparable except that we get high relative costs  for the restaurant groups in waste tracking and analytics (it's more efficient to install WTA systems in larger foodservice operations, because the amount of food waste prevented by a single WTA system installed in a restaurant is much less than a system installed in a large foodservice kitchen. Maybe if you limited WTA systems in restaurants to really large establishments you could get a similar cost.) Standardized date labeling (due to low cost) and waste tracking systems in institutions with contracted foodservice operations (due to high reduction potential) have a fairly good cost-effectiveness (Fig. 4) for most categories.
+
+# To do
+
+* ~~We still need to standardize everything to 2012 dollars.~~
+* Note that all costs are either annual costs, or if one-time costs, annualized over 5 years at 7% interest.
+* ~~The spoilage prevention packaging may not be the most up-to-date result with all eligible food groups included. (Get rid of seafood, add in vegetables?)~~
+* ~~Consumer education campaigns should be modeled as being more frequent (6x and 12x instead of 1x and 2x yearly) which will increase the costs.~~
+* ~~Probably get rid of the 0% coordination since that is a fairly unlikely scenario.~~
+* Check over all other assumptions and confirm validity.
+* The uncertainty given here is very crude, do a more refined job with it.
+* Look into what journal(s) to consider submitting.
+
+# Change log
+
+* **27 March 2020** incorporate updated costs and tweaks to scenarios; get rid of 0% coordination scenario for date label changes
+* **25 March 2020** original version
 
 \newpage
 
@@ -48,23 +75,7 @@ The waste tracking and analytics scenario is split up into 3 industry groups: co
 
 ![Cost per unit impact averted](C:\Users\qread\Dropbox\Q\projects\foodwaste\Results\four_interventions_unit_cost.png){ width=90% }
 
+![Impact averted per dollar spent (cost-effectiveness)](C:\Users\qread\Dropbox\Q\projects\foodwaste\Results\four_interventions_cost_effectiveness.png){ width=90% }
+
 \newpage
 
-# Comments
-
-The total cost of the consumer education campaigns is very low, and I don't know whether it is valid.
-
-There are some trade-offs with the total impact averted by category. I think the spoilage prevention packaging uses a fair amount of energy to produce the packaging, so you get a slightly worse return in terms of energy, than for the other categories.
-
-For the relative costs, the interventions are more or less comparable except that we get very high relative costs for the 0% coordination in standardized date labeling (it's fairly expensive and only has a modest reduction effect) and for the restaurant groups in waste tracking and analytics (it's more efficient to install WTA systems in larger foodservice operations, because the amount of food waste prevented by a single WTA system installed in a restaurant is much less than a system installed in a large foodservice kitchen. Maybe if you limited WTA systems in restaurants to really large establishments you could get a similar cost.)
-
-# To do
-
-* We still need to standardize everything to 2012 dollars.
-* Note that all costs are either annual costs, or if one-time costs, annualized over 5 years at 7% interest.
-* The spoilage prevention packaging may not be the most up-to-date result with all eligible food groups included. (Get rid of seafood, add in vegetables?)
-* Consumer education campaigns should be modeled as being more frequent (6x and 12x instead of 1x and 2x yearly) which will increase the costs.
-* Probably get rid of the 0% coordination since that is a fairly unlikely scenario.
-* Check over all other assumptions and confirm validity.
-* The uncertainty given here is very crude, do a more refined job with it.
-* Look into what journal(s) to consider submitting.
