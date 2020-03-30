@@ -126,7 +126,7 @@ p_totalcost <- ggplot(all_cost_table %>% mutate(intervention = str_wrap(interven
 p_ghgcosteff <- ggplot(costeff_ghg_table %>% mutate(intervention = str_wrap(intervention, width = 25)), aes(x = intervention, color = intervention)) +
   geom_point(data = costeff_ghg_table %>% filter(is.na(scenario) | scenario == 'total') %>% mutate(intervention = str_wrap(intervention, width = 25)), aes(y = as.numeric(ReFED_estimate)), pch = 1, alpha = 0.5, size = 4, color = 'black') +
   geom_pointrange(aes(x = intervention, group = scenario, y = our_estimate, ymin = our_lower_bound, ymax = our_upper_bound), position = position_dodge(width = 0.2)) +
-  annotate(geom = 'text', x = c(4.2, 3.8), y = c(10, 60), label = c('restaurants', 'contractors')) +
+  annotate(geom = 'text', x = c(4.2, 3.8), y = c(15, 60), label = c('restaurants', 'contractors'), size = 3) +
   scale_y_continuous(name = parse(text = 'GHG~cost-effectiveness~("$"/kg~CO[2])')) +
   coord_flip() 
 
