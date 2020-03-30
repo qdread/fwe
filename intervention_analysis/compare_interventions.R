@@ -71,7 +71,7 @@ pkg_cost <- result_packaging %>%
   slice(1) %>%
   setNames(names(consumer_ed_costs_annual))
 
-dat_totalcost <- data.frame(intervention = c('consumer education campaign', 'standardized date labeling', rep('waste tracking and analytics', 4), 'spoilage prevention packaging'),
+dat_totalcost <- data.frame(intervention = c('consumer education campaigns', 'standardized date labeling', rep('waste tracking and analytics', 4), 'spoilage prevention packaging'),
                             scenario = c(NA, NA, 'contracted foodservice', 'full-service restaurants', 'limited-service restaurants', 'total', NA),
                             rbind(consumer_ed_costs_annual,
                                   #datelabelcosts_nocoord_annual,
@@ -167,12 +167,14 @@ p_totalcost <- ggplot(dat_totalcost, aes(y = mean/1e6, ymin = lower/1e6, ymax = 
 
 category_labels <- c('energy~(PJ)', 'greenhouse~gas~(MT~CO[2])', 'land~(Mha)', 'water~(km^3)')
 cost_labels <- c('energy~("$"/MJ)', 'greenhouse~gas~("$"/kg~CO[2])', 'land~("$"/m^2)', 'water~("$"/m^3)')
+costeff_labels <- c('energy~(MJ/"$")', 'greenhouse~gas~(kg~CO[2]/"$")', 'land~(m^2/"$")', 'water~(m^3/"$")')
 
 all_interventions_4cat <- all_interventions %>%
   filter(grepl('enrg|gcc|land|watr', category)) %>%
   mutate_at(vars(contains('net_averted')), ~ . * c(1e-9, 1e-9, 1e-10, 1e-9)) %>%
   mutate(category = rep(category_labels, nrow(.)/4),
-         category_cost = rep(cost_labels, nrow(.)/4)) %>%
+         category_cost = rep(cost_labels, nrow(.)/4),
+         category_costeff = rep(costeff_labels, nrow(.)/4)) %>%
   rename(scenario = group) %>%
   arrange(category, intervention, scenario) %>%
   mutate(xpos = rep(x_positions, nrow(.)/length(x_positions)))
@@ -201,6 +203,43 @@ p_unitcost <- ggplot(all_interventions_4cat, aes(x = xpos, group = scenario, col
   interv_colors 
 
 
+# Impact averted per cost plot --------------------------------------------
+
+# inverted version of unit cost plot
+
+p_costeffectiveness <- ggplot(all_interventions_4cat, aes(x = xpos, group = scenario, color = intervention,
+                                                 y = 1/cost_per_reduction_mean, ymin = 1/cost_per_reduction_lower, ymax = 1/cost_per_reduction_upper)) +
+  facet_wrap(~ category_costeff, scales = 'free_y', labeller = label_parsed) +
+  geom_point(size = 2) +
+  geom_errorbar(width = 0.05) +
+  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3, hjust = 1.2) +
+  scale_x_continuous(limits = c(0.9, 3.8)) +
+  scale_y_continuous(name = 'Reduction per $1 spent') +
+  interv_colors 
+
+
+# Total cost versus unit cost curve ---------------------------------------
+
+# McKinsey curve: x axis is potential reduction in GT/y, y axis is cost per ton
+
+# If the benefit of reducing 1 kg CO2 is the social cost of carbon, or around 5 cents, you can take 0.05 - cost_per_reduction to get the net cost or net benefit
+# $0.05 per kg is $50 per tonne.
+
+p_costbytotal <- all_interventions_4cat %>% 
+  filter(grepl('greenhouse', category)) %>%
+  mutate(net_cost_lower = cost_per_reduction_lower - 0.05,
+         net_cost_mean =  cost_per_reduction_mean - 0.05,
+         net_cost_upper = cost_per_reduction_upper - 0.05) %>%
+ggplot(aes(x = net_averted_mean/1000, y = net_cost_mean * 1000, color = intervention)) +
+  geom_point(size = 2) +
+  geom_text(aes(label = gsub(' ', '\n', scenario)), color = 'black', alpha = 0.5, size = 3, hjust = 1.2) +
+  geom_hline(yintercept = 0, linetype = 'dotted', size = 1.5) +
+  theme_bw() +
+  scale_x_continuous(name = 'Total potential CO2 reduction (GT)', limits = c(0, 0.03)) +
+  scale_y_continuous(name = 'Net cost per ton CO2 emissions reduced', labels = scales::dollar) +
+  interv_colors +
+  theme(legend.position = 'bottom')
+
 # Save plots --------------------------------------------------------------
 
 fp_fig <- file.path(fp, 'figures/intervention_analysis')
@@ -208,3 +247,5 @@ fp_fig <- file.path(fp, 'figures/intervention_analysis')
 ggsave(file.path(fp_fig, 'four_interventions_total_cost.png'), p_totalcost, height = 5, width = 5, dpi = 300)
 ggsave(file.path(fp_fig, 'four_interventions_total_impact_averted.png'), p_totalimpact, height = 9, width = 7, dpi = 300)
 ggsave(file.path(fp_fig, 'four_interventions_unit_cost.png'), p_unitcost, height = 9, width = 7, dpi = 300)
+ggsave(file.path(fp_fig, 'four_interventions_cost_effectiveness.png'), p_costeffectiveness, height = 9, width = 7, dpi = 300)
+ggsave(file.path(fp_fig, 'four_interventions_cost_by_total.png'), p_costbytotal, height = 5, width = 5, dpi = 300)
