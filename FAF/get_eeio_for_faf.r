@@ -1,14 +1,12 @@
 # Virtual transfers of materials embodied in food, and in wasted food
 # QDR / FWE / 19 Nov 2019
 
+# Modified 18 May 2020: edit this so that EEIO is removed from loop
+
 # Load data ---------------------------------------------------------------
 
 library(tidyverse)
 library(reticulate)
-library(foreach)
-library(doParallel)
-
-registerDoParallel(cores = 8)
 
 is_local <- dir.exists('Q:/')
 
@@ -62,12 +60,23 @@ faf_vectors <- faf_by_bea %>%
   nest(data = c(BEA_code_full, value))
 
 
-# Run USEEIO for each vector, in parallel ---------------------------------
+# Run USEEIO for each code in vectors -------------------------------------
 
-impacts <- foreach(i = 1:nrow(faf_vectors)) %dopar% {
-  eeio_lcia('USEEIO2012', as.list(faf_vectors$data[[i]]$value), as.list(faf_vectors$data[[i]]$BEA_code_full))
+BEA_food <- left_join(BEA_food, code_lookup, by = c('BEA_389_code' = 'BEA_code'))
+EEIO_BEA <- map(BEA_food$BEA_code_full, ~ eeio_lcia('USEEIO2012', list(1), list(.))) # 76 codes
+# convert to 21x76 matrix
+EEIO_BEA_mat <- do.call(cbind, map(EEIO_BEA, 'Total'))
+  
+
+# Get USEEIO results for each vector ---------------------------------
+
+get_eeio_result <- function(dat) {
+  idx <- match(dat$BEA_code_full, BEA_food$BEA_code_full)
+  data.frame(Total = EEIO_BEA_mat[, idx, drop = FALSE] %*% dat$value, row.names = row.names(EEIO_BEA[[1]]))
 }
 
+impacts <- map(faf_vectors$data, get_eeio_result)
+  
 save(impacts, file ='/nfs/qread-data/cfs_io_analysis/faf_eeio_output.RData')
 
 

@@ -2,7 +2,10 @@
 # Get as many variables as possible, using imputation to fill in the suppressed records.
 # QDR / FWE / 09 Dec 2019
 
+# Modified 19 May 2020: include land area in the variables to impute
+
 library(tidyverse)
+library(mice)
 
 # Read text file ---------------------------------------------------
 
@@ -15,13 +18,18 @@ cdqt <- read_delim(cdqt_file, delim = '\t', col_names = FALSE, col_types = strre
 
 # Get all labor and income variables by NAICS -----------------------------
 
+cdqt_land <- cdqt %>%
+  filter(grepl('ACRES', X6), !grepl('OPERAT', X6))
+
 # All variables that are classified by state x NAICS code under operations, labor, and income
 # Get rid of duplicates, set row names, convert NAICS into a short character
 # Convert value column to numeric, setting suppressed rows to NA.
 cdqt_naics <- cdqt %>%
   filter(grepl('^NAICS', X14)) %>%
   filter(!grepl('AND', X14)) %>%
-  filter(grepl('FARM OPERATIONS|LABOR|INCOME', X6)) %>%
+  filter(grepl('FARM OPERATIONS|LABOR|INCOME|ACRES', X6)) %>%
+  filter(!grepl('ENVIRONMENTAL', X5)) %>%
+  filter(!grepl('PRACTICES', X6)) %>%
   filter(!grepl('FARM OPERATIONS, ORGANIZATION', X6, fixed = TRUE)) %>% # this seems fairly unnecessary.
   filter(!grepl('INCOME, NET CASH FARM', X6, fixed = TRUE)) %>% # also not necessary I think.
   filter(X8 %in% c('STATE', 'NATIONAL')) %>%
@@ -32,19 +40,18 @@ cdqt_naics <- cdqt %>%
          NAICS = gsub('\\(|\\)', '', NAICS))
 
 tail(sort(unique(cdqt_naics$value))) # Both D and Z codes are included here. 
-sum(cdqt_naics$value == '(D)') # about 1600 values. Not disclosed for confidentiality. Should be imputed.
-sum(cdqt_naics$value == '(Z)') # 35 values. These are effectively zero values. Can set them to 0.
+sum(cdqt_naics$value == '(D)') # about 1600 values. Not disclosed for confidentiality. Should be imputed. (now 10K with land acreage)
+sum(cdqt_naics$value == '(Z)') # 35 values. These are effectively zero values. (now 147 with land acreage) -- also impute these.
 
 cdqt_naics <- cdqt_naics %>%
   mutate(
-    suppressed = value == '(D)',
+    suppressed = value %in% c('(D)', '(Z)'),
     value = case_when(
-      value == '(D)' ~ as.numeric(NA),
-      value == '(Z)' ~ 0,
+      value %in% c('(D)', '(Z)') ~ as.numeric(NA),
       TRUE ~ as.numeric(gsub(',', '', value))
     ))
 
-unique(cdqt_naics$variable) # 34 variables. Some are sums of other variables.
+unique(cdqt_naics$variable) # 34 variables. Some are sums of other variables. (now >100 with land acreage)
 unique(cdqt_naics$NAICS) # this has all the ag naics codes.
 
 # Reduce the number of variables to a final list of a few important ones.
@@ -52,8 +59,10 @@ vars_to_use <- c('FARM OPERATIONS - NUMBER OF OPERATIONS',
                  'LABOR, HIRED - EXPENSE, MEASURED IN $',
                  'LABOR, CONTRACT - EXPENSE, MEASURED IN $',
                  'INCOME, FARM-RELATED - RECEIPTS, MEASURED IN $',
-                 'LABOR, HIRED - NUMBER OF WORKERS')
-vars_shortnames <- c('n_operations', 'labor_hired_expense', 'labor_contract_expense', 'receipts', 'n_workers')
+                 'LABOR, HIRED - NUMBER OF WORKERS',
+                 'AG LAND, CROPLAND - ACRES',
+                 'AG LAND, PASTURELAND, (EXCL CROPLAND & WOODLAND) - ACRES')
+vars_shortnames <- c('n_operations', 'labor_hired_expense', 'labor_contract_expense', 'receipts', 'n_workers', 'cropland', 'pastureland')
 
 
 cdqt_naics <- cdqt_naics %>%
@@ -71,7 +80,13 @@ naicstoremove <- cdqt_naics_wide %>% group_by(NAICS) %>%
   summarize(no_data = all(labor_hired_expense == 0 & labor_contract_expense == 0 & receipts == 0 & n_workers == 0))
 
 cdqt_naics_wide <- cdqt_naics_wide %>%
-  filter(!NAICS %in% naicstoremove$NAICS[naicstoremove$no_data]) # There are 184 missing values out of >3000 so can be imputed.
+  filter(!NAICS %in% naicstoremove$NAICS[naicstoremove$no_data]) # There are 304 missing values out of 4858 so can be imputed.
+
+# If there are spurious zeroes, convert them to NA.
+map(cdqt_naics_wide, ~ sum(. == 0, na.rm = TRUE))
+
+cdqt_naics_wide <- cdqt_naics_wide %>%
+  mutate_at(vars(labor_hired_expense, receipts, cropland, pastureland, n_workers), ~ if_else(. == 0, as.numeric(NA), .))
 
 # Repivot to long form.
 cdqt_naics <- cdqt_naics_wide %>%
@@ -81,17 +96,17 @@ cdqt_naics <- cdqt_naics_wide %>%
 
 # Use MICE to create some imputations of this dataset ---------------------
 
-library(mice)
+
 cdqt_to_impute <- cdqt_naics_wide %>%
   filter(!level %in% 'NATIONAL') %>%
-  select(state_abbrev, NAICS, labor_hired_expense:n_workers) %>%
+  select(state_abbrev, NAICS, n_operations:n_workers) %>%
   mutate(state_abbrev = factor(state_abbrev), NAICS = factor(NAICS)) %>%
-  mutate_at(vars(labor_hired_expense:n_workers), ~ log(. + 1))
+  mutate_at(vars(n_operations:n_workers), ~ log(. + 1))
 
 cdqt_imputed <- mice(data = as.data.frame(cdqt_to_impute), m = 10, seed = 222, method = 'rf')  # Random forest imputation.
 
 cdqt_imputed_complete <- complete(cdqt_imputed) %>%
-  mutate_at(vars(labor_hired_expense:n_workers), ~ round(exp(.) - 1)) %>%
+  mutate_at(vars(n_operations:n_workers), ~ round(exp(.) - 1)) %>%
   rename_at(vars(labor_hired_expense:n_workers), ~ paste(., 'imputed', sep = '_'))
 
 
@@ -119,10 +134,10 @@ cdqt_naics_withimp <- cdqt_naics_withimp %>%
 
 cdqt_naics_withimp %>%
   arrange(NAICS, state_fips) %>%
-  write_csv('/nfs/qread-data/cfs_io_analysis/NASS2012_receipts_workers_NAICS_imputed.csv')
+  write_csv('/nfs/qread-data/cfs_io_analysis/NASS2012_receipts_workers_land_NAICS_imputed.csv')
 
-cdqt_naics_data <- cdqt_naics_totalreceipts %>%
-  rename(receipts = value) %>%
-  select(-D) %>%
-  full_join(naics_empl_sums) %>%
-  arrange(NAICS, FIPS)
+# cdqt_naics_data <- cdqt_naics_totalreceipts %>%
+#   rename(receipts = value) %>%
+#   select(-D) %>%
+#   full_join(naics_empl_sums) %>%
+#   arrange(NAICS, FIPS)

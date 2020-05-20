@@ -154,3 +154,55 @@ cdqt_naics_data <- cdqt_naics_totalreceipts %>%
   arrange(NAICS, FIPS)
 
 write_csv(cdqt_naics_data, file.path('/nfs/qread-data/cfs_io_analysis/NASS2012_receipts_workers_NAICS.csv'))
+
+
+
+# Extract land area data from CDQT ----------------------------------------
+
+grep('ACRES', x6u, value = TRUE)
+
+cdqt_land <- cdqt %>%
+  filter(grepl('ACRES', X6), !grepl('OPERAT', X6))
+
+cdqt_land <- cdqt_land %>%
+  select(X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15) 
+
+# Total ag land only
+cdqt_landtotals <- cdqt_land %>%
+  filter(X7 == 'AG LAND', grepl('CROPLAND|PASTURE', X6))
+  
+# Only high level totals
+# but by county
+county_land <- cdqt_landtotals %>% 
+  filter(X6 %in% c("AG LAND, CROPLAND - ACRES", "AG LAND, PASTURELAND - ACRES"), X8 == 'COUNTY') %>%
+  select(X6, X9, X10, X11, X12, X13, X15) %>%
+  setNames(c('name', 'state_code','state_abbrev', 'state_name', 'county_code', 'county_name', 'value')) %>%
+  mutate(value = as.numeric(gsub(',', '', value)),
+         name = if_else(grepl('CROPLAND', name), 'cropland', 'pastureland')) %>%
+  filter(!duplicated(.)) %>%
+  pivot_wider(names_from = name, values_from = value)
+  
+library(units)
+
+# Convert to square meters
+to_sq_m <- function(x) x %>% set_units(acres) %>% set_units(m^2) %>% as.numeric
+
+county_land %>%
+  mutate_if(is.numeric, to_sq_m) %>%
+  write_csv('/nfs/qread-data/cfs_io_analysis/cropland_by_county.csv')
+
+
+# land by NAICS at state level --------------------------------------------
+
+cdqt_land_naics <- cdqt_land %>%
+  filter(grepl('NAICS', X14)) %>%
+  select(-X12, -X13)
+
+cdqt_land_naics <- cdqt_land_naics %>%
+  filter(X5 != 'ENVIRONMENTAL', !grepl('PRACTICES', X6))
+
+# The goal is to produce a matrix of crop and/or NAICS by state, with acres harvested.
+# This can be used to rescale the FAF tonnage and determine how many "acres" are shipped from one state to another.
+# We also must impute the D and Z values in the matrix.
+
+write_csv(cdqt_land_naics, '/nfs/qread-data/cfs_io_analysis/cropland_by_NAICS_raw.csv')

@@ -1,6 +1,7 @@
 # Combine SUSB and NASS data by NAICS code to produce a better weighting (previous one only used QCEW = bad)
 # QDR / FWE / 05 Dec 2019
 
+# Modified 19 May 2020: Use newer imputed NASS data that also includes cropland and pastureland
 # Modified 09 Dec 2019: Use imputed values from NASS
 # Originally modified from code that was in sctg_to_bea.r
 
@@ -24,10 +25,10 @@ load(file.path(fp_crosswalk, 'NAICS_BEA_SCTG_crosswalk.RData'))
 fips <- read_delim('/nfs/qread-data/statefips.txt', delim = '|')
 
 # Read CDQT (NASS) data for the agricultural NAICS codes
-nass_naics <- read_csv(file.path(fp_out, 'NASS2012_receipts_workers_NAICS_imputed.csv'))
+nass_naics <- read_csv(file.path(fp_out, 'NASS2012_receipts_workers_land_NAICS_imputed.csv'))
 
 # Read SUSB data for all other NAICS codes
-susb12 <- read_csv(file.path(fp, 'Census/SUSB/us_state_6digitnaics_2012.txt'), col_types = 'fffnnnffnfnfccc') 
+susb12 <- read_csv(file.path(fp, 'raw_data/Census/SUSB/us_state_6digitnaics_2012.txt'), col_types = 'fffnnnffnfnfccc') 
 susb_total <- susb12 %>% 
   filter(ENTRSIZEDSCR %in% 'Total')
 
@@ -141,7 +142,9 @@ nass1111 <- nass_naics %>%
   select(-grain, -oilseed) %>%
   pivot_longer(cols = c(proportion_grain, proportion_oilseed), names_to = 'crop', values_to = 'proportion') %>%
   mutate(receipts = round(receipts * proportion),
-         n_workers = round(n_workers * proportion))
+         n_workers = round(n_workers * proportion),
+         cropland = round(cropland * proportion),
+         pastureland = round(pastureland * proportion))
 
 nass1111_edited <- nass1111 %>%
   mutate(NAICS = if_else(crop == 'proportion_grain', '111130', '111110')) %>% # These are just one of the naics codes we could use.
@@ -182,11 +185,11 @@ nass_bea <- nass_naics_edited %>%
 
 nass_bea_edited <- nass_bea %>%
   ungroup %>%
-  select(state_fips, state_name, BEA_code, n_workers, receipts) %>%
-  setNames(names(susb_bea))
+  select(state_fips, state_name, BEA_code, n_workers, receipts, cropland, pastureland) %>%
+  setNames(c(names(susb_bea), 'cropland', 'pastureland'))
 
 susb_nass_bea <- bind_rows(nass_bea_edited, ungroup(susb_bea)) %>%
   mutate(state_name = if_else(state_name == 'United States', 'US TOTAL', state_name),
          state_name = toupper(state_name))
 
-write_csv(susb_nass_bea, file.path(fp_out, 'susb_nass_workers_receipts_bea.csv'))
+write_csv(susb_nass_bea, file.path(fp_out, 'susb_nass_workers_receipts_land_bea.csv'))
